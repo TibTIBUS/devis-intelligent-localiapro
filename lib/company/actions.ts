@@ -53,6 +53,7 @@ export async function saveCompanyLegalInformation(
         legal_name: parsed.data.legalName,
         organization_id: organizationId,
         postal_code: parsed.data.postalCode,
+        professional_insurance_required: parsed.data.professionalInsuranceRequired,
         registration_city: parsed.data.registrationCity ?? null,
         share_capital_cents: parsed.data.shareCapitalCents ?? null,
         siren: parsed.data.siren,

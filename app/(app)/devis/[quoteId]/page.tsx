@@ -10,6 +10,7 @@ import {
   QuoteSectionForm,
 } from "@/components/quotes/quote-forms";
 import { getCatalogItems } from "@/lib/catalog/queries";
+import { validateQuoteCompliance, type QuoteComplianceResult } from "@/lib/compliance/quote-compliance";
 import { getCustomers } from "@/lib/customers/queries";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import {
@@ -29,7 +30,7 @@ function formatCents(amount: bigint) {
   );
 }
 
-function DraftContent({ catalogItems, lines, quoteId, sections }: { catalogItems: Awaited<ReturnType<typeof getCatalogItems>>; lines: QuoteLine[]; quoteId: string; sections: QuoteSection[] }) {
+function DraftContent({ catalogItems, compliance, lines, quoteId, sections }: { catalogItems: Awaited<ReturnType<typeof getCatalogItems>>; compliance: QuoteComplianceResult; lines: QuoteLine[]; quoteId: string; sections: QuoteSection[] }) {
   const linesBySection = new Map(
     sections.map((section) => [section.id, lines.filter((line) => line.section_id === section.id)]),
   );
@@ -65,7 +66,7 @@ function DraftContent({ catalogItems, lines, quoteId, sections }: { catalogItems
         ))}
         <QuoteLineForm action={saveQuoteLine} catalogItems={catalogItems} quoteId={quoteId} sections={sections} />
       </section>
-      <FinalizeQuoteForm action={finalizeQuote} quoteId={quoteId} />
+      <FinalizeQuoteForm action={finalizeQuote} compliance={compliance} quoteId={quoteId} />
     </>
   );
 }
@@ -104,6 +105,9 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
     getCatalogItems(supabase, organizationId),
   ]);
   if (!editor) notFound();
+  const compliance = editor.quote.status === "draft"
+    ? await validateQuoteCompliance(supabase, editor.quote.id)
+    : null;
   const customer = customers.find((item) => item.id === editor.quote.customer_id);
   const finalized = editor.quote.status === "finalized";
 
@@ -129,7 +133,10 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
             depositRateBasisPoints={editor.quote.deposit_rate_basis_points}
             discountRateBasisPoints={editor.quote.discount_rate_basis_points}
             isQuoteFree={editor.quote.is_quote_free}
+            preparationFeeHtCents={editor.quote.preparation_fee_ht_cents}
+            preparationFeeVatRateBasisPoints={editor.quote.preparation_fee_vat_rate_basis_points}
             quoteId={editor.quote.id}
+            travelFeeApplicable={editor.quote.travel_fee_applicable}
             validUntil={editor.quote.valid_until}
             workAddressId={editor.quote.work_address_id}
           />
@@ -151,7 +158,7 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
           )}
         </section>
 
-        {finalized ? <FinalizedContent lines={editor.lines} /> : <DraftContent catalogItems={catalogItems} lines={editor.lines} quoteId={editor.quote.id} sections={editor.sections} />}
+        {finalized ? <FinalizedContent lines={editor.lines} /> : <DraftContent catalogItems={catalogItems} compliance={compliance!} lines={editor.lines} quoteId={editor.quote.id} sections={editor.sections} />}
       </section>
     </main>
   );

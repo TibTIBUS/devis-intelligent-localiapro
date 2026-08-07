@@ -65,3 +65,11 @@ commercial.
 Un devis finalisé et son contenu ne sont plus modifiables ni supprimables. Ce
 statut interne signifie que le document est figé ; il ne vaut pas acceptation
 par le client. L’acceptation commerciale sera modélisée séparément.
+
+## Contrôle réglementaire COMPLIANCE-001
+
+Avant finalisation, l’éditeur affiche les erreurs bloquantes et les points
+conditionnels à confirmer. Les lignes sont qualifiées comme main-d’œuvre,
+prestation, matériel, déplacement ou autre. Un devis payant conserve son prix
+HT et son taux de TVA ; les frais de déplacement sont explicitement déclarés
+applicables ou absents.

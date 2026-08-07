@@ -13,6 +13,7 @@ const validLegalInformation = {
   legalForm: "SARL",
   legalName: "Entreprise Martin",
   postalCode: "75001",
+  professionalInsuranceRequired: "yes",
   registrationCity: "Paris",
   shareCapitalCents: "1 000,50",
   siren: "123 456 789",
@@ -27,6 +28,7 @@ describe("companyLegalInformationSchema", () => {
       siren: "123456789",
       siret: "12345678900011",
       vatNumber: "FR12123456789",
+      professionalInsuranceRequired: true,
     });
   });
 
@@ -39,17 +41,17 @@ describe("companyLegalInformationSchema", () => {
     ).toBe(false);
   });
 
-  it("accepts optional legal fields left blank", () => {
+  it("accepts only the genuinely optional legal fields left blank", () => {
     expect(
       companyLegalInformationSchema.safeParse({
         ...validLegalInformation,
         addressLine2: "",
-        legalForm: "",
         registrationCity: "",
         shareCapitalCents: "",
         vatNumber: "",
       }).success,
     ).toBe(true);
+    expect(companyLegalInformationSchema.safeParse({ ...validLegalInformation, legalForm: "" }).success).toBe(false);
   });
 
   it("collects form values and formats capital for display", () => {

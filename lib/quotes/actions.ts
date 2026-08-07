@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
+import { validateQuoteCompliance } from "@/lib/compliance/quote-compliance";
 import { createClient } from "@/lib/supabase/server";
 import {
   getQuoteCreateValues,
@@ -82,6 +83,9 @@ export async function saveQuoteFinancialSettings(
       deposit_rate_basis_points: parsed.data.depositRateBasisPoints,
       discount_rate_basis_points: parsed.data.discountRateBasisPoints,
       is_quote_free: parsed.data.isQuoteFree,
+      preparation_fee_ht_cents: parsed.data.isQuoteFree ? null : parsed.data.preparationFeeHtCents,
+      preparation_fee_vat_rate_basis_points: parsed.data.isQuoteFree ? null : parsed.data.preparationFeeVatRateBasisPoints,
+      travel_fee_applicable: parsed.data.travelFeeApplicable,
       valid_until: parsed.data.validUntil,
       work_address_id: parsed.data.workAddressId,
     })
@@ -98,15 +102,6 @@ export async function saveQuoteFinancialSettings(
   return { message: "EnregistrÃ©.", status: "success" };
 }
 
-const finalizationMessages: Record<string, string> = {
-  "A current validity date is required.": "Renseignez une date de validitÃ© qui nâ€™est pas dÃ©passÃ©e.",
-  "A work address is required.": "SÃ©lectionnez le lieu dâ€™exÃ©cution.",
-  "At least one quote line is required.": "Ajoutez au moins une ligne au devis.",
-  "Company legal information is required.": "ComplÃ©tez les informations lÃ©gales de lâ€™entreprise.",
-  "Every quote line needs a price and VAT rate.": "Renseignez le prix HT et la TVA de chaque ligne.",
-  "The quote fee status is required.": "Indiquez si le devis est gratuit ou payant.",
-};
-
 export async function finalizeQuote(
   previousState: QuoteFormState,
   formData: FormData,
@@ -116,10 +111,18 @@ export async function finalizeQuote(
   if (!quoteId.success) return { message: "Impossible dâ€™identifier ce devis.", status: "error" };
 
   const { supabase } = await getAuthenticatedOrganizationId();
+  const compliance = await validateQuoteCompliance(supabase, quoteId.data);
+  if (!compliance.valid) {
+    return {
+      message: compliance.errors.map((issue) => issue.message).join(" "),
+      status: "error",
+    };
+  }
+
   const { data, error } = await supabase.rpc("finalize_quote", { p_quote_id: quoteId.data });
   if (error || !data?.[0]) {
     return {
-      message: finalizationMessages[error?.message ?? ""] ?? "Impossible de finaliser ce devis pour le moment.",
+      message: "Impossible de finaliser ce devis pour le moment. Relancez le contrôle de conformité.",
       status: "error",
     };
   }
@@ -174,6 +177,7 @@ export async function saveQuoteLine(
     catalog_item_id: parsed.data.catalogItemId ?? null,
     description: parsed.data.description ?? null,
     label: parsed.data.label ?? "",
+    line_kind: parsed.data.lineKind,
     quantity_milliunits: parsed.data.quantityMilliunits,
     section_id: parsed.data.sectionId ?? null,
     unit: parsed.data.unit ?? "",

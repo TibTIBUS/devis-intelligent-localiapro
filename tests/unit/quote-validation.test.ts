@@ -18,6 +18,7 @@ describe("quote validation", () => {
       description: "Pose comprise",
       label: "Main d’œuvre",
       lineId: "",
+      lineKind: "labor",
       quantityMilliunits: "2,500",
       quoteId: "13000000-0000-4000-8000-000000000001",
       sectionId: "",
@@ -39,6 +40,7 @@ describe("quote validation", () => {
       description: "",
       label: "",
       lineId: "",
+      lineKind: "service",
       quantityMilliunits: "1",
       quoteId: "23000000-0000-4000-8000-000000000001",
       sectionId: "",
@@ -55,6 +57,7 @@ describe("quote validation", () => {
       description: "",
       label: "Déplacement",
       lineId: "",
+      lineKind: "travel",
       quantityMilliunits: "1",
       quoteId: "33000000-0000-4000-8000-000000000001",
       sectionId: "",
@@ -71,13 +74,17 @@ describe("quote validation", () => {
       depositRateBasisPoints: "30",
       discountRateBasisPoints: "5,5",
       isQuoteFree: "paid",
+      preparationFeeHtCents: "25",
+      preparationFeeVatRateBasisPoints: "20",
       quoteId: "43000000-0000-4000-8000-000000000001",
+      travelFeeApplicable: "no",
       validUntil: "2026-12-31",
       workAddressId: "53000000-0000-4000-8000-000000000001",
     };
-    expect(quoteFinancialSettingsSchema.parse(details)).toMatchObject({ depositRateBasisPoints: 3000, discountRateBasisPoints: 550, isQuoteFree: false });
+    expect(quoteFinancialSettingsSchema.parse(details)).toMatchObject({ depositRateBasisPoints: 3000, discountRateBasisPoints: 550, isQuoteFree: false, preparationFeeHtCents: 2500, preparationFeeVatRateBasisPoints: 2000, travelFeeApplicable: false });
     expect(quoteFinancialSettingsSchema.safeParse({ ...details, depositRateBasisPoints: "101" }).success).toBe(false);
     expect(quoteFinancialSettingsSchema.safeParse({ ...details, workAddressId: "" }).success).toBe(false);
+    expect(quoteFinancialSettingsSchema.safeParse({ ...details, preparationFeeHtCents: "" }).success).toBe(false);
   });
 
   it("collects form values and formats stored values for fields", () => {

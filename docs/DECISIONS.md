@@ -130,3 +130,15 @@ de brouillon prévues. Des déclencheurs privés interdisent toute mutation du
 devis finalisé, de ses sections, de ses lignes et de ses versions, y compris si
 un futur appel applicatif oubliait ce contrôle. La finalisation interne et
 l’acceptation du devis par le client demeurent deux états métier distincts.
+
+## COMPLIANCE-001 — référentiel versionné et validation en base
+
+La conformité du devis n’est ni une appréciation du LLM ni une simple
+validation d’interface. PostgreSQL produit une liste structurée de codes
+d’erreur et bloque lui-même la transition vers `finalized`. L’application ne
+fait que traduire ces codes en indications actionnables.
+
+Les obligations conditionnelles ne sont pas déduites du nom du métier. Leur
+applicabilité est déclarée explicitement : assurance professionnelle au niveau
+de l’entreprise et frais de déplacement au niveau du devis. Le référentiel
+légal et les données justificatives sont intégrés au snapshot immuable.

@@ -7,6 +7,7 @@ export type QuoteLine = {
   description: string | null;
   id: string;
   label: string;
+  line_kind: "labor" | "material" | "travel" | "service" | "other";
   position: number;
   quantity_milliunits: number;
   section_id: string | null;
@@ -24,8 +25,11 @@ export type Quote = {
   id: string;
   is_quote_free: boolean | null;
   issued_on: string | null;
+  preparation_fee_ht_cents: number | null;
+  preparation_fee_vat_rate_basis_points: number | null;
   quote_number: string | null;
   status: "draft" | "finalized";
+  travel_fee_applicable: boolean | null;
   valid_until: string | null;
   work_address_id: string | null;
 };
@@ -59,7 +63,7 @@ export async function getQuoteEditorData(client: SupabaseClient, organizationId:
   const [quoteResult, sectionsResult, linesResult] = await Promise.all([
     client
       .from("quotes")
-      .select("customer_id, deposit_rate_basis_points, discount_rate_basis_points, finalized_at, id, is_quote_free, issued_on, quote_number, status, valid_until, work_address_id")
+      .select("customer_id, deposit_rate_basis_points, discount_rate_basis_points, finalized_at, id, is_quote_free, issued_on, preparation_fee_ht_cents, preparation_fee_vat_rate_basis_points, quote_number, status, travel_fee_applicable, valid_until, work_address_id")
       .eq("organization_id", organizationId)
       .eq("id", quoteId)
       .maybeSingle(),
@@ -72,7 +76,7 @@ export async function getQuoteEditorData(client: SupabaseClient, organizationId:
       .order("id", { ascending: true }),
     client
       .from("quote_lines")
-      .select("catalog_item_id, description, id, label, position, quantity_milliunits, section_id, unit, unit_price_ht_cents, vat_rate_basis_points")
+      .select("catalog_item_id, description, id, label, line_kind, position, quantity_milliunits, section_id, unit, unit_price_ht_cents, vat_rate_basis_points")
       .eq("organization_id", organizationId)
       .eq("quote_id", quoteId)
       .order("position", { ascending: true })
@@ -116,7 +120,7 @@ export async function getQuoteListData(client: SupabaseClient, organizationId: s
   const [quotesResult, customersResult, linesResult] = await Promise.all([
     client
       .from("quotes")
-      .select("customer_id, deposit_rate_basis_points, discount_rate_basis_points, finalized_at, id, is_quote_free, issued_on, quote_number, status, updated_at, valid_until, work_address_id")
+      .select("customer_id, deposit_rate_basis_points, discount_rate_basis_points, finalized_at, id, is_quote_free, issued_on, preparation_fee_ht_cents, preparation_fee_vat_rate_basis_points, quote_number, status, travel_fee_applicable, updated_at, valid_until, work_address_id")
       .eq("organization_id", organizationId)
       .order("updated_at", { ascending: false })
       .order("id", { ascending: true }),

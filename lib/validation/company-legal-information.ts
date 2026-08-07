@@ -30,7 +30,10 @@ export const companyLegalInformationSchema = z
       .trim()
       .min(1, "Saisissez la raison sociale ou votre nom.")
       .max(200, "La raison sociale est trop longue."),
-    legalForm: optionalTrimmedText(80, "La forme juridique est trop longue."),
+    legalForm: z.string().trim().min(1, "Saisissez la forme juridique.").max(80, "La forme juridique est trop longue."),
+    professionalInsuranceRequired: z.enum(["yes", "no"], {
+      message: "Indiquez si une assurance professionnelle est obligatoire.",
+    }).transform((value) => value === "yes"),
     shareCapitalCents: shareCapitalSchema,
     siren: normalizedIdentifier(9, "Le SIREN doit contenir 9 chiffres."),
     siret: normalizedIdentifier(14, "Le SIRET doit contenir 14 chiffres."),
@@ -84,6 +87,7 @@ export type CompanyLegalInformationFormState = {
     Record<
       | "legalName"
       | "legalForm"
+      | "professionalInsuranceRequired"
       | "shareCapitalCents"
       | "siren"
       | "siret"
@@ -108,6 +112,7 @@ export function getCompanyLegalInformationValues(formData: FormData) {
   return {
     legalName: formData.get("legalName"),
     legalForm: formData.get("legalForm"),
+    professionalInsuranceRequired: formData.get("professionalInsuranceRequired"),
     shareCapitalCents: formData.get("shareCapital"),
     siren: formData.get("siren"),
     siret: formData.get("siret"),
@@ -124,6 +129,7 @@ export function getCompanyLegalInformationFieldErrors(error: z.ZodError) {
   const fields = [
     "legalName",
     "legalForm",
+    "professionalInsuranceRequired",
     "shareCapitalCents",
     "siren",
     "siret",

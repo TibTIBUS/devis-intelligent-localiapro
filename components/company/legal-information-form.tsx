@@ -109,7 +109,7 @@ export function LegalInformationForm({
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="legalForm">
-            Forme juridique <span className="text-muted-foreground">(facultatif)</span>
+            Forme juridique
           </label>
           <input
             aria-invalid={Boolean(state.fieldErrors?.legalForm)}
@@ -118,6 +118,7 @@ export function LegalInformationForm({
             id="legalForm"
             maxLength={80}
             name="legalForm"
+            required
             type="text"
           />
           <FieldError message={state.fieldErrors?.legalForm} />
@@ -140,6 +141,34 @@ export function LegalInformationForm({
           <FieldError message={state.fieldErrors?.shareCapitalCents} />
         </div>
       </div>
+
+      <fieldset className="space-y-2 rounded-md border border-border p-4">
+        <legend className="px-1 text-sm font-medium">
+          Assurance professionnelle obligatoire pour votre activité
+        </legend>
+        <label className="mr-5 inline-flex items-center gap-2 text-sm">
+          <input
+            defaultChecked={legalInformation?.professional_insurance_required === true}
+            name="professionalInsuranceRequired"
+            type="radio"
+            value="yes"
+          />
+          Oui
+        </label>
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input
+            defaultChecked={legalInformation?.professional_insurance_required === false}
+            name="professionalInsuranceRequired"
+            type="radio"
+            value="no"
+          />
+          Non
+        </label>
+        <p className="text-xs text-muted-foreground">
+          Ne sélectionnez « Non » que si votre activité n’est soumise à aucune assurance professionnelle obligatoire.
+        </p>
+        <FieldError message={state.fieldErrors?.professionalInsuranceRequired} />
+      </fieldset>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2">

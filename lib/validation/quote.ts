@@ -76,9 +76,21 @@ export const quoteFinancialSettingsSchema = z.object({
   depositRateBasisPoints: percentageBasisPoints("Le taux dâ€™acompte"),
   discountRateBasisPoints: percentageBasisPoints("Le taux de remise"),
   isQuoteFree: z.enum(["free", "paid"], { message: "Indiquez si le devis est gratuit ou payant." }).transform((value) => value === "free"),
+  preparationFeeHtCents: optionalPriceCents,
+  preparationFeeVatRateBasisPoints: optionalVatRateBasisPoints,
   quoteId: z.string().uuid(),
+  travelFeeApplicable: z.enum(["yes", "no"], { message: "Indiquez si des frais de déplacement s’appliquent." }).transform((value) => value === "yes"),
   validUntil: z.string().date("Saisissez une date de validitÃ© valide."),
   workAddressId: z.string().uuid("SÃ©lectionnez le lieu dâ€™exÃ©cution."),
+}).superRefine((value, context) => {
+  if (!value.isQuoteFree) {
+    if (!value.preparationFeeHtCents) {
+      context.addIssue({ code: "custom", message: "Indiquez un prix HT supérieur à zéro.", path: ["preparationFeeHtCents"] });
+    }
+    if (value.preparationFeeVatRateBasisPoints === undefined) {
+      context.addIssue({ code: "custom", message: "Indiquez le taux de TVA applicable.", path: ["preparationFeeVatRateBasisPoints"] });
+    }
+  }
 });
 
 export const quoteSectionSchema = z.object({
@@ -92,6 +104,7 @@ export const quoteLineSchema = z.object({
   description: optionalText(1_000, "La description est trop longue."),
   label: optionalText(200, "Le libellÃ© est trop long."),
   lineId: optionalId,
+  lineKind: z.enum(["labor", "material", "travel", "service", "other"], { message: "Sélectionnez la nature de la ligne." }),
   quantityMilliunits: decimalInteger(1_000, "une quantitÃ©").refine(
     (value) => value > 0,
     "La quantitÃ© doit Ãªtre supÃ©rieure Ã  zÃ©ro.",
@@ -134,7 +147,10 @@ export function getQuoteFinancialSettingsValues(formData: FormData) {
     depositRateBasisPoints: formData.get("depositRate"),
     discountRateBasisPoints: formData.get("discountRate"),
     isQuoteFree: formData.get("isQuoteFree"),
+    preparationFeeHtCents: formData.get("preparationFeeHt"),
+    preparationFeeVatRateBasisPoints: formData.get("preparationFeeVatRate"),
     quoteId: formData.get("quoteId"),
+    travelFeeApplicable: formData.get("travelFeeApplicable"),
     validUntil: formData.get("validUntil"),
     workAddressId: formData.get("workAddressId"),
   };
@@ -154,6 +170,7 @@ export function getQuoteLineValues(formData: FormData) {
     description: formData.get("description"),
     label: formData.get("label"),
     lineId: formData.get("lineId"),
+    lineKind: formData.get("lineKind"),
     quantityMilliunits: formData.get("quantity"),
     quoteId: formData.get("quoteId"),
     sectionId: formData.get("sectionId"),
