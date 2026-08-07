@@ -41,7 +41,18 @@ export const addQuoteLineArgumentsSchema = z.object({
   quantity: z.string().trim().min(1).max(40).refine((value) => /^\d+(?:[.,]\d{1,3})?$/.test(value)),
 }).strict();
 
+export const updateQuoteLineArgumentsSchema = z.object({
+  lineKind: aiQuoteLineKindSchema,
+  quantity: z.string().trim().min(1).max(40).refine((value) => /^\d+(?:[.,]\d{1,3})?$/.test(value)),
+  quoteLineId: z.uuid(),
+}).strict();
+
+export const deleteQuoteLineArgumentsSchema = z.object({
+  quoteLineId: z.uuid(),
+}).strict();
+
 export const aiQuoteLineProposalSchema = z.object({
+  actionType: z.literal("add_quote_line"),
   catalogItemId: z.uuid(),
   label: z.string().trim().min(1).max(200),
   lineKind: aiQuoteLineKindSchema,
@@ -50,21 +61,68 @@ export const aiQuoteLineProposalSchema = z.object({
   unitPriceHtCents: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
 }).strict();
 
-export const confirmAiQuoteLineSchema = z.object({
-  proposal: aiQuoteLineProposalSchema.pick({
-    catalogItemId: true,
-    lineKind: true,
-    quantityMilliunits: true,
-  }),
-  quoteId: z.uuid(),
-  vatRate: z
-    .string()
-    .trim()
-    .transform((value) => value.replace(",", "."))
-    .refine((value) => /^\d+(?:\.\d{1,2})?$/.test(value))
-    .transform((value) => Math.round(Number(value) * 100))
-    .pipe(z.number().int().min(0).max(10_000)),
+export const aiUpdateQuoteLineProposalSchema = z.object({
+  actionType: z.literal("update_quote_line"),
+  currentLineKind: aiQuoteLineKindSchema,
+  currentQuantityMilliunits: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  label: z.string().trim().min(1).max(200),
+  lineKind: aiQuoteLineKindSchema,
+  quantityMilliunits: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  quoteLineId: z.uuid(),
+  unit: z.string().trim().min(1).max(80),
 }).strict();
+
+export const aiDeleteQuoteLineProposalSchema = z.object({
+  actionType: z.literal("delete_quote_line"),
+  label: z.string().trim().min(1).max(200),
+  lineKind: aiQuoteLineKindSchema,
+  quantityMilliunits: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  quoteLineId: z.uuid(),
+  unit: z.string().trim().min(1).max(80),
+}).strict();
+
+export const aiQuoteActionProposalSchema = z.discriminatedUnion("actionType", [
+  aiQuoteLineProposalSchema,
+  aiUpdateQuoteLineProposalSchema,
+  aiDeleteQuoteLineProposalSchema,
+]);
+
+const vatRateSchema = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(",", "."))
+  .refine((value) => /^\d+(?:\.\d{1,2})?$/.test(value))
+  .transform((value) => Math.round(Number(value) * 100))
+  .pipe(z.number().int().min(0).max(10_000));
+
+export const confirmAiQuoteActionSchema = z.discriminatedUnion("actionType", [
+  z.object({
+    actionType: z.literal("add_quote_line"),
+    proposal: aiQuoteLineProposalSchema.pick({
+      catalogItemId: true,
+      lineKind: true,
+      quantityMilliunits: true,
+    }),
+    quoteId: z.uuid(),
+    vatRate: vatRateSchema,
+  }).strict(),
+  z.object({
+    actionType: z.literal("update_quote_line"),
+    proposal: aiUpdateQuoteLineProposalSchema.pick({
+      lineKind: true,
+      quantityMilliunits: true,
+      quoteLineId: true,
+    }),
+    quoteId: z.uuid(),
+  }).strict(),
+  z.object({
+    actionType: z.literal("delete_quote_line"),
+    proposal: aiDeleteQuoteLineProposalSchema.pick({ quoteLineId: true }),
+    quoteId: z.uuid(),
+  }).strict(),
+]);
+
+export const confirmAiQuoteLineSchema = confirmAiQuoteActionSchema;
 
 export const undoAiQuoteActionSchema = z.object({ quoteId: z.uuid() }).strict();
 
@@ -76,3 +134,6 @@ export type AiConversationMessage = z.infer<typeof aiConversationMessageSchema>;
 export type QuoteAssistantRequest = z.infer<typeof quoteAssistantRequestSchema>;
 export type SearchCatalogArguments = z.infer<typeof searchCatalogArgumentsSchema>;
 export type AiQuoteLineProposal = z.infer<typeof aiQuoteLineProposalSchema>;
+export type AiQuoteActionProposal = z.infer<typeof aiQuoteActionProposalSchema>;
+export type AiUpdateQuoteLineProposal = z.infer<typeof aiUpdateQuoteLineProposalSchema>;
+export type AiDeleteQuoteLineProposal = z.infer<typeof aiDeleteQuoteLineProposalSchema>;

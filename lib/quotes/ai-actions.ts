@@ -33,6 +33,40 @@ export async function addCatalogQuoteLineFromAi(
   return result;
 }
 
+export async function updateQuoteLineFromAi(
+  client: SupabaseClient,
+  organizationId: string,
+  quoteId: string,
+  input: { lineKind: AiQuoteLineProposal["lineKind"]; quantityMilliunits: number; quoteLineId: string },
+) {
+  const { data, error } = await client.rpc("update_ai_quote_line", {
+    p_line_id: input.quoteLineId,
+    p_line_kind: input.lineKind,
+    p_organization_id: organizationId,
+    p_quantity_milliunits: input.quantityMilliunits,
+    p_quote_id: quoteId,
+  });
+  const result = data?.[0] as { action_id: string; label: string; line_id: string } | undefined;
+  if (error || !result) throw new Error("Impossible de modifier cette ligne de devis.");
+  return result;
+}
+
+export async function deleteQuoteLineFromAi(
+  client: SupabaseClient,
+  organizationId: string,
+  quoteId: string,
+  quoteLineId: string,
+) {
+  const { data, error } = await client.rpc("delete_ai_quote_line", {
+    p_line_id: quoteLineId,
+    p_organization_id: organizationId,
+    p_quote_id: quoteId,
+  });
+  const result = data?.[0] as { action_id: string; label: string; line_id: string } | undefined;
+  if (error || !result) throw new Error("Impossible de supprimer cette ligne de devis.");
+  return result;
+}
+
 export async function undoLastAiQuoteAction(
   client: SupabaseClient,
   organizationId: string,
@@ -42,7 +76,11 @@ export async function undoLastAiQuoteAction(
     p_organization_id: organizationId,
     p_quote_id: quoteId,
   });
-  const result = data?.[0] as { action_id: string; removed_line_id: string } | undefined;
+  const result = data?.[0] as {
+    action_id: string;
+    action_type: "add_quote_line" | "update_quote_line" | "delete_quote_line";
+    affected_line_id: string;
+  } | undefined;
   if (error || !result) throw new Error("Aucune action récente ne peut être annulée.");
   return result;
 }

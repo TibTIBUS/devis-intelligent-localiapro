@@ -65,6 +65,7 @@ export async function prepareAddQuoteLineTool(
   }
 
   const proposal: AiQuoteLineProposal = {
+    actionType: "add_quote_line",
     catalogItemId: item.id,
     label: item.name,
     lineKind: parsed.lineKind,

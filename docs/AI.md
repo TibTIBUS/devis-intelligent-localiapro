@@ -20,3 +20,11 @@ Références officielles :
 L’artisan confirme séparément la quantité, la nature de ligne et le taux de TVA. Une fonction PostgreSQL `security invoker` relit alors le catalogue, contrôle le devis brouillon par RLS, ajoute la ligne et journalise l’action dans une même transaction. Les totaux restent calculés par le moteur métier existant après relecture du devis.
 
 L’annulation vise uniquement le dernier ajout IA du même utilisateur. La ligne est supprimée, mais la trace d’audit est conservée avec sa date d’annulation.
+
+## AI-003 — modification et suppression contrôlées
+
+`update_quote_line` et `delete_quote_line` préparent une action sur une ligne identifiée dans le contexte minimal du devis actif. Ils ne font aucune écriture. La modification IA est volontairement limitée à la quantité et à la nature de ligne : le prix unitaire, la TVA, le libellé et l’unité ne sont jamais choisis par le modèle.
+
+Après confirmation explicite, une fonction PostgreSQL `security invoker` verrouille la ligne, vérifie le devis brouillon par RLS, applique l’action et enregistre l’état antérieur dans la même transaction. Une suppression conserve ainsi un instantané complet permettant de restaurer la ligne.
+
+L’annulation cible la dernière action IA non annulée du même utilisateur. Une modification n’est restaurée que si la ligne possède encore exactement l’état écrit par l’assistant, afin de ne jamais écraser une correction manuelle ultérieure.

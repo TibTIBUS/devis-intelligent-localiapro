@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import type { AiConversationMessage, AiQuoteLineProposal } from "@/lib/validation/ai";
+import type { AiConversationMessage, AiQuoteActionProposal } from "@/lib/validation/ai";
 
 function formatPrice(cents: number) {
   return new Intl.NumberFormat("fr-FR", { currency: "EUR", style: "currency" }).format(cents / 100);
@@ -14,6 +14,14 @@ function formatQuantity(milliunits: number) {
   return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 3 }).format(milliunits / 1_000);
 }
 
+const lineKindLabels = {
+  labor: "Main-d’œuvre",
+  material: "Matériau",
+  other: "Autre",
+  service: "Prestation",
+  travel: "Déplacement",
+} as const;
+
 export function QuoteAssistant({ quoteId }: { quoteId: string }) {
   const router = useRouter();
   const [messages, setMessages] = useState<AiConversationMessage[]>([]);
@@ -21,7 +29,7 @@ export function QuoteAssistant({ quoteId }: { quoteId: string }) {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [actionPending, setActionPending] = useState(false);
-  const [proposal, setProposal] = useState<AiQuoteLineProposal | null>(null);
+  const [proposal, setProposal] = useState<AiQuoteActionProposal | null>(null);
   const [canUndo, setCanUndo] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -47,7 +55,7 @@ export function QuoteAssistant({ quoteId }: { quoteId: string }) {
       const data = (await response.json()) as {
         error?: string;
         message?: string;
-        pendingAction?: AiQuoteLineProposal;
+        pendingAction?: AiQuoteActionProposal;
       };
       if (!response.ok || !data.message) throw new Error(data.error ?? "Réponse invalide.");
       setProposal(data.pendingAction ?? null);
@@ -70,16 +78,34 @@ export function QuoteAssistant({ quoteId }: { quoteId: string }) {
     setError("");
 
     try {
+      const payload = proposal.actionType === "add_quote_line"
+        ? {
+            actionType: proposal.actionType,
+            proposal: {
+              catalogItemId: proposal.catalogItemId,
+              lineKind: formData.get("lineKind"),
+              quantityMilliunits: proposal.quantityMilliunits,
+            },
+            quoteId,
+            vatRate: formData.get("vatRate"),
+          }
+        : proposal.actionType === "update_quote_line"
+          ? {
+              actionType: proposal.actionType,
+              proposal: {
+                lineKind: proposal.lineKind,
+                quantityMilliunits: proposal.quantityMilliunits,
+                quoteLineId: proposal.quoteLineId,
+              },
+              quoteId,
+            }
+          : {
+              actionType: proposal.actionType,
+              proposal: { quoteLineId: proposal.quoteLineId },
+              quoteId,
+            };
       const response = await fetch("/api/ai/quote-actions/confirm", {
-        body: JSON.stringify({
-          proposal: {
-            catalogItemId: proposal.catalogItemId,
-            lineKind: formData.get("lineKind"),
-            quantityMilliunits: proposal.quantityMilliunits,
-          },
-          quoteId,
-          vatRate: formData.get("vatRate"),
-        }),
+        body: JSON.stringify(payload),
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
@@ -93,7 +119,7 @@ export function QuoteAssistant({ quoteId }: { quoteId: string }) {
       setCanUndo(true);
       router.refresh();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "La prestation n’a pas pu être ajoutée.");
+      setError(caught instanceof Error ? caught.message : "L’action n’a pas pu être appliquée.");
     } finally {
       setActionPending(false);
     }
@@ -130,7 +156,7 @@ export function QuoteAssistant({ quoteId }: { quoteId: string }) {
       <div className="space-y-1">
         <h2 className="text-xl font-semibold" id="quote-assistant-title">Assistant devis</h2>
         <p className="text-sm text-muted-foreground">
-          Il recherche votre catalogue et prépare un ajout. Rien n’est enregistré sans votre confirmation.
+          Il prépare les ajouts, modifications et suppressions. Rien n’est enregistré sans votre confirmation.
         </p>
       </div>
       {messages.length > 0 ? (
@@ -151,44 +177,60 @@ export function QuoteAssistant({ quoteId }: { quoteId: string }) {
       {proposal ? (
         <form className="space-y-4 rounded-lg border border-primary/40 bg-muted/40 p-4" onSubmit={confirmProposal}>
           <div>
-            <h3 className="font-semibold">Ajout à confirmer</h3>
+            <h3 className="font-semibold">
+              {proposal.actionType === "add_quote_line"
+                ? "Ajout à confirmer"
+                : proposal.actionType === "update_quote_line"
+                  ? "Modification à confirmer"
+                  : "Suppression à confirmer"}
+            </h3>
             <p className="text-sm">{proposal.label}</p>
             <p className="text-sm text-muted-foreground">
-              {formatQuantity(proposal.quantityMilliunits)} {proposal.unit} × {formatPrice(proposal.unitPriceHtCents)} HT
+              {proposal.actionType === "update_quote_line"
+                ? `${formatQuantity(proposal.currentQuantityMilliunits)} → ${formatQuantity(proposal.quantityMilliunits)} ${proposal.unit}`
+                : `${formatQuantity(proposal.quantityMilliunits)} ${proposal.unit}`}
+              {proposal.actionType === "add_quote_line" ? ` × ${formatPrice(proposal.unitPriceHtCents)} HT` : ""}
             </p>
+            {proposal.actionType === "update_quote_line" ? (
+              <p className="text-sm text-muted-foreground">
+                Nature : {lineKindLabels[proposal.currentLineKind]} → {lineKindLabels[proposal.lineKind]}
+              </p>
+            ) : null}
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-1 text-sm font-medium">
-              Nature de la ligne
-              <select className="w-full rounded-md border border-input bg-background px-3 py-2" defaultValue={proposal.lineKind} name="lineKind">
-                <option value="labor">Main-d’œuvre</option>
-                <option value="material">Matériau</option>
-                <option value="travel">Déplacement</option>
-                <option value="service">Prestation</option>
-                <option value="other">Autre</option>
-              </select>
-            </label>
-            <label className="space-y-1 text-sm font-medium">
-              TVA applicable (%)
-              <input
-                className="w-full rounded-md border border-input bg-background px-3 py-2"
-                inputMode="decimal"
-                max="100"
-                min="0"
-                name="vatRate"
-                placeholder="Ex. : 10"
-                required
-                step="0.01"
-                type="number"
-              />
-            </label>
-          </div>
+          {proposal.actionType === "add_quote_line" ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="space-y-1 text-sm font-medium">
+                Nature de la ligne
+                <select className="w-full rounded-md border border-input bg-background px-3 py-2" defaultValue={proposal.lineKind} name="lineKind">
+                  <option value="labor">Main-d’œuvre</option>
+                  <option value="material">Matériau</option>
+                  <option value="travel">Déplacement</option>
+                  <option value="service">Prestation</option>
+                  <option value="other">Autre</option>
+                </select>
+              </label>
+              <label className="space-y-1 text-sm font-medium">
+                TVA applicable (%)
+                <input className="w-full rounded-md border border-input bg-background px-3 py-2" inputMode="decimal" max="100" min="0" name="vatRate" placeholder="Ex. : 10" required step="0.01" type="number" />
+              </label>
+            </div>
+          ) : null}
           <p className="text-xs text-muted-foreground">
-            Le prix unitaire vient du catalogue. Vérifiez le taux de TVA applicable à ce chantier avant de confirmer.
+            {proposal.actionType === "add_quote_line"
+              ? "Le prix unitaire vient du catalogue. Vérifiez le taux de TVA applicable à ce chantier avant de confirmer."
+              : proposal.actionType === "update_quote_line"
+                ? "Seules la quantité et la nature indiquées seront modifiées. Le prix et la TVA restent inchangés."
+                : "La ligne sera retirée du devis. Vous pourrez annuler immédiatement cette action."}
           </p>
           <div className="flex flex-wrap gap-2">
             <Button disabled={actionPending} type="submit">
-              {actionPending ? "Enregistrement…" : "Confirmer l’ajout"}
+              {actionPending
+                ? "Enregistrement…"
+                : proposal.actionType === "add_quote_line"
+                  ? "Confirmer l’ajout"
+                  : proposal.actionType === "update_quote_line"
+                    ? "Confirmer la modification"
+                    : "Confirmer la suppression"}
             </Button>
             <Button disabled={actionPending} onClick={() => setProposal(null)} type="button" variant="outline">
               Refuser
@@ -198,7 +240,7 @@ export function QuoteAssistant({ quoteId }: { quoteId: string }) {
       ) : null}
       {canUndo ? (
         <Button disabled={actionPending} onClick={undoLastAction} type="button" variant="outline">
-          Annuler le dernier ajout de l’assistant
+          Annuler la dernière action de l’assistant
         </Button>
       ) : null}
       <form className="space-y-3" onSubmit={submit}>

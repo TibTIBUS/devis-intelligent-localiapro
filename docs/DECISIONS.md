@@ -156,3 +156,9 @@ légal et les données justificatives sont intégrés au snapshot immuable.
 Un appel d’outil du modèle ne constitue jamais une autorisation d’écriture. L’outil `add_quote_line` prépare une proposition à partir d’un article appartenant au catalogue de l’entreprise ; une requête distincte, déclenchée par le bouton de confirmation de l’artisan, exécute l’écriture.
 
 Le prix est relu dans PostgreSQL au moment de la confirmation et le taux de TVA est obligatoirement saisi par l’artisan. L’ajout et sa trace d’audit sont atomiques. L’annulation est limitée au dernier ajout IA du même utilisateur afin de ne pas supprimer le travail d’un autre membre de l’entreprise.
+
+## AI-003 — une proposition IA n’est jamais une mutation
+
+Les outils de modification et de suppression renvoient uniquement une proposition structurée. Une requête distincte issue de l’interface de confirmation appelle des fonctions métier transactionnelles et soumises à RLS.
+
+Pour le MVP, l’assistant peut modifier la quantité et la nature d’une ligne, mais pas son prix, sa TVA, son libellé ou son unité. La suppression journalise un instantané complet. L’annulation refuse d’écraser une ligne modifiée depuis l’action IA ; cette protection prévaut sur la facilité d’annulation.

@@ -43,6 +43,7 @@ describe("add quote line AI tool", () => {
     expect(eqOrganization).toHaveBeenCalledWith("organization_id", "organization-1");
     expect(result.output.status).toBe("confirmation_required");
     expect(result.proposal).toMatchObject({
+      actionType: "add_quote_line",
       catalogItemId,
       quantityMilliunits: 4_000,
       unitPriceHtCents: 5_500,

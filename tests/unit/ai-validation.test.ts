@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   addQuoteLineArgumentsSchema,
+  confirmAiQuoteActionSchema,
   confirmAiQuoteLineSchema,
+  deleteQuoteLineArgumentsSchema,
   parseAiQuantityToMilliunits,
   quoteAssistantRequestSchema,
   searchCatalogArgumentsSchema,
+  updateQuoteLineArgumentsSchema,
 } from "@/lib/validation/ai";
 
 const quoteId = "2f3023a6-3bb4-4d3c-a0ab-fc297a62fb23";
@@ -48,6 +51,7 @@ describe("quote assistant validation", () => {
       quantity: "quatre",
     }).success).toBe(false);
     expect(confirmAiQuoteLineSchema.parse({
+      actionType: "add_quote_line",
       proposal: {
         catalogItemId: quoteId,
         lineKind: "labor",
@@ -55,6 +59,26 @@ describe("quote assistant validation", () => {
       },
       quoteId,
       vatRate: "10,00",
-    }).vatRate).toBe(1_000);
+    })).toMatchObject({ vatRate: 1_000 });
+  });
+
+  it("validates controlled update and deletion confirmations", () => {
+    expect(updateQuoteLineArgumentsSchema.parse({
+      lineKind: "service",
+      quantity: "2,5",
+      quoteLineId: quoteId,
+    }).quoteLineId).toBe(quoteId);
+    expect(deleteQuoteLineArgumentsSchema.safeParse({ quoteLineId: quoteId }).success).toBe(true);
+    expect(confirmAiQuoteActionSchema.safeParse({
+      actionType: "update_quote_line",
+      proposal: { lineKind: "service", quantityMilliunits: 2_500, quoteLineId: quoteId },
+      quoteId,
+    }).success).toBe(true);
+    expect(confirmAiQuoteActionSchema.safeParse({
+      actionType: "delete_quote_line",
+      proposal: { quoteLineId: quoteId },
+      quoteId,
+      vatRate: "20",
+    }).success).toBe(false);
   });
 });

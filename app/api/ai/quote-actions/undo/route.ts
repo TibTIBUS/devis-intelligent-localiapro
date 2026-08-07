@@ -20,9 +20,9 @@ export async function POST(request: Request) {
   try {
     await undoLastAiQuoteAction(supabase, organizationId, parsed.data.quoteId);
     revalidatePath(`/devis/${parsed.data.quoteId}`);
-    return NextResponse.json({ message: "Le dernier ajout de l’assistant a été annulé." });
+    return NextResponse.json({ message: "La dernière action de l’assistant a été annulée." });
   } catch (error) {
     console.error("AI quote action undo failed", error);
-    return NextResponse.json({ error: "Aucun ajout récent ne peut être annulé." }, { status: 409 });
+    return NextResponse.json({ error: "Aucune action récente ne peut être annulée sans risque." }, { status: 409 });
   }
 }

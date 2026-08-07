@@ -34,7 +34,13 @@ export async function POST(request: Request) {
   try {
     const result = await runQuoteAssistant({
       context: {
-        lineLabels: editor.lines.map((line) => line.label),
+        lines: editor.lines.map((line) => ({
+          id: line.id,
+          label: line.label,
+          lineKind: line.line_kind,
+          quantityMilliunits: line.quantity_milliunits,
+          unit: line.unit,
+        })),
         quoteId: editor.quote.id,
         status: editor.quote.status,
       },
