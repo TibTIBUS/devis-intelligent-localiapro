@@ -96,6 +96,13 @@ Références officielles :
 - Service Public Entreprendre, effets de l'acceptation d'un devis :
   <https://entreprendre.service-public.fr/vosdroits/F31144>
 
+## Périmètre QUOTE-007
+
+La liste des devis affiche un statut commercial calculé, jamais stocké :
+`Brouillon`, `À accepter`, `Accepté` ou `Expiré`. Il dépend respectivement du
+statut technique, de l'enregistrement immuable d'acceptation et de la date de
+validité. La date d'échéance reste incluse dans la période de validité.
+
 ## Contrôle réglementaire COMPLIANCE-001
 
 Avant finalisation, l’éditeur affiche les erreurs bloquantes et les points

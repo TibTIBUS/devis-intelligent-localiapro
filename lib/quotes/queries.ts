@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { calculateQuoteTotals, type QuoteCalculationLine } from "@/lib/calculations/quotes";
+import { getCommercialQuoteStatus, type CommercialQuoteStatus } from "@/lib/quotes/commercial-status";
 
 export type QuoteLine = {
   catalog_item_id: string | null;
@@ -36,6 +37,7 @@ export type Quote = {
 };
 
 export type QuoteListItem = {
+  commercialStatus: CommercialQuoteStatus;
   customerName: string;
   id: string;
   issuedOn: string | null;
@@ -126,7 +128,7 @@ export function filterQuotesByCustomerName<T extends { customerName: string }>(q
 }
 
 export async function getQuoteListData(client: SupabaseClient, organizationId: string, search: string) {
-  const [quotesResult, customersResult, linesResult] = await Promise.all([
+  const [quotesResult, customersResult, linesResult, acceptancesResult] = await Promise.all([
     client
       .from("quotes")
       .select("customer_id, deposit_rate_basis_points, discount_rate_basis_points, finalized_at, id, is_quote_free, issued_on, preparation_fee_ht_cents, preparation_fee_vat_rate_basis_points, quote_number, status, travel_fee_applicable, updated_at, valid_until, work_address_id")
@@ -141,9 +143,13 @@ export async function getQuoteListData(client: SupabaseClient, organizationId: s
       .from("quote_lines")
       .select("quantity_milliunits, quote_id, unit_price_ht_cents, vat_rate_basis_points")
       .eq("organization_id", organizationId),
+    client
+      .from("quote_acceptances")
+      .select("quote_id")
+      .eq("organization_id", organizationId),
   ]);
 
-  if (quotesResult.error || customersResult.error || linesResult.error) {
+  if (quotesResult.error || customersResult.error || linesResult.error || acceptancesResult.error) {
     throw new Error("Impossible de charger les devis.");
   }
 
@@ -160,8 +166,10 @@ export async function getQuoteListData(client: SupabaseClient, organizationId: s
     });
     linesByQuoteId.set(line.quote_id, lines);
   }
+  const acceptedQuoteIds = new Set((acceptancesResult.data as { quote_id: string }[]).map((acceptance) => acceptance.quote_id));
 
   const quotes = (quotesResult.data as (Quote & { updated_at: string })[]).map((quote) => ({
+    commercialStatus: getCommercialQuoteStatus({ accepted: acceptedQuoteIds.has(quote.id), status: quote.status, validUntil: quote.valid_until }),
     customerName: customersById.get(quote.customer_id) ?? "Client indisponible",
     id: quote.id,
     issuedOn: quote.issued_on,

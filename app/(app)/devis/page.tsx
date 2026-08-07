@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import { getQuoteListData } from "@/lib/quotes/queries";
+import { commercialStatusLabel } from "@/lib/quotes/commercial-status";
 import { createClient } from "@/lib/supabase/server";
 import { quoteSearchSchema } from "@/lib/validation/quote";
 
@@ -43,7 +44,7 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
               <article className="space-y-2 rounded-lg border border-border p-5" key={quote.id}>
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <h2 className="text-lg font-semibold">{quote.quoteNumber ? `${quote.quoteNumber} — ` : ""}Devis de {quote.customerName}</h2>
-                  <span className="text-sm text-muted-foreground">{quote.status === "finalized" ? "Finalisé" : "Brouillon"} — modifié le {formatUpdatedAt(quote.updatedAt)}</span>
+                  <span className="text-sm text-muted-foreground">{commercialStatusLabel[quote.commercialStatus]} — modifié le {formatUpdatedAt(quote.updatedAt)}</span>
                 </div>
                 {quote.totals.isComplete ? <p className="text-sm text-muted-foreground">Total TTC : {formatCents(quote.totals.totalTtcCents)}</p> : <p className="text-sm text-muted-foreground">Total en attente : prix HT ou TVA à compléter.</p>}
                 <Link className="inline-block text-sm font-medium underline" href={`/devis/${quote.id}`}>Ouvrir le devis</Link>
