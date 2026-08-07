@@ -30,6 +30,9 @@ export default async function DashboardPage() {
       >
         Gérer les assurances de l’entreprise
       </Link>
+      <Link className="mt-3 block text-sm font-medium underline" href="/catalogue">
+        Gérer le catalogue de prestations
+      </Link>
     </main>
   );
 }
