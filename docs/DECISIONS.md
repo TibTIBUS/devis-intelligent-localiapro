@@ -96,3 +96,15 @@ ligne ne peut donc jamais viser une section d'un autre devis ou d'une autre
 organisation. La suppression d'un devis emporte son contenu de travail ; la
 référence au client reste restrictive afin de ne pas supprimer un client déjà
 utilisé par un devis.
+
+## QUOTE-002 — calcul financier aligné sur la facturation française
+
+Le moteur utilise exclusivement des entiers : milli-unités pour les quantités,
+centimes pour l'argent et points de base pour les taux. Les lignes sont
+arrondies au centime avant agrégation, conformément au modèle français de
+facturation électronique.
+
+Une remise globale réduit la base taxable et est ventilée exactement entre les
+catégories de TVA. La taxe est ensuite calculée sur la base nette agrégée de
+chaque taux. Cette ventilation garantit que la somme des bases et taxes
+affichées correspond exactement aux totaux du document, y compris en multi-TVA.

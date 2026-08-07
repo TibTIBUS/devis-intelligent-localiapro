@@ -58,10 +58,10 @@ values
 
 insert into public.quotes (id, organization_id, customer_id)
 values ('31000000-0000-0000-0000-000000000052', '20000000-0000-0000-0000-000000000052', '21000000-0000-0000-0000-000000000052');
-insert into public.quote_sections (id, organization_id, quote_id)
-values ('32000000-0000-0000-0000-000000000052', '20000000-0000-0000-0000-000000000052', '31000000-0000-0000-0000-000000000052');
-insert into public.quote_lines (id, organization_id, quote_id, section_id)
-values ('33000000-0000-0000-0000-000000000052', '20000000-0000-0000-0000-000000000052', '31000000-0000-0000-0000-000000000052', '32000000-0000-0000-0000-000000000052');
+insert into public.quote_sections (id, organization_id, quote_id, title)
+values ('32000000-0000-0000-0000-000000000052', '20000000-0000-0000-0000-000000000052', '31000000-0000-0000-0000-000000000052', 'Section B');
+insert into public.quote_lines (id, organization_id, quote_id, section_id, label, unit, quantity_milliunits)
+values ('33000000-0000-0000-0000-000000000052', '20000000-0000-0000-0000-000000000052', '31000000-0000-0000-0000-000000000052', '32000000-0000-0000-0000-000000000052', 'Ligne B', 'unite', 1000);
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000051', true);
@@ -71,15 +71,15 @@ select lives_ok(
   'an owner should create a quote for their customer'
 );
 select lives_ok(
-  $$ insert into public.quote_sections (id, organization_id, quote_id) values ('32000000-0000-0000-0000-000000000051', '10000000-0000-0000-0000-000000000051', '31000000-0000-0000-0000-000000000051') $$,
+  $$ insert into public.quote_sections (id, organization_id, quote_id, title) values ('32000000-0000-0000-0000-000000000051', '10000000-0000-0000-0000-000000000051', '31000000-0000-0000-0000-000000000051', 'Section A') $$,
   'an owner should create a section for their quote'
 );
 select lives_ok(
-  $$ insert into public.quote_lines (id, organization_id, quote_id, section_id) values ('33000000-0000-0000-0000-000000000051', '10000000-0000-0000-0000-000000000051', '31000000-0000-0000-0000-000000000051', '32000000-0000-0000-0000-000000000051') $$,
+  $$ insert into public.quote_lines (id, organization_id, quote_id, section_id, label, unit, quantity_milliunits) values ('33000000-0000-0000-0000-000000000051', '10000000-0000-0000-0000-000000000051', '31000000-0000-0000-0000-000000000051', '32000000-0000-0000-0000-000000000051', 'Ligne A', 'heure', 1000) $$,
   'an owner should create a line inside a section'
 );
 select lives_ok(
-  $$ insert into public.quote_lines (id, organization_id, quote_id) values ('33100000-0000-0000-0000-000000000051', '10000000-0000-0000-0000-000000000051', '31000000-0000-0000-0000-000000000051') $$,
+  $$ insert into public.quote_lines (id, organization_id, quote_id, label, unit, quantity_milliunits) values ('33100000-0000-0000-0000-000000000051', '10000000-0000-0000-0000-000000000051', '31000000-0000-0000-0000-000000000051', 'Ligne libre', 'forfait', 1000) $$,
   'a quote line may remain outside a section'
 );
 select throws_ok(
@@ -91,29 +91,29 @@ select throws_ok(
   '23503', null, 'a quote should not reference another organization customer'
 );
 select throws_ok(
-  $$ insert into public.quote_sections (organization_id, quote_id) values ('20000000-0000-0000-0000-000000000052', '31000000-0000-0000-0000-000000000052') $$,
+  $$ insert into public.quote_sections (organization_id, quote_id, title) values ('20000000-0000-0000-0000-000000000052', '31000000-0000-0000-0000-000000000052', 'Interdite') $$,
   '42501', null, 'an owner should not create a section for another organization'
 );
 select throws_ok(
-  $$ insert into public.quote_sections (organization_id, quote_id) values ('10000000-0000-0000-0000-000000000051', '31000000-0000-0000-0000-000000000052') $$,
+  $$ insert into public.quote_sections (organization_id, quote_id, title) values ('10000000-0000-0000-0000-000000000051', '31000000-0000-0000-0000-000000000052', 'Interdite') $$,
   '23503', null, 'a section should not reference another organization quote'
 );
 select throws_ok(
-  $$ insert into public.quote_lines (organization_id, quote_id) values ('20000000-0000-0000-0000-000000000052', '31000000-0000-0000-0000-000000000052') $$,
+  $$ insert into public.quote_lines (organization_id, quote_id, label, unit, quantity_milliunits) values ('20000000-0000-0000-0000-000000000052', '31000000-0000-0000-0000-000000000052', 'Interdite', 'unite', 1000) $$,
   '42501', null, 'an owner should not create a line for another organization'
 );
 select throws_ok(
-  $$ insert into public.quote_lines (organization_id, quote_id) values ('10000000-0000-0000-0000-000000000051', '31000000-0000-0000-0000-000000000052') $$,
+  $$ insert into public.quote_lines (organization_id, quote_id, label, unit, quantity_milliunits) values ('10000000-0000-0000-0000-000000000051', '31000000-0000-0000-0000-000000000052', 'Interdite', 'unite', 1000) $$,
   '23503', null, 'a line should not reference another organization quote'
 );
 
 insert into public.quotes (id, organization_id, customer_id)
 values ('31100000-0000-0000-0000-000000000051', '10000000-0000-0000-0000-000000000051', '21000000-0000-0000-0000-000000000051');
-insert into public.quote_sections (id, organization_id, quote_id)
-values ('32100000-0000-0000-0000-000000000051', '10000000-0000-0000-0000-000000000051', '31100000-0000-0000-0000-000000000051');
+insert into public.quote_sections (id, organization_id, quote_id, title)
+values ('32100000-0000-0000-0000-000000000051', '10000000-0000-0000-0000-000000000051', '31100000-0000-0000-0000-000000000051', 'Autre section');
 
 select throws_ok(
-  $$ insert into public.quote_lines (organization_id, quote_id, section_id) values ('10000000-0000-0000-0000-000000000051', '31000000-0000-0000-0000-000000000051', '32100000-0000-0000-0000-000000000051') $$,
+  $$ insert into public.quote_lines (organization_id, quote_id, section_id, label, unit, quantity_milliunits) values ('10000000-0000-0000-0000-000000000051', '31000000-0000-0000-0000-000000000051', '32100000-0000-0000-0000-000000000051', 'Interdite', 'unite', 1000) $$,
   '23503', null, 'a line should not reference a section from another quote'
 );
 select is((select count(*) from public.quotes), 2::bigint, 'an owner should only read their quotes');
