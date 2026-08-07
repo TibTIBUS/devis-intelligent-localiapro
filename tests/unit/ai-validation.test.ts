@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { quoteAssistantRequestSchema, searchCatalogArgumentsSchema } from "@/lib/validation/ai";
+import {
+  addQuoteLineArgumentsSchema,
+  confirmAiQuoteLineSchema,
+  parseAiQuantityToMilliunits,
+  quoteAssistantRequestSchema,
+  searchCatalogArgumentsSchema,
+} from "@/lib/validation/ai";
 
 const quoteId = "2f3023a6-3bb4-4d3c-a0ab-fc297a62fb23";
 
@@ -32,5 +38,23 @@ describe("quote assistant validation", () => {
       organizationId: quoteId,
       query: "plomberie",
     }).success).toBe(false);
+  });
+
+  it("converts quantities and VAT deterministically on the server", () => {
+    expect(parseAiQuantityToMilliunits("4,250")).toBe(4_250);
+    expect(addQuoteLineArgumentsSchema.safeParse({
+      catalogItemId: quoteId,
+      lineKind: "labor",
+      quantity: "quatre",
+    }).success).toBe(false);
+    expect(confirmAiQuoteLineSchema.parse({
+      proposal: {
+        catalogItemId: quoteId,
+        lineKind: "labor",
+        quantityMilliunits: 4_000,
+      },
+      quoteId,
+      vatRate: "10,00",
+    }).vatRate).toBe(1_000);
   });
 });

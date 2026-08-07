@@ -1,0 +1,1 @@
+-- Historique conservé : la correction consolidée est appliquée par enforce_quote_compliance_array_types.

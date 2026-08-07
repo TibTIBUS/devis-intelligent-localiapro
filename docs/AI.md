@@ -12,3 +12,11 @@ Références officielles :
 
 - https://developers.openai.com/api/docs/guides/function-calling
 - https://developers.openai.com/api/docs/guides/structured-outputs
+
+## AI-002 — ajout contrôlé d’une prestation catalogue
+
+`add_quote_line` est un outil strict de préparation : son appel par le modèle ne modifie jamais le devis. Le serveur relit la prestation dans le catalogue de l’entreprise authentifiée et ne produit une proposition que si un prix HT existe. Le modèle ne reçoit ni ne choisit le prix et ne choisit pas le taux de TVA.
+
+L’artisan confirme séparément la quantité, la nature de ligne et le taux de TVA. Une fonction PostgreSQL `security invoker` relit alors le catalogue, contrôle le devis brouillon par RLS, ajoute la ligne et journalise l’action dans une même transaction. Les totaux restent calculés par le moteur métier existant après relecture du devis.
+
+L’annulation vise uniquement le dernier ajout IA du même utilisateur. La ligne est supprimée, mais la trace d’audit est conservée avec sa date d’annulation.

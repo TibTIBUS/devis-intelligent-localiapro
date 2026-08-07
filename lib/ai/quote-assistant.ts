@@ -5,8 +5,9 @@ import type { ResponseInputItem } from "openai/resources/responses/responses";
 
 import { createOpenAIClient } from "@/lib/ai/client";
 import { buildQuoteAssistantPrompt, type QuoteAssistantContext } from "@/lib/ai/prompts/quote-assistant";
+import { addQuoteLineTool, prepareAddQuoteLineTool } from "@/lib/ai/tools/add-quote-line";
 import { executeSearchCatalogTool, searchCatalogTool } from "@/lib/ai/tools/search-catalog";
-import type { AiConversationMessage } from "@/lib/validation/ai";
+import type { AiConversationMessage, AiQuoteLineProposal } from "@/lib/validation/ai";
 
 const MAX_TOOL_ROUNDS = 3;
 
@@ -24,6 +25,7 @@ export async function runQuoteAssistant({
   supabase,
 }: RunQuoteAssistantOptions) {
   const { client, model } = createOpenAIClient();
+  let pendingAction: AiQuoteLineProposal | undefined;
   const input: ResponseInputItem[] = messages.map((message) => ({
     content: message.content,
     role: message.role,
@@ -36,26 +38,41 @@ export async function runQuoteAssistant({
       model,
       parallel_tool_calls: false,
       store: false,
-      tools: [searchCatalogTool],
+      tools: [searchCatalogTool, addQuoteLineTool],
     });
     const calls = response.output.filter((item) => item.type === "function_call");
 
     if (calls.length === 0) {
       const message = response.output_text.trim();
       if (!message) throw new Error("L’assistant n’a produit aucune réponse.");
-      return message;
+      return { message, pendingAction };
     }
 
-    input.push(...calls);
+    // Le SDK expose un type de sortie plus large que les outils autorisés ici.
+    // Avec uniquement des fonctions personnalisées, ces éléments sont rejouables comme entrée.
+    input.push(...response.output as unknown as ResponseInputItem[]);
     for (const call of calls) {
-      if (call.name !== searchCatalogTool.name) {
+      let output: unknown;
+      if (call.name === searchCatalogTool.name) {
+        output = await executeSearchCatalogTool(
+          supabase,
+          organizationId,
+          call.arguments,
+        );
+      } else if (call.name === addQuoteLineTool.name) {
+        const result = await prepareAddQuoteLineTool(
+          supabase,
+          organizationId,
+          call.arguments,
+        );
+        if (result.proposal) {
+          if (pendingAction) throw new Error("Une seule proposition peut être préparée à la fois.");
+          pendingAction = result.proposal;
+        }
+        output = result.output;
+      } else {
         throw new Error("L’assistant a demandé un outil non autorisé.");
       }
-      const output = await executeSearchCatalogTool(
-        supabase,
-        organizationId,
-        call.arguments,
-      );
       input.push({
         call_id: call.call_id,
         output: JSON.stringify(output),

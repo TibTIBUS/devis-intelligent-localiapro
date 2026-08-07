@@ -27,9 +27,12 @@ export async function POST(request: Request) {
   if (!editor) {
     return NextResponse.json({ error: "Devis introuvable." }, { status: 404 });
   }
+  if (editor.quote.status !== "draft") {
+    return NextResponse.json({ error: "Ce devis finalisé ne peut plus être modifié." }, { status: 409 });
+  }
 
   try {
-    const message = await runQuoteAssistant({
+    const result = await runQuoteAssistant({
       context: {
         lineLabels: editor.lines.map((line) => line.label),
         quoteId: editor.quote.id,
@@ -39,7 +42,7 @@ export async function POST(request: Request) {
       organizationId,
       supabase,
     });
-    return NextResponse.json({ message });
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Quote assistant failed", error);
     return NextResponse.json(

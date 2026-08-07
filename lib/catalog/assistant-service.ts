@@ -20,3 +20,19 @@ export async function searchCatalogForAssistant(
 
   return data as CatalogItem[];
 }
+
+export async function getCatalogItemForAssistant(
+  client: SupabaseClient,
+  organizationId: string,
+  catalogItemId: string,
+) {
+  const { data, error } = await client
+    .from("catalog_items")
+    .select("category_id, description, id, name, unit, unit_price_ht_cents")
+    .eq("organization_id", organizationId)
+    .eq("id", catalogItemId)
+    .maybeSingle();
+
+  if (error) throw new Error("Impossible de charger cette prestation du catalogue.");
+  return data as CatalogItem | null;
+}

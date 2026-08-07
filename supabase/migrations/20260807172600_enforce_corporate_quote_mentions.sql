@@ -69,7 +69,7 @@ begin
     timezone('Europe/Paris', now())::date
   );
   company_result := private.get_company_quote_compliance_result(quote_organization_id);
-  merged_errors := quote_result -> 'errors' || company_result -> 'errors';
+  merged_errors := (quote_result -> 'errors') || (company_result -> 'errors');
 
   if exists (
     select 1 from jsonb_array_elements(company_result -> 'errors') issue

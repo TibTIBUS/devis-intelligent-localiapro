@@ -150,3 +150,9 @@ Les obligations conditionnelles ne sont pas déduites du nom du métier. Leur
 applicabilité est déclarée explicitement : assurance professionnelle au niveau
 de l’entreprise et frais de déplacement au niveau du devis. Le référentiel
 légal et les données justificatives sont intégrés au snapshot immuable.
+
+## AI-002 — confirmation humaine avant toute écriture IA
+
+Un appel d’outil du modèle ne constitue jamais une autorisation d’écriture. L’outil `add_quote_line` prépare une proposition à partir d’un article appartenant au catalogue de l’entreprise ; une requête distincte, déclenchée par le bouton de confirmation de l’artisan, exécute l’écriture.
+
+Le prix est relu dans PostgreSQL au moment de la confirmation et le taux de TVA est obligatoirement saisi par l’artisan. L’ajout et sa trace d’audit sont atomiques. L’annulation est limitée au dernier ajout IA du même utilisateur afin de ne pas supprimer le travail d’un autre membre de l’entreprise.

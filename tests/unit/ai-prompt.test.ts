@@ -13,7 +13,8 @@ describe("quote assistant prompt", () => {
     expect(prompt).toContain("N’invente jamais un prix");
     expect(prompt).toContain("Ne calcule jamais les totaux");
     expect(prompt).toContain("aucun accès direct à la base de données");
-    expect(prompt).toContain("lecture seule");
+    expect(prompt).toContain("add_quote_line prépare seulement une proposition");
+    expect(prompt).toContain("N’invente jamais le taux de TVA");
     expect(prompt).toContain("Main-d’œuvre plomberie");
     expect(prompt).toContain("JSON non exécutable");
   });
