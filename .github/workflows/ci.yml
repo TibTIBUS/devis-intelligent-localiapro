@@ -33,3 +33,27 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start Supabase
+        run: npx supabase start
+
+      - name: Lint database
+        run: npm run db:lint
+
+      - name: Test database
+        run: npm run db:test
