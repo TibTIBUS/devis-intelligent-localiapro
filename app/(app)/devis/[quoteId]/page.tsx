@@ -10,6 +10,7 @@ import {
   QuoteSectionForm,
 } from "@/components/quotes/quote-forms";
 import { getCatalogItems } from "@/lib/catalog/queries";
+import { QuotePdfForm } from "@/components/quotes/quote-pdf-form";
 import { validateQuoteCompliance, type QuoteComplianceResult } from "@/lib/compliance/quote-compliance";
 import { getCustomers } from "@/lib/customers/queries";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
@@ -158,7 +159,12 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
           )}
         </section>
 
-        {finalized ? <FinalizedContent lines={editor.lines} /> : <DraftContent catalogItems={catalogItems} compliance={compliance!} lines={editor.lines} quoteId={editor.quote.id} sections={editor.sections} />}
+        {finalized ? (
+          <>
+            <FinalizedContent lines={editor.lines} />
+            {editor.quote.quote_version_id ? <QuotePdfForm quoteId={editor.quote.id} versionId={editor.quote.quote_version_id} /> : null}
+          </>
+        ) : <DraftContent catalogItems={catalogItems} compliance={compliance!} lines={editor.lines} quoteId={editor.quote.id} sections={editor.sections} />}
       </section>
     </main>
   );

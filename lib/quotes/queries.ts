@@ -32,6 +32,7 @@ export type Quote = {
   travel_fee_applicable: boolean | null;
   valid_until: string | null;
   work_address_id: string | null;
+  quote_version_id: string | null;
 };
 
 export type QuoteListItem = {
@@ -60,7 +61,7 @@ function toBigInt(value: number | string) {
 }
 
 export async function getQuoteEditorData(client: SupabaseClient, organizationId: string, quoteId: string) {
-  const [quoteResult, sectionsResult, linesResult] = await Promise.all([
+  const [quoteResult, sectionsResult, linesResult, versionResult] = await Promise.all([
     client
       .from("quotes")
       .select("customer_id, deposit_rate_basis_points, discount_rate_basis_points, finalized_at, id, is_quote_free, issued_on, preparation_fee_ht_cents, preparation_fee_vat_rate_basis_points, quote_number, status, travel_fee_applicable, valid_until, work_address_id")
@@ -81,15 +82,23 @@ export async function getQuoteEditorData(client: SupabaseClient, organizationId:
       .eq("quote_id", quoteId)
       .order("position", { ascending: true })
       .order("id", { ascending: true }),
+    client
+      .from("quote_versions")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("quote_id", quoteId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
-  if (quoteResult.error || sectionsResult.error || linesResult.error) {
+  if (quoteResult.error || sectionsResult.error || linesResult.error || versionResult.error) {
     throw new Error("Impossible de charger ce devis.");
   }
 
   if (!quoteResult.data) return null;
 
-  const quote = quoteResult.data as Quote;
+  const quote = { ...(quoteResult.data as Quote), quote_version_id: versionResult.data?.id ?? null };
   const lines = linesResult.data as QuoteLine[];
   const calculationLines: QuoteCalculationLine[] = lines.map((line) => ({
     quantityMilliunits: toBigInt(line.quantity_milliunits),
