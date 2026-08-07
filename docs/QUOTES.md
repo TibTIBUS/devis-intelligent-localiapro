@@ -103,6 +103,13 @@ La liste des devis affiche un statut commercial calculé, jamais stocké :
 statut technique, de l'enregistrement immuable d'acceptation et de la date de
 validité. La date d'échéance reste incluse dans la période de validité.
 
+## Périmètre DASHBOARD-001
+
+Le tableau de bord réutilise ces mêmes statuts et le moteur de calcul des
+montants pour afficher les comptes et TTC des devis à accepter et acceptés,
+ainsi que les brouillons, les expirés et les cinq derniers devis. Aucun total
+ou agrégat n'est enregistré en base.
+
 ## Contrôle réglementaire COMPLIANCE-001
 
 Avant finalisation, l’éditeur affiche les erreurs bloquantes et les points
