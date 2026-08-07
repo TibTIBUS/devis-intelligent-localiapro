@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit --incremental false",
     "test": "vitest run",
+    "test:ai": "vitest run --config vitest.ai.config.mts",
     "test:e2e": "playwright test",
     "test:watch": "vitest",
     "db:lint": "supabase db lint --local --level error",
