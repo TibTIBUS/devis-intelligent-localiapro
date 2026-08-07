@@ -73,3 +73,14 @@ L’état initial, y compris un prix inconnu, est historisé. Une mise à jour q
 change pas le prix n’ajoute aucune entrée. L’historique suit le cycle de vie de
 la prestation et est supprimé avec elle ; l’immutabilité des documents
 commerciaux sera assurée séparément par les snapshots de devis.
+
+## CLIENT-001 — identité client neutre et coordonnées multiples
+
+Le schéma client n’impose pas de statut particulier ou professionnel, faute de
+règle produit validée. Un nom d’affichage commun couvre le MVP ; les contacts
+et adresses sont stockés séparément pour accepter plusieurs coordonnées.
+
+Les coordonnées portent systématiquement l’organisation et une clé étrangère
+composite vers le client. Cette redondance contrôlée interdit les relations
+entre entreprises. Un index partiel garantit au maximum un contact principal
+et une adresse principale par client.
