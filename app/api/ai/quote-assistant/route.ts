@@ -31,6 +31,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ce devis finalisé ne peut plus être modifié." }, { status: 409 });
   }
 
+  const { data: addresses, error: addressesError } = await supabase
+    .from("customer_addresses")
+    .select("address_line_1, city, id, label, postal_code")
+    .eq("organization_id", organizationId)
+    .eq("customer_id", editor.quote.customer_id);
+  if (addressesError) {
+    return NextResponse.json({ error: "Impossible de charger les adresses du client." }, { status: 503 });
+  }
+
   try {
     const result = await runQuoteAssistant({
       context: {
@@ -43,6 +52,14 @@ export async function POST(request: Request) {
         })),
         quoteId: editor.quote.id,
         status: editor.quote.status,
+        note: editor.quote.note,
+        paymentTerms: editor.quote.payment_terms,
+        validUntil: editor.quote.valid_until,
+        workAddressId: editor.quote.work_address_id,
+        workAddresses: (addresses ?? []).map((address) => ({
+          id: address.id,
+          label: `${address.label ? `${address.label} — ` : ""}${address.address_line_1}, ${address.postal_code} ${address.city}`,
+        })),
       },
       messages: parsed.data.messages,
       organizationId,

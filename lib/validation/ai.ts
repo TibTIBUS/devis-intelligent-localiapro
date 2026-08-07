@@ -51,6 +51,22 @@ export const deleteQuoteLineArgumentsSchema = z.object({
   quoteLineId: z.uuid(),
 }).strict();
 
+export const setPaymentTermsArgumentsSchema = z.object({
+  paymentTerms: z.string().trim().min(1).max(2_000),
+}).strict();
+
+export const setValidityArgumentsSchema = z.object({
+  validUntil: z.string().date(),
+}).strict();
+
+export const setWorksiteAddressArgumentsSchema = z.object({
+  workAddressId: z.uuid(),
+}).strict();
+
+export const updateQuoteNoteArgumentsSchema = z.object({
+  note: z.string().trim().min(1).max(4_000),
+}).strict();
+
 export const aiQuoteLineProposalSchema = z.object({
   actionType: z.literal("add_quote_line"),
   catalogItemId: z.uuid(),
@@ -81,10 +97,35 @@ export const aiDeleteQuoteLineProposalSchema = z.object({
   unit: z.string().trim().min(1).max(80),
 }).strict();
 
+export const aiSetPaymentTermsProposalSchema = z.object({
+  actionType: z.literal("set_payment_terms"),
+  paymentTerms: z.string().trim().min(1).max(2_000),
+}).strict();
+
+export const aiSetValidityProposalSchema = z.object({
+  actionType: z.literal("set_validity"),
+  validUntil: z.string().date(),
+}).strict();
+
+export const aiSetWorksiteAddressProposalSchema = z.object({
+  actionType: z.literal("set_worksite_address"),
+  addressLabel: z.string().trim().min(1).max(500),
+  workAddressId: z.uuid(),
+}).strict();
+
+export const aiUpdateQuoteNoteProposalSchema = z.object({
+  actionType: z.literal("update_quote_note"),
+  note: z.string().trim().min(1).max(4_000),
+}).strict();
+
 export const aiQuoteActionProposalSchema = z.discriminatedUnion("actionType", [
   aiQuoteLineProposalSchema,
   aiUpdateQuoteLineProposalSchema,
   aiDeleteQuoteLineProposalSchema,
+  aiSetPaymentTermsProposalSchema,
+  aiSetValidityProposalSchema,
+  aiSetWorksiteAddressProposalSchema,
+  aiUpdateQuoteNoteProposalSchema,
 ]);
 
 const vatRateSchema = z
@@ -118,6 +159,26 @@ export const confirmAiQuoteActionSchema = z.discriminatedUnion("actionType", [
   z.object({
     actionType: z.literal("delete_quote_line"),
     proposal: aiDeleteQuoteLineProposalSchema.pick({ quoteLineId: true }),
+    quoteId: z.uuid(),
+  }).strict(),
+  z.object({
+    actionType: z.literal("set_payment_terms"),
+    proposal: aiSetPaymentTermsProposalSchema.pick({ paymentTerms: true }),
+    quoteId: z.uuid(),
+  }).strict(),
+  z.object({
+    actionType: z.literal("set_validity"),
+    proposal: aiSetValidityProposalSchema.pick({ validUntil: true }),
+    quoteId: z.uuid(),
+  }).strict(),
+  z.object({
+    actionType: z.literal("set_worksite_address"),
+    proposal: aiSetWorksiteAddressProposalSchema.pick({ workAddressId: true }),
+    quoteId: z.uuid(),
+  }).strict(),
+  z.object({
+    actionType: z.literal("update_quote_note"),
+    proposal: aiUpdateQuoteNoteProposalSchema.pick({ note: true }),
     quoteId: z.uuid(),
   }).strict(),
 ]);

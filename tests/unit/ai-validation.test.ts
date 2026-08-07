@@ -9,6 +9,10 @@ import {
   quoteAssistantRequestSchema,
   searchCatalogArgumentsSchema,
   updateQuoteLineArgumentsSchema,
+  setPaymentTermsArgumentsSchema,
+  setValidityArgumentsSchema,
+  setWorksiteAddressArgumentsSchema,
+  updateQuoteNoteArgumentsSchema,
 } from "@/lib/validation/ai";
 
 const quoteId = "2f3023a6-3bb4-4d3c-a0ab-fc297a62fb23";
@@ -80,5 +84,14 @@ describe("quote assistant validation", () => {
       quoteId,
       vatRate: "20",
     }).success).toBe(false);
+  });
+
+  it("validates exact non-financial quote settings", () => {
+    expect(setPaymentTermsArgumentsSchema.parse({ paymentTerms: "Paiement à réception" }).paymentTerms).toBe("Paiement à réception");
+    expect(setValidityArgumentsSchema.safeParse({ validUntil: "2026-09-30" }).success).toBe(true);
+    expect(setValidityArgumentsSchema.safeParse({ validUntil: "dans 30 jours" }).success).toBe(false);
+    expect(setWorksiteAddressArgumentsSchema.safeParse({ workAddressId: quoteId, organizationId: quoteId }).success).toBe(false);
+    expect(updateQuoteNoteArgumentsSchema.safeParse({ note: "a".repeat(4_001) }).success).toBe(false);
+    expect(confirmAiQuoteActionSchema.safeParse({ actionType: "set_validity", proposal: { validUntil: "2026-09-30" }, quoteId }).success).toBe(true);
   });
 });

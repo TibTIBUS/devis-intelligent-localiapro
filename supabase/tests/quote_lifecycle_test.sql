@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(39);
+select plan(41);
 
 select has_table('public', 'quote_versions', 'quote versions should exist');
 select has_column('public', 'quotes', 'status', 'quotes should store their lifecycle status');
@@ -35,10 +35,10 @@ insert into public.customers (id, organization_id, display_name) values
 insert into public.customer_addresses (id, organization_id, customer_id, label, address_line_1, postal_code, city, is_primary) values
   ('22000000-0000-0000-0000-000000000071', '10000000-0000-0000-0000-000000000071', '21000000-0000-0000-0000-000000000071', 'Chantier', '2 rue du Chantier', '75002', 'Paris', true),
   ('22000000-0000-0000-0000-000000000072', '10000000-0000-0000-0000-000000000072', '21000000-0000-0000-0000-000000000072', 'Chantier', '3 rue du Chantier', '69001', 'Lyon', true);
-insert into public.quotes (id, organization_id, customer_id, valid_until, is_quote_free, preparation_fee_ht_cents, preparation_fee_vat_rate_basis_points, travel_fee_applicable, work_address_id) values
-  ('31000000-0000-0000-0000-000000000071', '10000000-0000-0000-0000-000000000071', '21000000-0000-0000-0000-000000000071', timezone('Europe/Paris', now())::date + 30, true, null, null, false, '22000000-0000-0000-0000-000000000071'),
-  ('31100000-0000-0000-0000-000000000071', '10000000-0000-0000-0000-000000000071', '21000000-0000-0000-0000-000000000071', timezone('Europe/Paris', now())::date + 30, false, 2500, 2000, false, '22000000-0000-0000-0000-000000000071'),
-  ('31000000-0000-0000-0000-000000000072', '10000000-0000-0000-0000-000000000072', '21000000-0000-0000-0000-000000000072', timezone('Europe/Paris', now())::date + 30, true, null, null, false, '22000000-0000-0000-0000-000000000072');
+insert into public.quotes (id, organization_id, customer_id, valid_until, is_quote_free, preparation_fee_ht_cents, preparation_fee_vat_rate_basis_points, travel_fee_applicable, work_address_id, payment_terms, note) values
+  ('31000000-0000-0000-0000-000000000071', '10000000-0000-0000-0000-000000000071', '21000000-0000-0000-0000-000000000071', timezone('Europe/Paris', now())::date + 30, true, null, null, false, '22000000-0000-0000-0000-000000000071', 'Paiement à réception', 'Protéger le parquet'),
+  ('31100000-0000-0000-0000-000000000071', '10000000-0000-0000-0000-000000000071', '21000000-0000-0000-0000-000000000071', timezone('Europe/Paris', now())::date + 30, false, 2500, 2000, false, '22000000-0000-0000-0000-000000000071', null, null),
+  ('31000000-0000-0000-0000-000000000072', '10000000-0000-0000-0000-000000000072', '21000000-0000-0000-0000-000000000072', timezone('Europe/Paris', now())::date + 30, true, null, null, false, '22000000-0000-0000-0000-000000000072', null, null);
 insert into public.quote_sections (id, organization_id, quote_id, title)
 values ('32000000-0000-0000-0000-000000000071', '10000000-0000-0000-0000-000000000071', '31000000-0000-0000-0000-000000000071', 'Travaux');
 insert into public.quote_lines (id, organization_id, quote_id, section_id, label, unit, quantity_milliunits, unit_price_ht_cents, vat_rate_basis_points) values
@@ -57,6 +57,8 @@ select is((select issued_on from public.quotes where id = '31000000-0000-0000-00
 select is((select count(*) from public.quote_versions where quote_id = '31000000-0000-0000-0000-000000000071'), 1::bigint, 'finalization should create one version');
 select is((select snapshot #>> '{lines,0,label}' from public.quote_versions where quote_id = '31000000-0000-0000-0000-000000000071'), 'Main oeuvre', 'the snapshot should preserve line content');
 select is((select snapshot #>> '{customer,workAddress,address_line_1}' from public.quote_versions where quote_id = '31000000-0000-0000-0000-000000000071'), '2 rue du Chantier', 'the snapshot should preserve the work address');
+select is((select snapshot #>> '{quote,paymentTerms}' from public.quote_versions where quote_id = '31000000-0000-0000-0000-000000000071'), 'Paiement à réception', 'the snapshot should preserve payment terms');
+select is((select snapshot #>> '{quote,note}' from public.quote_versions where quote_id = '31000000-0000-0000-0000-000000000071'), 'Protéger le parquet', 'the snapshot should preserve the quote note');
 select is((select compliance_snapshot ->> 'rulesVersion' from public.quote_versions where quote_id = '31000000-0000-0000-0000-000000000071'), 'FR-BUILDING-QUOTE-2017-01', 'the snapshot should preserve the compliance rules version');
 select is((select snapshot #>> '{lines,0,lineKind}' from public.quote_versions where quote_id = '31000000-0000-0000-0000-000000000071'), 'service', 'the snapshot should preserve the line kind');
 select lives_ok($$ select * from public.finalize_quote('31000000-0000-0000-0000-000000000071') $$, 'repeating finalization should be idempotent');

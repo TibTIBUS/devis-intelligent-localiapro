@@ -14,6 +14,11 @@ describe("quote assistant prompt", () => {
       }],
       quoteId: "2f3023a6-3bb4-4d3c-a0ab-fc297a62fb23",
       status: "draft",
+      note: null,
+      paymentTerms: null,
+      validUntil: null,
+      workAddressId: null,
+      workAddresses: [{ id: "8ba9c847-da8c-4dfa-b01a-1d88da690b9d", label: "Chantier — 2 rue du Test, 75001 Paris" }],
     });
 
     expect(prompt).toContain("N’invente jamais un prix");
@@ -23,5 +28,7 @@ describe("quote assistant prompt", () => {
     expect(prompt).toContain("N’invente jamais le taux de TVA");
     expect(prompt).toContain("Main-d’œuvre plomberie");
     expect(prompt).toContain("JSON non exécutable");
+    expect(prompt).toContain("N’invente, ne complète et ne reformule aucune clause juridique");
+    expect(prompt).toContain("Chantier — 2 rue du Test");
   });
 });

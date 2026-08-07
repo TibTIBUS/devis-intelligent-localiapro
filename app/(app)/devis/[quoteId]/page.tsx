@@ -139,6 +139,8 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
             depositRateBasisPoints={editor.quote.deposit_rate_basis_points}
             discountRateBasisPoints={editor.quote.discount_rate_basis_points}
             isQuoteFree={editor.quote.is_quote_free}
+            note={editor.quote.note}
+            paymentTerms={editor.quote.payment_terms}
             preparationFeeHtCents={editor.quote.preparation_fee_ht_cents}
             preparationFeeVatRateBasisPoints={editor.quote.preparation_fee_vat_rate_basis_points}
             quoteId={editor.quote.id}

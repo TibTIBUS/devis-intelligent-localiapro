@@ -10,11 +10,10 @@ const requiredText = (maxLength: number, message: string) =>
   z.string().trim().min(1, "Ce champ est obligatoire.").max(maxLength, message);
 
 const optionalText = (maxLength: number, message: string) =>
-  z
-    .string()
-    .trim()
-    .max(maxLength, message)
-    .transform((value) => value || undefined);
+  z.preprocess(
+    (value) => value ?? "",
+    z.string().trim().max(maxLength, message).transform((value) => value || undefined),
+  );
 
 const decimalInteger = (scale: number, label: string) =>
   z
@@ -78,7 +77,9 @@ export const quoteFinancialSettingsSchema = z.object({
   isQuoteFree: z.enum(["free", "paid"], { message: "Indiquez si le devis est gratuit ou payant." }).transform((value) => value === "free"),
   preparationFeeHtCents: optionalPriceCents,
   preparationFeeVatRateBasisPoints: optionalVatRateBasisPoints,
+  paymentTerms: optionalText(2_000, "Les conditions de paiement sont trop longues."),
   quoteId: z.string().uuid(),
+  note: optionalText(4_000, "La note est trop longue."),
   travelFeeApplicable: z.enum(["yes", "no"], { message: "Indiquez si des frais de déplacement s’appliquent." }).transform((value) => value === "yes"),
   validUntil: z.string().date("Saisissez une date de validitÃ© valide."),
   workAddressId: z.string().uuid("SÃ©lectionnez le lieu dâ€™exÃ©cution."),
@@ -149,7 +150,9 @@ export function getQuoteFinancialSettingsValues(formData: FormData) {
     isQuoteFree: formData.get("isQuoteFree"),
     preparationFeeHtCents: formData.get("preparationFeeHt"),
     preparationFeeVatRateBasisPoints: formData.get("preparationFeeVatRate"),
+    paymentTerms: formData.get("paymentTerms"),
     quoteId: formData.get("quoteId"),
+    note: formData.get("note"),
     travelFeeApplicable: formData.get("travelFeeApplicable"),
     validUntil: formData.get("validUntil"),
     workAddressId: formData.get("workAddressId"),

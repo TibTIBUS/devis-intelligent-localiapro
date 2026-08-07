@@ -22,6 +22,21 @@ const lineKindLabels = {
   travel: "Déplacement",
 } as const;
 
+function proposalTitle(proposal: AiQuoteActionProposal) {
+  if (proposal.actionType === "add_quote_line") return "Ajout à confirmer";
+  if (proposal.actionType === "update_quote_line") return "Modification à confirmer";
+  if (proposal.actionType === "delete_quote_line") return "Suppression à confirmer";
+  return "Paramètre du devis à confirmer";
+}
+
+function proposalDescription(proposal: AiQuoteActionProposal) {
+  if ("label" in proposal) return proposal.label;
+  if (proposal.actionType === "set_payment_terms") return proposal.paymentTerms;
+  if (proposal.actionType === "set_validity") return `Valide jusqu’au ${proposal.validUntil}`;
+  if (proposal.actionType === "set_worksite_address") return proposal.addressLabel;
+  return proposal.note;
+}
+
 export function QuoteAssistant({ quoteId }: { quoteId: string }) {
   const router = useRouter();
   const [messages, setMessages] = useState<AiConversationMessage[]>([]);
@@ -99,11 +114,19 @@ export function QuoteAssistant({ quoteId }: { quoteId: string }) {
               },
               quoteId,
             }
-          : {
+          : proposal.actionType === "delete_quote_line"
+            ? {
               actionType: proposal.actionType,
               proposal: { quoteLineId: proposal.quoteLineId },
               quoteId,
-            };
+            }
+            : proposal.actionType === "set_payment_terms"
+              ? { actionType: proposal.actionType, proposal: { paymentTerms: proposal.paymentTerms }, quoteId }
+              : proposal.actionType === "set_validity"
+                ? { actionType: proposal.actionType, proposal: { validUntil: proposal.validUntil }, quoteId }
+                : proposal.actionType === "set_worksite_address"
+                  ? { actionType: proposal.actionType, proposal: { workAddressId: proposal.workAddressId }, quoteId }
+                  : { actionType: proposal.actionType, proposal: { note: proposal.note }, quoteId };
       const response = await fetch("/api/ai/quote-actions/confirm", {
         body: JSON.stringify(payload),
         headers: { "Content-Type": "application/json" },
@@ -156,7 +179,7 @@ export function QuoteAssistant({ quoteId }: { quoteId: string }) {
       <div className="space-y-1">
         <h2 className="text-xl font-semibold" id="quote-assistant-title">Assistant devis</h2>
         <p className="text-sm text-muted-foreground">
-          Il prépare les ajouts, modifications et suppressions. Rien n’est enregistré sans votre confirmation.
+          Il prépare les lignes et paramètres du devis. Rien n’est enregistré sans votre confirmation.
         </p>
       </div>
       {messages.length > 0 ? (
@@ -178,19 +201,15 @@ export function QuoteAssistant({ quoteId }: { quoteId: string }) {
         <form className="space-y-4 rounded-lg border border-primary/40 bg-muted/40 p-4" onSubmit={confirmProposal}>
           <div>
             <h3 className="font-semibold">
-              {proposal.actionType === "add_quote_line"
-                ? "Ajout à confirmer"
-                : proposal.actionType === "update_quote_line"
-                  ? "Modification à confirmer"
-                  : "Suppression à confirmer"}
+              {proposalTitle(proposal)}
             </h3>
-            <p className="text-sm">{proposal.label}</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="whitespace-pre-wrap text-sm">{proposalDescription(proposal)}</p>
+            {proposal.actionType === "add_quote_line" || proposal.actionType === "update_quote_line" || proposal.actionType === "delete_quote_line" ? <p className="text-sm text-muted-foreground">
               {proposal.actionType === "update_quote_line"
                 ? `${formatQuantity(proposal.currentQuantityMilliunits)} → ${formatQuantity(proposal.quantityMilliunits)} ${proposal.unit}`
                 : `${formatQuantity(proposal.quantityMilliunits)} ${proposal.unit}`}
               {proposal.actionType === "add_quote_line" ? ` × ${formatPrice(proposal.unitPriceHtCents)} HT` : ""}
-            </p>
+            </p> : null}
             {proposal.actionType === "update_quote_line" ? (
               <p className="text-sm text-muted-foreground">
                 Nature : {lineKindLabels[proposal.currentLineKind]} → {lineKindLabels[proposal.lineKind]}
@@ -220,7 +239,9 @@ export function QuoteAssistant({ quoteId }: { quoteId: string }) {
               ? "Le prix unitaire vient du catalogue. Vérifiez le taux de TVA applicable à ce chantier avant de confirmer."
               : proposal.actionType === "update_quote_line"
                 ? "Seules la quantité et la nature indiquées seront modifiées. Le prix et la TVA restent inchangés."
-                : "La ligne sera retirée du devis. Vous pourrez annuler immédiatement cette action."}
+                : proposal.actionType === "delete_quote_line"
+                  ? "La ligne sera retirée du devis. Vous pourrez annuler immédiatement cette action."
+                  : "Cette valeur a été reprise de votre demande. Vérifiez-la avant de confirmer ; aucune clause n’est ajoutée automatiquement."}
           </p>
           <div className="flex flex-wrap gap-2">
             <Button disabled={actionPending} type="submit">
@@ -230,7 +251,9 @@ export function QuoteAssistant({ quoteId }: { quoteId: string }) {
                   ? "Confirmer l’ajout"
                   : proposal.actionType === "update_quote_line"
                     ? "Confirmer la modification"
-                    : "Confirmer la suppression"}
+                    : proposal.actionType === "delete_quote_line"
+                      ? "Confirmer la suppression"
+                      : "Confirmer ce paramètre"}
             </Button>
             <Button disabled={actionPending} onClick={() => setProposal(null)} type="button" variant="outline">
               Refuser

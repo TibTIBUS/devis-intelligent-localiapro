@@ -28,7 +28,9 @@ export type Quote = {
   issued_on: string | null;
   preparation_fee_ht_cents: number | null;
   preparation_fee_vat_rate_basis_points: number | null;
+  payment_terms: string | null;
   quote_number: string | null;
+  note: string | null;
   status: "draft" | "finalized";
   travel_fee_applicable: boolean | null;
   valid_until: string | null;
@@ -66,7 +68,7 @@ export async function getQuoteEditorData(client: SupabaseClient, organizationId:
   const [quoteResult, sectionsResult, linesResult, versionResult] = await Promise.all([
     client
       .from("quotes")
-      .select("customer_id, deposit_rate_basis_points, discount_rate_basis_points, finalized_at, id, is_quote_free, issued_on, preparation_fee_ht_cents, preparation_fee_vat_rate_basis_points, quote_number, status, travel_fee_applicable, valid_until, work_address_id")
+      .select("customer_id, deposit_rate_basis_points, discount_rate_basis_points, finalized_at, id, is_quote_free, issued_on, note, payment_terms, preparation_fee_ht_cents, preparation_fee_vat_rate_basis_points, quote_number, status, travel_fee_applicable, valid_until, work_address_id")
       .eq("organization_id", organizationId)
       .eq("id", quoteId)
       .maybeSingle(),

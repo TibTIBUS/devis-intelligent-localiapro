@@ -83,6 +83,8 @@ export async function saveQuoteFinancialSettings(
       deposit_rate_basis_points: parsed.data.depositRateBasisPoints,
       discount_rate_basis_points: parsed.data.discountRateBasisPoints,
       is_quote_free: parsed.data.isQuoteFree,
+      note: parsed.data.note ?? null,
+      payment_terms: parsed.data.paymentTerms ?? null,
       preparation_fee_ht_cents: parsed.data.isQuoteFree ? null : parsed.data.preparationFeeHtCents,
       preparation_fee_vat_rate_basis_points: parsed.data.isQuoteFree ? null : parsed.data.preparationFeeVatRateBasisPoints,
       travel_fee_applicable: parsed.data.travelFeeApplicable,

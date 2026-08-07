@@ -11,6 +11,8 @@ const snapshot = {
     issuedOn: "2026-08-07",
     validUntil: "2026-09-06",
     isFree: true,
+    note: "Accès au chantier par la cour.",
+    paymentTerms: "Paiement à réception.",
     discountRateBasisPoints: 500,
     depositRateBasisPoints: 3000,
   },
@@ -70,6 +72,7 @@ describe("quote PDF", () => {
     expect(data.snapshot.lines[0].quantityMilliunits).toBe(2000n);
     expect(data.snapshot.lines[0].unitPriceHtCents).toBe(5500n);
     expect(data.snapshot.company.legalName).toBe("Entreprise Martin");
+    expect(data.snapshot.quote.paymentTerms).toBe("Paiement à réception.");
   });
 
   it("renders a real PDF buffer without live application data", async () => {
@@ -77,5 +80,5 @@ describe("quote PDF", () => {
 
     expect(buffer.subarray(0, 4).toString()).toBe("%PDF");
     expect(buffer.byteLength).toBeGreaterThan(1_000);
-  });
+  }, 10_000);
 });

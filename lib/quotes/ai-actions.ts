@@ -67,6 +67,33 @@ export async function deleteQuoteLineFromAi(
   return result;
 }
 
+export async function updateQuoteMetadataFromAi(
+  client: SupabaseClient,
+  organizationId: string,
+  quoteId: string,
+  input:
+    | { actionType: "set_payment_terms"; paymentTerms: string }
+    | { actionType: "set_validity"; validUntil: string }
+    | { actionType: "set_worksite_address"; workAddressId: string }
+    | { actionType: "update_quote_note"; note: string },
+) {
+  const rpcByAction = {
+    set_payment_terms: ["set_ai_quote_payment_terms", { p_payment_terms: input.actionType === "set_payment_terms" ? input.paymentTerms : "" }],
+    set_validity: ["set_ai_quote_validity", { p_valid_until: input.actionType === "set_validity" ? input.validUntil : "" }],
+    set_worksite_address: ["set_ai_quote_worksite_address", { p_work_address_id: input.actionType === "set_worksite_address" ? input.workAddressId : "" }],
+    update_quote_note: ["update_ai_quote_note", { p_note: input.actionType === "update_quote_note" ? input.note : "" }],
+  } as const;
+  const [name, specificArgs] = rpcByAction[input.actionType];
+  const { data, error } = await client.rpc(name, {
+    p_organization_id: organizationId,
+    p_quote_id: quoteId,
+    ...specificArgs,
+  });
+  const result = data?.[0] as { action_id: string } | undefined;
+  if (error || !result) throw new Error("Impossible de modifier ce paramètre du devis.");
+  return result;
+}
+
 export async function undoLastAiQuoteAction(
   client: SupabaseClient,
   organizationId: string,
@@ -78,8 +105,8 @@ export async function undoLastAiQuoteAction(
   });
   const result = data?.[0] as {
     action_id: string;
-    action_type: "add_quote_line" | "update_quote_line" | "delete_quote_line";
-    affected_line_id: string;
+    action_type: "add_quote_line" | "update_quote_line" | "delete_quote_line" | "set_payment_terms" | "set_validity" | "set_worksite_address" | "update_quote_note";
+    affected_line_id: string | null;
   } | undefined;
   if (error || !result) throw new Error("Aucune action récente ne peut être annulée.");
   return result;

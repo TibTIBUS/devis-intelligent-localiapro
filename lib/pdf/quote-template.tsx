@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
   totalFinal: { borderTop: `1 solid ${colors.navy}`, color: colors.navy, fontSize: 11, fontWeight: 700, marginTop: 4, paddingTop: 7 },
   compliance: { backgroundColor: colors.pale, borderRadius: 4, marginBottom: 18, padding: 11 },
   complianceTitle: { color: colors.navy, fontSize: 9, fontWeight: 700, marginBottom: 5 },
+  quoteText: { border: `1 solid ${colors.border}`, borderRadius: 4, marginBottom: 12, padding: 11 },
   signatures: { flexDirection: "row", gap: 14, marginTop: 16 },
   signature: { border: `1 solid ${colors.border}`, flex: 1, height: 65, padding: 9 },
   footer: { bottom: 20, color: colors.muted, fontSize: 7, left: 42, position: "absolute", right: 42, textAlign: "center" },
@@ -194,6 +195,17 @@ function ComplianceBlock({ data }: { data: QuotePdfData }) {
   );
 }
 
+function QuoteTexts({ data }: { data: QuotePdfData }) {
+  const { note, paymentTerms } = data.snapshot.quote;
+  if (!note && !paymentTerms) return null;
+  return (
+    <View style={styles.quoteText} wrap={false}>
+      {paymentTerms ? <><Text style={styles.complianceTitle}>Conditions de paiement</Text><Text style={styles.line}>{paymentTerms}</Text></> : null}
+      {note ? <><Text style={[styles.complianceTitle, { marginTop: paymentTerms ? 8 : 0 }]}>Note du devis</Text><Text style={styles.line}>{note}</Text></> : null}
+    </View>
+  );
+}
+
 export function QuoteDocument({ data }: { data: QuotePdfData }) {
   const company = data.snapshot.company;
   const customer = data.snapshot.customer;
@@ -215,6 +227,7 @@ export function QuoteDocument({ data }: { data: QuotePdfData }) {
         <Text style={styles.subtitle}>Offre détaillée de prestations et fournitures</Text>
         <LinesTable data={data} />
         <Totals data={data} />
+        <QuoteTexts data={data} />
         <ComplianceBlock data={data} />
 
         <View style={styles.signatures} wrap={false}>
