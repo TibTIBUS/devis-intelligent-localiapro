@@ -27,6 +27,11 @@ npm run test
 npm run build
 ```
 
+## Déploiement
+
+La configuration Netlify et la séparation stricte entre preview et production
+sont décrites dans [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 ## Supabase local
 
 La configuration locale se trouve dans `supabase/config.toml`. Les futures
