@@ -84,3 +84,15 @@ Les coordonnées portent systématiquement l’organisation et une clé étrang�
 composite vers le client. Cette redondance contrôlée interdit les relations
 entre entreprises. Un index partiel garantit au maximum un contact principal
 et une adresse principale par client.
+
+## QUOTE-001 — socle relationnel avant règles financières
+
+Le premier ticket devis crée uniquement la topologie du devis vivant : devis,
+sections et lignes. Les champs financiers, la numérotation et les statuts sont
+écartés tant que leurs règles de calcul et de cycle de vie ne sont pas validées.
+
+Les relations portent l'organisation et utilisent des clés composites. Une
+ligne ne peut donc jamais viser une section d'un autre devis ou d'une autre
+organisation. La suppression d'un devis emporte son contenu de travail ; la
+référence au client reste restrictive afin de ne pas supprimer un client déjà
+utilisé par un devis.
