@@ -54,5 +54,5 @@ export async function createInitialOrganization(
     };
   }
 
-  redirect("/tableau-de-bord");
+  redirect("/entreprise/logo");
 }

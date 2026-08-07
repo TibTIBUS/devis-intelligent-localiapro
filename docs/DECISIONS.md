@@ -31,3 +31,10 @@ La première organisation est créée par une fonction RPC transactionnelle avec
 dispose pas de privilèges supplémentaires. Un verrou transactionnel par
 utilisateur et le retour de l’adhésion existante rendent l’onboarding
 idempotent face aux doubles soumissions.
+
+## STORAGE-001 — logos privés à chemin stable
+
+Le logo reste dans un bucket privé et porte un chemin déterministe sans
+extension. Le remplacement utilise ainsi un `upsert` sur le même objet, sans
+colonne de chemin supplémentaire ni ancien fichier orphelin. Les politiques
+Storage exigent l’adhésion à l’organisation pour `SELECT`, `INSERT` et `UPDATE`.

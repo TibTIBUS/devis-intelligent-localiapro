@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -11,5 +12,12 @@ export default async function DashboardPage() {
     redirect("/onboarding");
   }
 
-  return <main>Tableau de bord</main>;
+  return (
+    <main className="p-6">
+      <h1 className="text-3xl font-semibold tracking-tight">Tableau de bord</h1>
+      <Link className="mt-6 inline-block text-sm font-medium underline" href="/entreprise/logo">
+        Ajouter ou remplacer le logo de l’entreprise
+      </Link>
+    </main>
+  );
 }
