@@ -1,5 +1,15 @@
 # Clients
 
+## Périmètre CLIENT-003
+
+Un artisan peut supprimer un client, un contact ou une adresse depuis la page
+`/clients`. L’action est validée côté serveur et filtrée par l’organisation de
+la session. La suppression du client utilise la cascade déjà définie : ses
+contacts et adresses sont donc supprimés avec lui.
+
+Ce comportement est limité aux données de préparation des devis. Les règles de
+conservation des futurs documents finalisés ne sont pas modifiées par ce ticket.
+
 ## Périmètre CLIENT-002
 
 La page `/clients` permet de créer et modifier l’identité neutre d’un client,

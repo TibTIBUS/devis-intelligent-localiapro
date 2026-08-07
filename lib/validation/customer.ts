@@ -86,9 +86,15 @@ export type CustomerAddressFormState = {
   status: "error" | "idle";
 };
 
+export type CustomerDeleteFormState = {
+  message?: string;
+  status: "error" | "idle" | "success";
+};
+
 export const initialCustomerFormState: CustomerFormState = { status: "idle" };
 export const initialCustomerContactFormState: CustomerContactFormState = { status: "idle" };
 export const initialCustomerAddressFormState: CustomerAddressFormState = { status: "idle" };
+export const initialCustomerDeleteFormState: CustomerDeleteFormState = { status: "idle" };
 
 export function getCustomerValues(formData: FormData) {
   return {
@@ -145,3 +151,7 @@ export function getCustomerAddressFieldErrors(error: z.ZodError) {
     ["addressLine1", "addressLine2", "city", "countryCode", "label", "postalCode"] as const,
   );
 }
+
+export const customerIdSchema = z.string().uuid();
+export const customerContactIdSchema = z.string().uuid();
+export const customerAddressIdSchema = z.string().uuid();

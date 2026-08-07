@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { customerAddressSchema, customerContactSchema, customerSchema, getCustomerAddressValues, getCustomerContactValues } from "@/lib/validation/customer";
+import { customerAddressIdSchema, customerAddressSchema, customerContactIdSchema, customerContactSchema, customerIdSchema, customerSchema, getCustomerAddressValues, getCustomerContactValues } from "@/lib/validation/customer";
 
 describe("customer validation", () => {
   it("accepts a neutral customer identity", () => {
@@ -27,5 +27,13 @@ describe("customer validation", () => {
     addressFormData.set("customerId", "13000000-0000-0000-0000-000000000001");
     expect(getCustomerContactValues(contactFormData)).toMatchObject({ isPrimary: true });
     expect(getCustomerAddressValues(addressFormData)).toMatchObject({ isPrimary: false });
+  });
+
+  it("validates identifiers before a deletion action can run", () => {
+    const id = "13000000-0000-4000-8000-000000000001";
+    expect(customerIdSchema.safeParse(id).success).toBe(true);
+    expect(customerContactIdSchema.safeParse(id).success).toBe(true);
+    expect(customerAddressIdSchema.safeParse(id).success).toBe(true);
+    expect(customerIdSchema.safeParse("not-an-id").success).toBe(false);
   });
 });

@@ -1,7 +1,14 @@
 import { redirect } from "next/navigation";
 
 import { CustomerForm } from "@/components/customers/customer-form";
-import { saveCustomer, saveCustomerAddress, saveCustomerContact } from "@/lib/customers/actions";
+import {
+  deleteCustomer,
+  deleteCustomerAddress,
+  deleteCustomerContact,
+  saveCustomer,
+  saveCustomerAddress,
+  saveCustomerContact,
+} from "@/lib/customers/actions";
 import { getCustomers } from "@/lib/customers/queries";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -25,7 +32,7 @@ export default async function CustomersPage() {
         </section>
         {customers.length ? <section className="space-y-4">
           <h2 className="text-xl font-semibold tracking-tight">Clients enregistrés</h2>
-          {customers.map((customer) => <CustomerForm addressAction={saveCustomerAddress} contactAction={saveCustomerContact} customer={customer} customerAction={saveCustomer} key={customer.id} />)}
+          {customers.map((customer) => <CustomerForm addressAction={saveCustomerAddress} contactAction={saveCustomerContact} customer={customer} customerAction={saveCustomer} deleteAddressAction={deleteCustomerAddress} deleteContactAction={deleteCustomerContact} deleteCustomerAction={deleteCustomer} key={customer.id} />)}
         </section> : null}
       </section>
     </main>

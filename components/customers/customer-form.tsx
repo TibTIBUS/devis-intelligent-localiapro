@@ -8,21 +8,27 @@ import type { Customer, CustomerAddress, CustomerContact } from "@/lib/customers
 import {
   initialCustomerAddressFormState,
   initialCustomerContactFormState,
+  initialCustomerDeleteFormState,
   initialCustomerFormState,
   type CustomerAddressFormState,
   type CustomerContactFormState,
+  type CustomerDeleteFormState,
   type CustomerFormState,
 } from "@/lib/validation/customer";
 
 type CustomerAction = (previousState: CustomerFormState, formData: FormData) => Promise<CustomerFormState>;
 type ContactAction = (previousState: CustomerContactFormState, formData: FormData) => Promise<CustomerContactFormState>;
 type AddressAction = (previousState: CustomerAddressFormState, formData: FormData) => Promise<CustomerAddressFormState>;
+type DeleteAction = (previousState: CustomerDeleteFormState, formData: FormData) => Promise<CustomerDeleteFormState>;
 
 type CustomerFormProps = {
   addressAction: AddressAction;
   contactAction: ContactAction;
   customerAction: CustomerAction;
   customer?: Customer;
+  deleteAddressAction?: DeleteAction;
+  deleteContactAction?: DeleteAction;
+  deleteCustomerAction?: DeleteAction;
 };
 
 const inputClassName = "h-10 w-full rounded-md border border-input bg-background px-3 text-sm";
@@ -34,6 +40,17 @@ function FieldError({ message }: { message?: string }) {
 function SubmitButton({ children }: { children: string }) {
   const { pending } = useFormStatus();
   return <Button disabled={pending} type="submit">{pending ? "Enregistrement en cours…" : children}</Button>;
+}
+
+function DeleteForm({ action, id, name, children }: { action: DeleteAction; id: string; name: "addressId" | "contactId" | "customerId"; children: string }) {
+  const [state, formAction] = useActionState(action, initialCustomerDeleteFormState);
+  return (
+    <form action={formAction} className="space-y-2">
+      <input name={name} type="hidden" value={id} />
+      <Button type="submit" variant="destructive">{children}</Button>
+      {state.message ? <p aria-live="polite" className={state.status === "error" ? "text-sm text-destructive" : "text-sm text-muted-foreground"}>{state.message}</p> : null}
+    </form>
+  );
 }
 
 function CustomerIdentityForm({ action, customer }: { action: CustomerAction; customer?: Customer }) {
@@ -53,10 +70,11 @@ function CustomerIdentityForm({ action, customer }: { action: CustomerAction; cu
   );
 }
 
-function ContactForm({ action, contact, customerId }: { action: ContactAction; contact?: CustomerContact; customerId: string }) {
+function ContactForm({ action, contact, customerId, deleteAction }: { action: ContactAction; contact?: CustomerContact; customerId: string; deleteAction?: DeleteAction }) {
   const [state, formAction] = useActionState(action, initialCustomerContactFormState);
   const id = contact?.id ?? "new";
   return (
+    <div className="space-y-3">
     <form action={formAction} className="space-y-4 rounded-md border border-border p-4" noValidate>
       <input name="customerId" type="hidden" value={customerId} />
       {contact ? <input name="contactId" type="hidden" value={contact.id} /> : null}
@@ -83,13 +101,16 @@ function ContactForm({ action, contact, customerId }: { action: ContactAction; c
       {state.message ? <p className="text-sm text-destructive">{state.message}</p> : null}
       <SubmitButton>{contact ? "Modifier le contact" : "Ajouter un contact"}</SubmitButton>
     </form>
+    {contact && deleteAction ? <DeleteForm action={deleteAction} id={contact.id} name="contactId">Supprimer ce contact</DeleteForm> : null}
+    </div>
   );
 }
 
-function AddressForm({ action, address, customerId }: { action: AddressAction; address?: CustomerAddress; customerId: string }) {
+function AddressForm({ action, address, customerId, deleteAction }: { action: AddressAction; address?: CustomerAddress; customerId: string; deleteAction?: DeleteAction }) {
   const [state, formAction] = useActionState(action, initialCustomerAddressFormState);
   const id = address?.id ?? "new";
   return (
+    <div className="space-y-3">
     <form action={formAction} className="space-y-4 rounded-md border border-border p-4" noValidate>
       <input name="customerId" type="hidden" value={customerId} />
       {address ? <input name="addressId" type="hidden" value={address.id} /> : null}
@@ -131,22 +152,25 @@ function AddressForm({ action, address, customerId }: { action: AddressAction; a
       {state.message ? <p className="text-sm text-destructive">{state.message}</p> : null}
       <SubmitButton>{address ? "Modifier l’adresse" : "Ajouter une adresse"}</SubmitButton>
     </form>
+    {address && deleteAction ? <DeleteForm action={deleteAction} id={address.id} name="addressId">Supprimer cette adresse</DeleteForm> : null}
+    </div>
   );
 }
 
-export function CustomerForm({ addressAction, contactAction, customerAction, customer }: CustomerFormProps) {
+export function CustomerForm({ addressAction, contactAction, customerAction, customer, deleteAddressAction, deleteContactAction, deleteCustomerAction }: CustomerFormProps) {
   if (!customer) return <div className="rounded-lg border border-border p-4"><CustomerIdentityForm action={customerAction} /></div>;
   return (
     <article className="space-y-6 rounded-lg border border-border p-5">
       <CustomerIdentityForm action={customerAction} customer={customer} />
+      {deleteCustomerAction ? <DeleteForm action={deleteCustomerAction} id={customer.id} name="customerId">Supprimer ce client et ses coordonnees</DeleteForm> : null}
       <section className="space-y-3">
         <h3 className="text-base font-semibold">Contacts</h3>
-        {customer.contacts.map((contact) => <ContactForm action={contactAction} contact={contact} customerId={customer.id} key={contact.id} />)}
+        {customer.contacts.map((contact) => <ContactForm action={contactAction} contact={contact} customerId={customer.id} deleteAction={deleteContactAction} key={contact.id} />)}
         <ContactForm action={contactAction} customerId={customer.id} />
       </section>
       <section className="space-y-3">
         <h3 className="text-base font-semibold">Adresses</h3>
-        {customer.addresses.map((address) => <AddressForm action={addressAction} address={address} customerId={customer.id} key={address.id} />)}
+        {customer.addresses.map((address) => <AddressForm action={addressAction} address={address} customerId={customer.id} deleteAction={deleteAddressAction} key={address.id} />)}
         <AddressForm action={addressAction} customerId={customer.id} />
       </section>
     </article>
