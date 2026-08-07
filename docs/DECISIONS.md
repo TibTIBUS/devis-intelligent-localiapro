@@ -50,3 +50,14 @@ Le type d’assurance n’est pas une énumération PostgreSQL : les obligations
 dépendent du métier et peuvent évoluer. La validation fonctionnelle des types
 attendus sera portée par l’application au moment du formulaire, sans rendre le
 schéma réglementairement rigide.
+
+## CATALOG-001 — prix facultatif et catégorie de la même organisation
+
+Le prix catalogue est un entier exprimé en centimes HT. Il reste nullable afin
+de représenter explicitement un tarif inconnu, conformément à l’interdiction
+d’inventer un prix. Le taux de TVA n’est pas fixé dans le catalogue : il sera
+déterminé dans le contexte du devis par le moteur financier.
+
+La relation entre prestation et catégorie porte également l’identifiant de
+l’organisation. Cette clé étrangère composite bloque en base tout rattachement
+d’une prestation à la catégorie d’une autre entreprise, indépendamment de RLS.
