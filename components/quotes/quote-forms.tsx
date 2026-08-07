@@ -54,10 +54,10 @@ export function CreateQuoteForm({ action, customers }: { action: QuoteAction; cu
   );
 }
 
-export function QuoteFinancialSettingsForm({ action, depositRateBasisPoints, discountRateBasisPoints, quoteId }: { action: QuoteAction; depositRateBasisPoints: number; discountRateBasisPoints: number; quoteId: string }) {
+export function QuoteFinancialSettingsForm({ action, addresses, depositRateBasisPoints, discountRateBasisPoints, isQuoteFree, quoteId, validUntil, workAddressId }: { action: QuoteAction; addresses: { address_line_1: string; city: string; id: string; label: string | null; postal_code: string }[]; depositRateBasisPoints: number; discountRateBasisPoints: number; isQuoteFree: boolean | null; quoteId: string; validUntil: string | null; workAddressId: string | null }) {
   const [state, formAction] = useActionState(action, initialQuoteFormState);
   return (
-    <form action={formAction} className="grid gap-4 rounded-lg border border-border p-4 sm:grid-cols-3" noValidate>
+    <form action={formAction} className="grid gap-4 rounded-lg border border-border p-4 sm:grid-cols-2" noValidate>
       <input name="quoteId" type="hidden" value={quoteId} />
       <div className="space-y-2">
         <label className="text-sm font-medium" htmlFor="quote-discount">Remise globale (%)</label>
@@ -69,9 +69,17 @@ export function QuoteFinancialSettingsForm({ action, depositRateBasisPoints, dis
         <input aria-invalid={Boolean(state.fieldErrors?.depositRateBasisPoints)} className={inputClassName} defaultValue={formatRateInput(depositRateBasisPoints)} id="quote-deposit" inputMode="decimal" maxLength={6} name="depositRate" type="text" />
         <FieldError name="depositRateBasisPoints" state={state} />
       </div>
+      <div className="space-y-2"><label className="text-sm font-medium" htmlFor="quote-valid-until">ValiditÃ© de lâ€™offre jusquâ€™au</label><input aria-invalid={Boolean(state.fieldErrors?.validUntil)} className={inputClassName} defaultValue={validUntil ?? ""} id="quote-valid-until" name="validUntil" required type="date" /><FieldError name="validUntil" state={state} /></div>
+      <div className="space-y-2"><label className="text-sm font-medium" htmlFor="quote-work-address">Lieu dâ€™exÃ©cution</label><select aria-invalid={Boolean(state.fieldErrors?.workAddressId)} className={inputClassName} defaultValue={workAddressId ?? ""} id="quote-work-address" name="workAddressId"><option value="">SÃ©lectionnez une adresse client</option>{addresses.map((address) => <option key={address.id} value={address.id}>{address.label ? `${address.label} â€” ` : ""}{address.address_line_1}, {address.postal_code} {address.city}</option>)}</select><FieldError name="workAddressId" state={state} /></div>
+      <fieldset className="space-y-2"><legend className="text-sm font-medium">Ã‰tablissement du devis</legend><label className="mr-4 inline-flex items-center gap-2 text-sm"><input defaultChecked={isQuoteFree === true} name="isQuoteFree" type="radio" value="free" /> Gratuit</label><label className="inline-flex items-center gap-2 text-sm"><input defaultChecked={isQuoteFree === false} name="isQuoteFree" type="radio" value="paid" /> Payant</label><FieldError name="isQuoteFree" state={state} /></fieldset>
       <div className="flex items-end gap-3"><SubmitButton>Enregistrer</SubmitButton><FormMessage state={state} /></div>
     </form>
   );
+}
+
+export function FinalizeQuoteForm({ action, quoteId }: { action: QuoteAction; quoteId: string }) {
+  const [state, formAction] = useActionState(action, initialQuoteFormState);
+  return <form action={formAction} className="space-y-3 rounded-lg border border-border p-5"><input name="quoteId" type="hidden" value={quoteId} /><p className="text-sm text-muted-foreground">La finalisation attribue le numÃ©ro commercial, date le devis et crÃ©e un snapshot immuable. Le devis ne pourra plus Ãªtre modifiÃ© ni supprimÃ©.</p><SubmitButton>Finaliser le devis</SubmitButton><FormMessage state={state} /></form>;
 }
 
 export function QuoteSectionForm({ action, quoteId, section }: { action: QuoteAction; quoteId: string; section?: QuoteSection }) {

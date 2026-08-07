@@ -81,6 +81,9 @@ export async function saveQuoteFinancialSettings(
     .update({
       deposit_rate_basis_points: parsed.data.depositRateBasisPoints,
       discount_rate_basis_points: parsed.data.discountRateBasisPoints,
+      is_quote_free: parsed.data.isQuoteFree,
+      valid_until: parsed.data.validUntil,
+      work_address_id: parsed.data.workAddressId,
     })
     .eq("id", parsed.data.quoteId)
     .eq("organization_id", organizationId)
@@ -93,6 +96,37 @@ export async function saveQuoteFinancialSettings(
 
   revalidateQuote(parsed.data.quoteId);
   return { message: "EnregistrÃ©.", status: "success" };
+}
+
+const finalizationMessages: Record<string, string> = {
+  "A current validity date is required.": "Renseignez une date de validitÃ© qui nâ€™est pas dÃ©passÃ©e.",
+  "A work address is required.": "SÃ©lectionnez le lieu dâ€™exÃ©cution.",
+  "At least one quote line is required.": "Ajoutez au moins une ligne au devis.",
+  "Company legal information is required.": "ComplÃ©tez les informations lÃ©gales de lâ€™entreprise.",
+  "Every quote line needs a price and VAT rate.": "Renseignez le prix HT et la TVA de chaque ligne.",
+  "The quote fee status is required.": "Indiquez si le devis est gratuit ou payant.",
+};
+
+export async function finalizeQuote(
+  previousState: QuoteFormState,
+  formData: FormData,
+): Promise<QuoteFormState> {
+  void previousState;
+  const quoteId = quoteIdSchema.safeParse(formData.get("quoteId"));
+  if (!quoteId.success) return { message: "Impossible dâ€™identifier ce devis.", status: "error" };
+
+  const { supabase } = await getAuthenticatedOrganizationId();
+  const { data, error } = await supabase.rpc("finalize_quote", { p_quote_id: quoteId.data });
+  if (error || !data?.[0]) {
+    return {
+      message: finalizationMessages[error?.message ?? ""] ?? "Impossible de finaliser ce devis pour le moment.",
+      status: "error",
+    };
+  }
+
+  revalidateQuote(quoteId.data);
+  revalidatePath("/devis");
+  return { message: `Devis finalisÃ© sous le numÃ©ro ${data[0].quote_number}.`, status: "success" };
 }
 
 export async function saveQuoteSection(

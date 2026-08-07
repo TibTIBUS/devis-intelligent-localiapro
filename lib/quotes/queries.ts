@@ -20,12 +20,22 @@ export type Quote = {
   customer_id: string;
   deposit_rate_basis_points: number;
   discount_rate_basis_points: number;
+  finalized_at: string | null;
   id: string;
+  is_quote_free: boolean | null;
+  issued_on: string | null;
+  quote_number: string | null;
+  status: "draft" | "finalized";
+  valid_until: string | null;
+  work_address_id: string | null;
 };
 
 export type QuoteListItem = {
   customerName: string;
   id: string;
+  issuedOn: string | null;
+  quoteNumber: string | null;
+  status: "draft" | "finalized";
   totals: ReturnType<typeof calculateQuoteTotals>;
   updatedAt: string;
 };
@@ -49,7 +59,7 @@ export async function getQuoteEditorData(client: SupabaseClient, organizationId:
   const [quoteResult, sectionsResult, linesResult] = await Promise.all([
     client
       .from("quotes")
-      .select("customer_id, deposit_rate_basis_points, discount_rate_basis_points, id")
+      .select("customer_id, deposit_rate_basis_points, discount_rate_basis_points, finalized_at, id, is_quote_free, issued_on, quote_number, status, valid_until, work_address_id")
       .eq("organization_id", organizationId)
       .eq("id", quoteId)
       .maybeSingle(),
@@ -106,7 +116,7 @@ export async function getQuoteListData(client: SupabaseClient, organizationId: s
   const [quotesResult, customersResult, linesResult] = await Promise.all([
     client
       .from("quotes")
-      .select("customer_id, deposit_rate_basis_points, discount_rate_basis_points, id, updated_at")
+      .select("customer_id, deposit_rate_basis_points, discount_rate_basis_points, finalized_at, id, is_quote_free, issued_on, quote_number, status, updated_at, valid_until, work_address_id")
       .eq("organization_id", organizationId)
       .order("updated_at", { ascending: false })
       .order("id", { ascending: true }),
@@ -141,6 +151,9 @@ export async function getQuoteListData(client: SupabaseClient, organizationId: s
   const quotes = (quotesResult.data as (Quote & { updated_at: string })[]).map((quote) => ({
     customerName: customersById.get(quote.customer_id) ?? "Client indisponible",
     id: quote.id,
+    issuedOn: quote.issued_on,
+    quoteNumber: quote.quote_number,
+    status: quote.status,
     totals: calculateQuoteTotals(
       linesByQuoteId.get(quote.id) ?? [],
       quote.discount_rate_basis_points,

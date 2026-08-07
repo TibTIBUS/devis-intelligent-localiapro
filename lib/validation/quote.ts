@@ -75,7 +75,10 @@ export const quoteCreateSchema = z.object({
 export const quoteFinancialSettingsSchema = z.object({
   depositRateBasisPoints: percentageBasisPoints("Le taux dâ€™acompte"),
   discountRateBasisPoints: percentageBasisPoints("Le taux de remise"),
+  isQuoteFree: z.enum(["free", "paid"], { message: "Indiquez si le devis est gratuit ou payant." }).transform((value) => value === "free"),
   quoteId: z.string().uuid(),
+  validUntil: z.string().date("Saisissez une date de validitÃ© valide."),
+  workAddressId: z.string().uuid("SÃ©lectionnez le lieu dâ€™exÃ©cution."),
 });
 
 export const quoteSectionSchema = z.object({
@@ -130,7 +133,10 @@ export function getQuoteFinancialSettingsValues(formData: FormData) {
   return {
     depositRateBasisPoints: formData.get("depositRate"),
     discountRateBasisPoints: formData.get("discountRate"),
+    isQuoteFree: formData.get("isQuoteFree"),
     quoteId: formData.get("quoteId"),
+    validUntil: formData.get("validUntil"),
+    workAddressId: formData.get("workAddressId"),
   };
 }
 

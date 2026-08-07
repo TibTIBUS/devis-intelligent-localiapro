@@ -47,3 +47,21 @@ Une ligne issue du catalogue reprend côté serveur son libellé, son unité, sa
 ## Liste et reprise QUOTE-004
 
 La liste des devis est limitée côté serveur à l’organisation courante et reste soumise aux politiques RLS. Elle affiche le client, la dernière modification et, lorsque le devis est complet, un TTC calculé à partir des lignes relues en base. La recherche par client est validée et normalisée avant filtrage ; elle ne sert jamais à construire une requête SQL libre.
+
+## Finalisation et numérotation QUOTE-005
+
+La finalisation est une opération serveur atomique. Elle attribue un numéro
+commercial annuel au format `D-AAAA-NNNNN`, avec une séquence propre à chaque
+organisation et protégée contre les finalisations concurrentes. La date
+d’émission est déterminée selon le calendrier de Paris.
+
+Avant finalisation, le devis doit comporter une date de validité, une adresse
+d’exécution appartenant au client, l’indication de gratuité ou du prix du devis,
+une entreprise légalement configurée et au moins une ligne entièrement chiffrée
+avec son taux de TVA. La finalisation crée `quote_versions` version 1, snapshot
+immuable de l’entreprise, du client, des coordonnées, du chantier et du contenu
+commercial.
+
+Un devis finalisé et son contenu ne sont plus modifiables ni supprimables. Ce
+statut interne signifie que le document est figé ; il ne vaut pas acceptation
+par le client. L’acceptation commerciale sera modélisée séparément.

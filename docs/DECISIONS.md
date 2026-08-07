@@ -116,3 +116,17 @@ Le devis est modifié par opérations courtes (création, ajout, modification ou
 ## QUOTE-004 — la reprise ne contourne pas le moteur financier
 
 La liste est une vue de lecture du devis vivant. Elle ne stocke pas de total dupliqué : chaque TTC affiché est calculé à la lecture depuis les lignes, la remise et l’acompte du devis. Un devis incomplet reste visible, mais sans montant officiel.
+
+## QUOTE-005 — finalisation atomique et snapshot immuable
+
+Le numéro commercial n’est jamais calculé dans le navigateur. La fonction
+serveur `finalize_quote` verrouille brièvement la séquence annuelle de
+l’organisation, attribue `D-AAAA-NNNNN`, fige le devis et crée sa première
+version dans la même transaction. Une nouvelle tentative sur le même devis est
+idempotente et retourne la version existante.
+
+Les droits SQL du rôle authentifié ne permettent de modifier que les colonnes
+de brouillon prévues. Des déclencheurs privés interdisent toute mutation du
+devis finalisé, de ses sections, de ses lignes et de ses versions, y compris si
+un futur appel applicatif oubliait ce contrôle. La finalisation interne et
+l’acceptation du devis par le client demeurent deux états métier distincts.

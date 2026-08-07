@@ -67,8 +67,17 @@ describe("quote validation", () => {
   });
 
   it("validates quote-level discount and deposit rates", () => {
-    expect(quoteFinancialSettingsSchema.parse({ depositRateBasisPoints: "30", discountRateBasisPoints: "5,5", quoteId: "43000000-0000-4000-8000-000000000001" })).toMatchObject({ depositRateBasisPoints: 3000, discountRateBasisPoints: 550 });
-    expect(quoteFinancialSettingsSchema.safeParse({ depositRateBasisPoints: "101", discountRateBasisPoints: "0", quoteId: "43000000-0000-4000-8000-000000000001" }).success).toBe(false);
+    const details = {
+      depositRateBasisPoints: "30",
+      discountRateBasisPoints: "5,5",
+      isQuoteFree: "paid",
+      quoteId: "43000000-0000-4000-8000-000000000001",
+      validUntil: "2026-12-31",
+      workAddressId: "53000000-0000-4000-8000-000000000001",
+    };
+    expect(quoteFinancialSettingsSchema.parse(details)).toMatchObject({ depositRateBasisPoints: 3000, discountRateBasisPoints: 550, isQuoteFree: false });
+    expect(quoteFinancialSettingsSchema.safeParse({ ...details, depositRateBasisPoints: "101" }).success).toBe(false);
+    expect(quoteFinancialSettingsSchema.safeParse({ ...details, workAddressId: "" }).success).toBe(false);
   });
 
   it("collects form values and formats stored values for fields", () => {
