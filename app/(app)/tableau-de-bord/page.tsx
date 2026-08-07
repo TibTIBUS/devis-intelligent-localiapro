@@ -24,6 +24,12 @@ export default async function DashboardPage() {
       >
         Gérer les informations légales de l’entreprise
       </Link>
+      <Link
+        className="mt-3 block text-sm font-medium underline"
+        href="/entreprise/assurances"
+      >
+        Gérer les assurances de l’entreprise
+      </Link>
     </main>
   );
 }
