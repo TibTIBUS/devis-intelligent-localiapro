@@ -131,6 +131,14 @@ devis finalisé, de ses sections, de ses lignes et de ses versions, y compris si
 un futur appel applicatif oubliait ce contrôle. La finalisation interne et
 l’acceptation du devis par le client demeurent deux états métier distincts.
 
+## PDF-001 — le document est rendu depuis la version figée
+
+Le renderer PDF reçoit uniquement le snapshot de `quote_versions` et les
+données de conformité figées lors de la finalisation. Il réutilise le moteur
+financier entier pour les totaux et ne dépend pas de `quotes`, du catalogue ou
+des données actuelles du client. Le PDF est donc déterministe et indépendant
+des modifications ultérieures de l’entreprise.
+
 ## COMPLIANCE-001 — référentiel versionné et validation en base
 
 La conformité du devis n’est ni une appréciation du LLM ni une simple
