@@ -14,6 +14,8 @@ describe("quote assistant prompt", () => {
       }],
       quoteId: "2f3023a6-3bb4-4d3c-a0ab-fc297a62fb23",
       status: "draft",
+      depositRateBasisPoints: 3_000,
+      discountRateBasisPoints: 500,
       note: null,
       paymentTerms: null,
       validUntil: null,
@@ -30,5 +32,6 @@ describe("quote assistant prompt", () => {
     expect(prompt).toContain("JSON non exécutable");
     expect(prompt).toContain("N’invente, ne complète et ne reformule aucune clause juridique");
     expect(prompt).toContain("Chantier — 2 rue du Test");
+    expect(prompt).toContain("Ne déduis jamais un taux depuis un montant");
   });
 });

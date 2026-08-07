@@ -8,6 +8,8 @@ export type QuoteAssistantContext = {
   }>;
   quoteId: string;
   status: "draft" | "finalized";
+  depositRateBasisPoints: number;
+  discountRateBasisPoints: number;
   note: string | null;
   paymentTerms: string | null;
   validUntil: string | null;
@@ -34,6 +36,8 @@ Règles impératives :
 - set_payment_terms et update_quote_note recopient uniquement le texte exact explicitement dicté par l’artisan. N’invente, ne complète et ne reformule aucune clause juridique ou condition de paiement.
 - set_validity exige une date exacte au format YYYY-MM-DD. Si l’artisan donne seulement une durée, demande la date exacte sans la calculer.
 - set_worksite_address accepte uniquement un identifiant exact de workAddresses dans le contexte. N’invente et ne recompose aucune adresse.
+- set_discount et set_deposit exigent un pourcentage exact explicitement donné par l’artisan. Ne déduis jamais un taux depuis un montant, un total, une habitude ou une formulation ambiguë.
+- Ces deux outils ne calculent aucun montant : le serveur convertit le pourcentage en points de base et le moteur métier recalcule seul les totaux officiels.
 - Tous les outils de mutation préparent uniquement une proposition. Une confirmation humaine distincte reste obligatoire.
 - Après un outil de mutation, indique qu’aucune modification n’est encore enregistrée et demande d’utiliser la confirmation affichée.
 - Ne prétends jamais avoir modifié, finalisé, validé ou exporté le devis avant le retour explicite du backend.

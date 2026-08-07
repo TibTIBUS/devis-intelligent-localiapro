@@ -94,6 +94,27 @@ export async function updateQuoteMetadataFromAi(
   return result;
 }
 
+export async function setQuoteFinancialRateFromAi(
+  client: SupabaseClient,
+  organizationId: string,
+  quoteId: string,
+  input: { actionType: "set_discount" | "set_deposit"; currentRateBasisPoints: number; rateBasisPoints: number },
+) {
+  const name = input.actionType === "set_discount" ? "set_ai_quote_discount" : "set_ai_quote_deposit";
+  const rateArgument = input.actionType === "set_discount"
+    ? { p_discount_rate_basis_points: input.rateBasisPoints }
+    : { p_deposit_rate_basis_points: input.rateBasisPoints };
+  const { data, error } = await client.rpc(name, {
+    p_organization_id: organizationId,
+    p_quote_id: quoteId,
+    p_expected_rate_basis_points: input.currentRateBasisPoints,
+    ...rateArgument,
+  });
+  const result = data?.[0] as { action_id: string } | undefined;
+  if (error || !result) throw new Error("Impossible de modifier ce taux du devis.");
+  return result;
+}
+
 export async function undoLastAiQuoteAction(
   client: SupabaseClient,
   organizationId: string,
@@ -105,7 +126,7 @@ export async function undoLastAiQuoteAction(
   });
   const result = data?.[0] as {
     action_id: string;
-    action_type: "add_quote_line" | "update_quote_line" | "delete_quote_line" | "set_payment_terms" | "set_validity" | "set_worksite_address" | "update_quote_note";
+    action_type: "add_quote_line" | "update_quote_line" | "delete_quote_line" | "set_discount" | "set_deposit" | "set_payment_terms" | "set_validity" | "set_worksite_address" | "update_quote_note";
     affected_line_id: string | null;
   } | undefined;
   if (error || !result) throw new Error("Aucune action récente ne peut être annulée.");

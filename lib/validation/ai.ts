@@ -67,6 +67,17 @@ export const updateQuoteNoteArgumentsSchema = z.object({
   note: z.string().trim().min(1).max(4_000),
 }).strict();
 
+const aiPercentageSchema = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(",", "."))
+  .refine((value) => /^\d+(?:\.\d{1,2})?$/.test(value), "Le pourcentage doit être explicite et comporter deux décimales maximum.")
+  .transform((value) => Math.round(Number(value) * 100))
+  .pipe(z.number().int().min(0).max(10_000));
+
+export const setDiscountArgumentsSchema = z.object({ discountRate: aiPercentageSchema }).strict();
+export const setDepositArgumentsSchema = z.object({ depositRate: aiPercentageSchema }).strict();
+
 export const aiQuoteLineProposalSchema = z.object({
   actionType: z.literal("add_quote_line"),
   catalogItemId: z.uuid(),
@@ -118,6 +129,18 @@ export const aiUpdateQuoteNoteProposalSchema = z.object({
   note: z.string().trim().min(1).max(4_000),
 }).strict();
 
+export const aiSetDiscountProposalSchema = z.object({
+  actionType: z.literal("set_discount"),
+  currentRateBasisPoints: z.number().int().min(0).max(10_000),
+  rateBasisPoints: z.number().int().min(0).max(10_000),
+}).strict();
+
+export const aiSetDepositProposalSchema = z.object({
+  actionType: z.literal("set_deposit"),
+  currentRateBasisPoints: z.number().int().min(0).max(10_000),
+  rateBasisPoints: z.number().int().min(0).max(10_000),
+}).strict();
+
 export const aiQuoteActionProposalSchema = z.discriminatedUnion("actionType", [
   aiQuoteLineProposalSchema,
   aiUpdateQuoteLineProposalSchema,
@@ -126,6 +149,8 @@ export const aiQuoteActionProposalSchema = z.discriminatedUnion("actionType", [
   aiSetValidityProposalSchema,
   aiSetWorksiteAddressProposalSchema,
   aiUpdateQuoteNoteProposalSchema,
+  aiSetDiscountProposalSchema,
+  aiSetDepositProposalSchema,
 ]);
 
 const vatRateSchema = z
@@ -179,6 +204,16 @@ export const confirmAiQuoteActionSchema = z.discriminatedUnion("actionType", [
   z.object({
     actionType: z.literal("update_quote_note"),
     proposal: aiUpdateQuoteNoteProposalSchema.pick({ note: true }),
+    quoteId: z.uuid(),
+  }).strict(),
+  z.object({
+    actionType: z.literal("set_discount"),
+    proposal: aiSetDiscountProposalSchema.pick({ currentRateBasisPoints: true, rateBasisPoints: true }),
+    quoteId: z.uuid(),
+  }).strict(),
+  z.object({
+    actionType: z.literal("set_deposit"),
+    proposal: aiSetDepositProposalSchema.pick({ currentRateBasisPoints: true, rateBasisPoints: true }),
     quoteId: z.uuid(),
   }).strict(),
 ]);

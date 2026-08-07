@@ -13,6 +13,8 @@ import {
   setValidityArgumentsSchema,
   setWorksiteAddressArgumentsSchema,
   updateQuoteNoteArgumentsSchema,
+  setDepositArgumentsSchema,
+  setDiscountArgumentsSchema,
 } from "@/lib/validation/ai";
 
 const quoteId = "2f3023a6-3bb4-4d3c-a0ab-fc297a62fb23";
@@ -93,5 +95,15 @@ describe("quote assistant validation", () => {
     expect(setWorksiteAddressArgumentsSchema.safeParse({ workAddressId: quoteId, organizationId: quoteId }).success).toBe(false);
     expect(updateQuoteNoteArgumentsSchema.safeParse({ note: "a".repeat(4_001) }).success).toBe(false);
     expect(confirmAiQuoteActionSchema.safeParse({ actionType: "set_validity", proposal: { validUntil: "2026-09-30" }, quoteId }).success).toBe(true);
+  });
+
+  it("converts only explicit financial percentages to basis points", () => {
+    expect(setDiscountArgumentsSchema.parse({ discountRate: "10,25" }).discountRate).toBe(1_025);
+    expect(setDepositArgumentsSchema.parse({ depositRate: "30" }).depositRate).toBe(3_000);
+    expect(setDiscountArgumentsSchema.safeParse({ discountRate: "10 %" }).success).toBe(false);
+    expect(setDepositArgumentsSchema.safeParse({ depositRate: "un tiers" }).success).toBe(false);
+    expect(setDiscountArgumentsSchema.safeParse({ discountRate: "100.01" }).success).toBe(false);
+    expect(confirmAiQuoteActionSchema.safeParse({ actionType: "set_discount", proposal: { currentRateBasisPoints: 500, rateBasisPoints: 1_000 }, quoteId }).success).toBe(true);
+    expect(confirmAiQuoteActionSchema.safeParse({ actionType: "set_deposit", proposal: { currentRateBasisPoints: 3_000, rateBasisPoints: 10_001 }, quoteId }).success).toBe(false);
   });
 });

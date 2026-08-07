@@ -52,6 +52,8 @@ export async function POST(request: Request) {
         })),
         quoteId: editor.quote.id,
         status: editor.quote.status,
+        depositRateBasisPoints: editor.quote.deposit_rate_basis_points,
+        discountRateBasisPoints: editor.quote.discount_rate_basis_points,
         note: editor.quote.note,
         paymentTerms: editor.quote.payment_terms,
         validUntil: editor.quote.valid_until,

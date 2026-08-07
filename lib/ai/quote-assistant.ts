@@ -13,6 +13,7 @@ import {
   updateQuoteLineTool,
 } from "@/lib/ai/tools/edit-quote-line";
 import { executeSearchCatalogTool, searchCatalogTool } from "@/lib/ai/tools/search-catalog";
+import { prepareQuoteFinancialSettingTool, setDepositTool, setDiscountTool } from "@/lib/ai/tools/quote-financial-settings";
 import {
   confirmationOutput,
   prepareQuoteMetadataTool,
@@ -52,7 +53,7 @@ export async function runQuoteAssistant({
       model,
       parallel_tool_calls: false,
       store: false,
-      tools: [searchCatalogTool, addQuoteLineTool, updateQuoteLineTool, deleteQuoteLineTool, setPaymentTermsTool, setValidityTool, setWorksiteAddressTool, updateQuoteNoteTool],
+      tools: [searchCatalogTool, addQuoteLineTool, updateQuoteLineTool, deleteQuoteLineTool, setDiscountTool, setDepositTool, setPaymentTermsTool, setValidityTool, setWorksiteAddressTool, updateQuoteNoteTool],
     });
     const calls = response.output.filter((item) => item.type === "function_call");
 
@@ -107,6 +108,10 @@ export async function runQuoteAssistant({
       } else if ([setPaymentTermsTool.name, setValidityTool.name, setWorksiteAddressTool.name, updateQuoteNoteTool.name].includes(call.name)) {
         if (pendingAction) throw new Error("Une seule proposition peut être préparée à la fois.");
         pendingAction = prepareQuoteMetadataTool(call.name, call.arguments, context.workAddresses);
+        output = confirmationOutput;
+      } else if ([setDiscountTool.name, setDepositTool.name].includes(call.name)) {
+        if (pendingAction) throw new Error("Une seule proposition peut être préparée à la fois.");
+        pendingAction = prepareQuoteFinancialSettingTool(call.name, call.arguments, context);
         output = confirmationOutput;
       } else {
         throw new Error("L’assistant a demandé un outil non autorisé.");

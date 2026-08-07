@@ -14,6 +14,10 @@ function formatQuantity(milliunits: number) {
   return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 3 }).format(milliunits / 1_000);
 }
 
+function formatRate(basisPoints: number) {
+  return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(basisPoints / 100);
+}
+
 const lineKindLabels = {
   labor: "Main-d’œuvre",
   material: "Matériau",
@@ -34,6 +38,8 @@ function proposalDescription(proposal: AiQuoteActionProposal) {
   if (proposal.actionType === "set_payment_terms") return proposal.paymentTerms;
   if (proposal.actionType === "set_validity") return `Valide jusqu’au ${proposal.validUntil}`;
   if (proposal.actionType === "set_worksite_address") return proposal.addressLabel;
+  if (proposal.actionType === "set_discount") return `Remise : ${formatRate(proposal.currentRateBasisPoints)} % → ${formatRate(proposal.rateBasisPoints)} %`;
+  if (proposal.actionType === "set_deposit") return `Acompte : ${formatRate(proposal.currentRateBasisPoints)} % → ${formatRate(proposal.rateBasisPoints)} %`;
   return proposal.note;
 }
 
@@ -126,7 +132,9 @@ export function QuoteAssistant({ quoteId }: { quoteId: string }) {
                 ? { actionType: proposal.actionType, proposal: { validUntil: proposal.validUntil }, quoteId }
                 : proposal.actionType === "set_worksite_address"
                   ? { actionType: proposal.actionType, proposal: { workAddressId: proposal.workAddressId }, quoteId }
-                  : { actionType: proposal.actionType, proposal: { note: proposal.note }, quoteId };
+                  : proposal.actionType === "update_quote_note"
+                    ? { actionType: proposal.actionType, proposal: { note: proposal.note }, quoteId }
+                    : { actionType: proposal.actionType, proposal: { currentRateBasisPoints: proposal.currentRateBasisPoints, rateBasisPoints: proposal.rateBasisPoints }, quoteId };
       const response = await fetch("/api/ai/quote-actions/confirm", {
         body: JSON.stringify(payload),
         headers: { "Content-Type": "application/json" },
@@ -241,6 +249,8 @@ export function QuoteAssistant({ quoteId }: { quoteId: string }) {
                 ? "Seules la quantité et la nature indiquées seront modifiées. Le prix et la TVA restent inchangés."
                 : proposal.actionType === "delete_quote_line"
                   ? "La ligne sera retirée du devis. Vous pourrez annuler immédiatement cette action."
+                  : proposal.actionType === "set_discount" || proposal.actionType === "set_deposit"
+                    ? "Seul le taux affiché sera enregistré. Le moteur métier recalculera les montants après confirmation."
                   : "Cette valeur a été reprise de votre demande. Vérifiez-la avant de confirmer ; aucune clause n’est ajoutée automatiquement."}
           </p>
           <div className="flex flex-wrap gap-2">

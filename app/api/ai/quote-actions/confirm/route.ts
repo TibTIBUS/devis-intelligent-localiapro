@@ -5,6 +5,7 @@ import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import {
   addCatalogQuoteLineFromAi,
   deleteQuoteLineFromAi,
+  setQuoteFinancialRateFromAi,
   updateQuoteLineFromAi,
   updateQuoteMetadataFromAi,
 } from "@/lib/quotes/ai-actions";
@@ -50,6 +51,15 @@ export async function POST(request: Request) {
         parsed.data.proposal.quoteLineId,
       );
       message = `La ligne « ${result.label} » a été supprimée.`;
+    } else if (parsed.data.actionType === "set_discount" || parsed.data.actionType === "set_deposit") {
+      await setQuoteFinancialRateFromAi(supabase, organizationId, parsed.data.quoteId, {
+        actionType: parsed.data.actionType,
+        currentRateBasisPoints: parsed.data.proposal.currentRateBasisPoints,
+        rateBasisPoints: parsed.data.proposal.rateBasisPoints,
+      });
+      message = parsed.data.actionType === "set_discount"
+        ? "Le taux de remise a été enregistré et les totaux ont été recalculés par le moteur métier."
+        : "Le taux d’acompte a été enregistré et son montant a été recalculé par le moteur métier.";
     } else {
       await updateQuoteMetadataFromAi(
         supabase,
