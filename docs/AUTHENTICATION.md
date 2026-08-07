@@ -9,5 +9,20 @@ navigateur et le serveur.
 - `/auth/callback` échange le code PKCE contre une session et refuse toute
   destination de redirection externe.
 
-Les formulaires email/mot de passe, OAuth Google et la récupération de mot de
-passe restent hors périmètre de ce ticket.
+OAuth Google et la récupération de mot de passe restent hors périmètre de ce
+ticket.
+
+## Email et mot de passe
+
+AUTH-002 ajoute l’inscription et la connexion via des Server Actions. Les
+identifiants sont validés côté serveur avec Zod ; les erreurs de connexion ne
+précisent jamais si une adresse email est déjà inscrite.
+
+La configuration locale active la confirmation d’email, définit
+`http://localhost:3000` comme Site URL et autorise uniquement
+`http://localhost:3000/auth/callback` comme URL de redirection.
+
+Avant un test sur l’environnement Supabase distant, reproduire ces réglages
+dans **Auth > URL Configuration** et activer la confirmation d’email dans le
+fournisseur Email. La configuration SMTP de production sera traitée avant la
+mise en ligne.
