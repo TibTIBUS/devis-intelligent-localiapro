@@ -33,6 +33,9 @@ export default async function DashboardPage() {
       <Link className="mt-3 block text-sm font-medium underline" href="/catalogue">
         Gérer le catalogue de prestations
       </Link>
+      <Link className="mt-3 block text-sm font-medium underline" href="/clients">
+        Gérer les clients
+      </Link>
     </main>
   );
 }

@@ -1,5 +1,17 @@
 # Clients
 
+## Périmètre CLIENT-002
+
+La page `/clients` permet de créer et modifier l’identité neutre d’un client,
+ses contacts et ses adresses. Un client est d’abord créé avec son seul nom ;
+les coordonnées sont ensuite ajoutées ou modifiées séparément.
+
+Les données de formulaire sont validées par Zod dans les actions serveur. Les
+modifications utilisent toujours l’organisation obtenue depuis la session, et
+la RLS reste donc la protection effective contre tout accès inter-entreprises.
+La suppression des clients et des coordonnées est volontairement hors du
+périmètre de ce ticket.
+
 ## Périmètre CLIENT-001
 
 Le socle client est volontairement neutre vis-à-vis du statut particulier ou
