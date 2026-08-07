@@ -24,3 +24,19 @@ prestations ne peut pas être supprimée.
 Les deux tables sont protégées par RLS pour les opérations de lecture,
 création, modification et suppression. Aucun privilège n’est accordé au rôle
 anonyme.
+
+## Historique des prix — CATALOG-002
+
+Chaque création de prestation enregistre son état de prix initial dans
+`catalog_price_history`, y compris lorsqu’il est inconnu (`null`). Une nouvelle
+entrée est ensuite ajoutée uniquement lorsque le prix change réellement. Le
+retour d’un prix renseigné vers un prix inconnu est donc également conservé.
+
+L’historique est alimenté par un déclencheur privé et privilégié. Son exécution
+contrôle explicitement l’appartenance de l’utilisateur à l’organisation. Le
+rôle authentifié dispose uniquement du droit de lecture, lui-même filtré par
+RLS ; aucune écriture directe n’est autorisée.
+
+La suppression d’une prestation supprime son historique catalogue. Les futurs
+devis finalisés conserveront leurs propres snapshots immuables et ne dépendront
+pas de cette table.

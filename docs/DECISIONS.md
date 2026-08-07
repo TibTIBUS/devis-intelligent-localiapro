@@ -61,3 +61,15 @@ déterminé dans le contexte du devis par le moteur financier.
 La relation entre prestation et catégorie porte également l’identifiant de
 l’organisation. Cette clé étrangère composite bloque en base tout rattachement
 d’une prestation à la catégorie d’une autre entreprise, indépendamment de RLS.
+
+## CATALOG-002 — historique de prix en écriture interne uniquement
+
+Les changements de prix sont enregistrés automatiquement par un déclencheur
+privé. Les clients authentifiés peuvent consulter l’historique de leur
+organisation mais ne disposent d’aucun droit direct d’insertion, modification
+ou suppression sur cette table.
+
+L’état initial, y compris un prix inconnu, est historisé. Une mise à jour qui ne
+change pas le prix n’ajoute aucune entrée. L’historique suit le cycle de vie de
+la prestation et est supprimé avec elle ; l’immutabilité des documents
+commerciaux sera assurée séparément par les snapshots de devis.
