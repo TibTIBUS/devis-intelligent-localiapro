@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { getTrustedSupabaseOAuthUrl } from "@/lib/auth/redirects";
 import {
   getAuthFormValues,
   getFieldErrors,
@@ -21,6 +22,28 @@ function validationError(error: Parameters<typeof getFieldErrors>[0]): AuthFormS
     message: "Vérifiez les informations saisies.",
     status: "error",
   };
+}
+
+export async function signInWithGoogle(): Promise<never> {
+  const env = parsePublicEnv(process.env);
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      skipBrowserRedirect: true,
+    },
+  });
+
+  const authorizationUrl = error
+    ? null
+    : getTrustedSupabaseOAuthUrl(data.url, env.NEXT_PUBLIC_SUPABASE_URL);
+
+  if (!authorizationUrl) {
+    redirect("/connexion?erreur=oauth_indisponible");
+  }
+
+  redirect(authorizationUrl);
 }
 
 export async function signIn(

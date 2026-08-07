@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
+import { hasConsistentIdentityOwnership } from "@/lib/auth/identities";
 import { getSafeAuthenticatedRedirect } from "@/lib/auth/redirects";
 import { parsePublicEnv } from "@/lib/validation/env";
 
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
   }
 
   const env = parsePublicEnv(process.env);
-  let response = NextResponse.redirect(redirectUrl);
+  const response = NextResponse.redirect(redirectUrl);
   const supabase = createServerClient(
     env.NEXT_PUBLIC_SUPABASE_URL,
     env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
@@ -47,7 +48,21 @@ export async function GET(request: NextRequest) {
     redirectUrl.pathname = "/connexion";
     redirectUrl.search = "";
     redirectUrl.searchParams.set("erreur", "callback_invalide");
-    response = NextResponse.redirect(redirectUrl);
+    response.headers.set("location", redirectUrl.toString());
+    return response;
+  }
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user || !hasConsistentIdentityOwnership(user)) {
+    await supabase.auth.signOut({ scope: "local" });
+    redirectUrl.pathname = "/connexion";
+    redirectUrl.search = "";
+    redirectUrl.searchParams.set("erreur", "identite_invalide");
+    response.headers.set("location", redirectUrl.toString());
   }
 
   return response;

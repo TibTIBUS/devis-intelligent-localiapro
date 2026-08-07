@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { getSafeAuthenticatedRedirect } from "@/lib/auth/redirects";
+import {
+  getSafeAuthenticatedRedirect,
+  getTrustedSupabaseOAuthUrl,
+} from "@/lib/auth/redirects";
 
 describe("getSafeAuthenticatedRedirect", () => {
   it("uses the dashboard when no return path is provided", () => {
@@ -27,5 +30,31 @@ describe("getSafeAuthenticatedRedirect", () => {
     expect(getSafeAuthenticatedRedirect("/\\\\evil.example")).toBe(
       "/tableau-de-bord",
     );
+  });
+});
+
+describe("getTrustedSupabaseOAuthUrl", () => {
+  const supabaseUrl = "https://project-ref.supabase.co";
+
+  it("accepts the Supabase OAuth authorization endpoint", () => {
+    expect(
+      getTrustedSupabaseOAuthUrl(
+        `${supabaseUrl}/auth/v1/authorize?provider=google`,
+        supabaseUrl,
+      ),
+    ).toBe(`${supabaseUrl}/auth/v1/authorize?provider=google`);
+  });
+
+  it("rejects an external, malformed, or unexpected endpoint", () => {
+    expect(
+      getTrustedSupabaseOAuthUrl(
+        "https://evil.example/auth/v1/authorize",
+        supabaseUrl,
+      ),
+    ).toBeNull();
+    expect(
+      getTrustedSupabaseOAuthUrl(`${supabaseUrl}/auth/v1/token`, supabaseUrl),
+    ).toBeNull();
+    expect(getTrustedSupabaseOAuthUrl("not-a-url", supabaseUrl)).toBeNull();
   });
 });

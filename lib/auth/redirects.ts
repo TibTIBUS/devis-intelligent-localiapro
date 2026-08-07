@@ -15,3 +15,24 @@ export function getSafeAuthenticatedRedirect(
 
   return next;
 }
+
+export function getTrustedSupabaseOAuthUrl(
+  candidate: string,
+  supabaseUrl: string,
+): string | null {
+  try {
+    const authorizationUrl = new URL(candidate);
+    const projectUrl = new URL(supabaseUrl);
+
+    if (
+      authorizationUrl.origin !== projectUrl.origin ||
+      authorizationUrl.pathname !== "/auth/v1/authorize"
+    ) {
+      return null;
+    }
+
+    return authorizationUrl.toString();
+  } catch {
+    return null;
+  }
+}

@@ -2,10 +2,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { EmailPasswordForm } from "@/components/auth/email-password-form";
-import { signIn } from "@/lib/auth/actions";
+import { GoogleOAuthForm } from "@/components/auth/google-oauth-form";
+import { signIn, signInWithGoogle } from "@/lib/auth/actions";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{ erreur?: string }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { erreur } = await searchParams;
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
 
@@ -19,6 +25,17 @@ export default async function LoginPage() {
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">Localiapro.fr</p>
           <h1 className="text-3xl font-semibold tracking-tight">Connexion</h1>
+        </div>
+        {erreur ? (
+          <p aria-live="polite" className="text-sm text-destructive">
+            La connexion n’a pas pu être finalisée. Veuillez réessayer.
+          </p>
+        ) : null}
+        <GoogleOAuthForm action={signInWithGoogle} />
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="h-px flex-1 bg-border" />
+          <span>ou avec votre adresse email</span>
+          <span className="h-px flex-1 bg-border" />
         </div>
         <EmailPasswordForm action={signIn} mode="sign-in" />
         <Link className="text-sm font-medium underline" href="/mot-de-passe-oublie">

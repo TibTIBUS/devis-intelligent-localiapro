@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { EmailPasswordForm } from "@/components/auth/email-password-form";
-import { signUp } from "@/lib/auth/actions";
+import { GoogleOAuthForm } from "@/components/auth/google-oauth-form";
+import { signInWithGoogle, signUp } from "@/lib/auth/actions";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function SignUpPage() {
@@ -22,6 +23,12 @@ export default async function SignUpPage() {
           <p className="text-sm text-muted-foreground">
             Utilisez au moins 8 caractères pour votre mot de passe.
           </p>
+        </div>
+        <GoogleOAuthForm action={signInWithGoogle} />
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="h-px flex-1 bg-border" />
+          <span>ou avec votre adresse email</span>
+          <span className="h-px flex-1 bg-border" />
         </div>
         <EmailPasswordForm action={signUp} mode="sign-up" />
         <p className="text-sm text-muted-foreground">
