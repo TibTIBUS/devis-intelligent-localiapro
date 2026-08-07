@@ -12,6 +12,7 @@ import {
 import { getCatalogItems } from "@/lib/catalog/queries";
 import { QuotePdfForm } from "@/components/quotes/quote-pdf-form";
 import { QuoteAcceptancePanel } from "@/components/quotes/quote-acceptance-form";
+import { QuoteAssistant } from "@/components/quotes/quote-assistant";
 import { validateQuoteCompliance, type QuoteComplianceResult } from "@/lib/compliance/quote-compliance";
 import { getCustomers } from "@/lib/customers/queries";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
@@ -162,6 +163,8 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
             <p className="text-sm text-muted-foreground">Total en attente : renseignez le prix HT et le taux de TVA des lignes {editor.totals.missingLineIndexes.map((index) => index + 1).join(", ")}.</p>
           )}
         </section>
+
+        {!finalized ? <QuoteAssistant quoteId={editor.quote.id} /> : null}
 
         {finalized ? (
           <>

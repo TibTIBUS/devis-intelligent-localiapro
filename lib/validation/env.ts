@@ -14,8 +14,14 @@ const serverEnvSchema = publicEnvSchema.extend({
   OPENAI_REALTIME_MODEL: z.string().min(1),
 });
 
+const openAIEnvSchema = z.object({
+  OPENAI_API_KEY: z.string().min(1),
+  OPENAI_TEXT_MODEL: z.string().min(1),
+});
+
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
+export type OpenAIEnv = z.infer<typeof openAIEnvSchema>;
 
 type Environment = Record<string, string | undefined>;
 
@@ -36,5 +42,12 @@ export function parseServerEnv(env: Environment): ServerEnv {
     OPENAI_API_KEY: env.OPENAI_API_KEY,
     OPENAI_TEXT_MODEL: env.OPENAI_TEXT_MODEL,
     OPENAI_REALTIME_MODEL: env.OPENAI_REALTIME_MODEL,
+  });
+}
+
+export function parseOpenAIEnv(env: Environment): OpenAIEnv {
+  return openAIEnvSchema.parse({
+    OPENAI_API_KEY: env.OPENAI_API_KEY,
+    OPENAI_TEXT_MODEL: env.OPENAI_TEXT_MODEL,
   });
 }

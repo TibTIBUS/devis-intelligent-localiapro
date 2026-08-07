@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parsePublicEnv, parseServerEnv } from "@/lib/validation/env";
+import { parseOpenAIEnv, parsePublicEnv, parseServerEnv } from "@/lib/validation/env";
 
 const validEnv = {
   NEXT_PUBLIC_APP_URL: "http://localhost:3000",
@@ -35,5 +35,13 @@ describe("environment validation", () => {
     expect(parseServerEnv(validEnv).SUPABASE_SERVICE_ROLE_KEY).toBe(
       "service-role-test",
     );
+  });
+
+  it("can validate the OpenAI server configuration independently", () => {
+    expect(parseOpenAIEnv(validEnv)).toEqual({
+      OPENAI_API_KEY: "openai-test",
+      OPENAI_TEXT_MODEL: "text-model-test",
+    });
+    expect(() => parseOpenAIEnv({ OPENAI_API_KEY: "openai-test" })).toThrow();
   });
 });
