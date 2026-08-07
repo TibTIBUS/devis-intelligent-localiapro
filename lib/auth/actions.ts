@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import {
   getAuthFormValues,
   getFieldErrors,
+  getPasswordFormValues,
   type AuthFormState,
+  passwordResetRequestSchema,
+  passwordUpdateSchema,
   signInSchema,
   signUpSchema,
 } from "@/lib/validation/auth";
@@ -81,4 +84,62 @@ export async function signUp(
       "Si cette adresse peut être inscrite, un email de confirmation vient d’être envoyé.",
     status: "success",
   };
+}
+
+export async function requestPasswordReset(
+  previousState: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  void previousState;
+  const parsed = passwordResetRequestSchema.safeParse({
+    email: formData.get("email"),
+  });
+
+  if (!parsed.success) {
+    return validationError(parsed.error);
+  }
+
+  const env = parsePublicEnv(process.env);
+  const supabase = await createClient();
+  await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/confirm?next=/mot-de-passe/nouveau`,
+  });
+
+  return {
+    message:
+      "Si un compte correspond à cette adresse, un email de réinitialisation vient d’être envoyé.",
+    status: "success",
+  };
+}
+
+export async function updatePassword(
+  previousState: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  void previousState;
+  const parsed = passwordUpdateSchema.safeParse(getPasswordFormValues(formData));
+
+  if (!parsed.success) {
+    return validationError(parsed.error);
+  }
+
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+
+  if (!claimsData) {
+    redirect("/mot-de-passe-oublie?erreur=lien_invalide");
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password: parsed.data.password,
+  });
+
+  if (error) {
+    return {
+      message: "Impossible de modifier votre mot de passe pour le moment.",
+      status: "error",
+    };
+  }
+
+  redirect("/tableau-de-bord");
 }

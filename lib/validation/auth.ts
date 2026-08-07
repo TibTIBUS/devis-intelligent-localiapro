@@ -19,6 +19,18 @@ export const signUpSchema = signInSchema
     path: ["passwordConfirmation"],
   });
 
+export const passwordResetRequestSchema = z.object({ email });
+
+export const passwordUpdateSchema = z
+  .object({
+    password,
+    passwordConfirmation: password,
+  })
+  .refine(({ password, passwordConfirmation }) => password === passwordConfirmation, {
+    message: "Les mots de passe ne correspondent pas.",
+    path: ["passwordConfirmation"],
+  });
+
 export type AuthFormState = {
   fieldErrors?: Partial<Record<"email" | "password" | "passwordConfirmation", string>>;
   message?: string;
@@ -30,6 +42,13 @@ export const initialAuthFormState: AuthFormState = { status: "idle" };
 export function getAuthFormValues(formData: FormData) {
   return {
     email: formData.get("email"),
+    password: formData.get("password"),
+    passwordConfirmation: formData.get("passwordConfirmation"),
+  };
+}
+
+export function getPasswordFormValues(formData: FormData) {
+  return {
     password: formData.get("password"),
     passwordConfirmation: formData.get("passwordConfirmation"),
   };

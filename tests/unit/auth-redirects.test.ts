@@ -11,6 +11,12 @@ describe("getSafeAuthenticatedRedirect", () => {
     expect(getSafeAuthenticatedRedirect("/devis/nouveau")).toBe("/devis/nouveau");
   });
 
+  it("supports a route-specific safe fallback", () => {
+    expect(getSafeAuthenticatedRedirect(null, "/mot-de-passe/nouveau")).toBe(
+      "/mot-de-passe/nouveau",
+    );
+  });
+
   it("rejects external and protocol-relative destinations", () => {
     expect(getSafeAuthenticatedRedirect("https://evil.example")).toBe(
       "/tableau-de-bord",

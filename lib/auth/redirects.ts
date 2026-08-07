@@ -2,6 +2,7 @@ const defaultAuthenticatedPath = "/tableau-de-bord";
 
 export function getSafeAuthenticatedRedirect(
   next: string | null,
+  fallback = defaultAuthenticatedPath,
 ): string {
   if (
     !next ||
@@ -9,7 +10,7 @@ export function getSafeAuthenticatedRedirect(
     next.startsWith("//") ||
     next.includes("\\\\")
   ) {
-    return defaultAuthenticatedPath;
+    return fallback;
   }
 
   return next;

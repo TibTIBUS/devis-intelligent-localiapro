@@ -21,6 +21,9 @@ export default async function LoginPage() {
           <h1 className="text-3xl font-semibold tracking-tight">Connexion</h1>
         </div>
         <EmailPasswordForm action={signIn} mode="sign-in" />
+        <Link className="text-sm font-medium underline" href="/mot-de-passe-oublie">
+          Mot de passe oublié ?
+        </Link>
         <p className="text-sm text-muted-foreground">
           Pas encore de compte ?{" "}
           <Link className="font-medium text-foreground underline" href="/inscription">

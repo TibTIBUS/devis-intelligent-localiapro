@@ -9,8 +9,7 @@ navigateur et le serveur.
 - `/auth/callback` échange le code PKCE contre une session et refuse toute
   destination de redirection externe.
 
-OAuth Google et la récupération de mot de passe restent hors périmètre de ce
-ticket.
+OAuth Google reste hors périmètre de ce ticket.
 
 ## Email et mot de passe
 
@@ -26,3 +25,14 @@ Avant un test sur l’environnement Supabase distant, reproduire ces réglages
 dans **Auth > URL Configuration** et activer la confirmation d’email dans le
 fournisseur Email. La configuration SMTP de production sera traitée avant la
 mise en ligne.
+
+## Réinitialisation du mot de passe
+
+AUTH-003 envoie une réponse identique pour toute adresse email valide afin de
+ne pas révéler l’existence d’un compte. Le lien email passe par
+`/auth/confirm`, qui vérifie uniquement un jeton Supabase de type `recovery`
+avant d’ouvrir la page de changement de mot de passe.
+
+Le modèle local `supabase/templates/recovery.html` utilise `TokenHash` pour que
+la session soit créée côté serveur. Reproduire ce modèle dans **Auth > Email
+Templates > Reset Password** sur le projet Supabase distant avant un test réel.
