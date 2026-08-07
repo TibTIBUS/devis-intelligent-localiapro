@@ -23,3 +23,11 @@ L’identifiant `auth.users.id` reste l’unique identifiant canonique. Le callb
 OAuth contrôle la cohérence des `user_id` des identités et n’amorce aucune
 organisation. Les espaces de travail sont donc créés ultérieurement à partir
 de cet identifiant stable, quel que soit le mode de connexion.
+
+## ORG-001 — création initiale atomique
+
+La première organisation est créée par une fonction RPC transactionnelle avec
+`security invoker`. Elle applique donc les politiques RLS existantes et ne
+dispose pas de privilèges supplémentaires. Un verrou transactionnel par
+utilisateur et le retour de l’adhésion existante rendent l’onboarding
+idempotent face aux doubles soumissions.

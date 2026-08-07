@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(15);
+select plan(21);
 
 select has_table('public', 'profiles', 'profiles should exist');
 select has_table('public', 'organizations', 'organizations should exist');
@@ -79,11 +79,24 @@ values
     '{}',
     now(),
     now()
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '00000000-0000-0000-0000-000000000003',
+    'authenticated',
+    'authenticated',
+    'owner-c@example.test',
+    'not-used-in-tests',
+    now(),
+    '{"provider":"email","providers":["email"]}',
+    '{}',
+    now(),
+    now()
   );
 
 select results_eq(
   $$ select count(*)::bigint from public.profiles $$,
-  array[2::bigint],
+  array[3::bigint],
   'creating auth users should create profiles'
 );
 
@@ -151,6 +164,71 @@ select results_eq(
   $$,
   array[]::uuid[],
   'an owner should not update another organization'
+);
+
+reset role;
+
+select has_function(
+  'public',
+  'create_initial_organization',
+  array['text', 'text'],
+  'the initial organization function should exist'
+);
+
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.create_initial_organization(text, text)',
+    'execute'
+  ),
+  'anonymous users should not execute the initial organization function'
+);
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '00000000-0000-0000-0000-000000000003',
+  true
+);
+
+select lives_ok(
+  $$ select public.create_initial_organization('Entreprise C', 'MaÃ§onnerie') $$,
+  'an authenticated user can create an initial organization atomically'
+);
+
+select results_eq(
+  $$
+    select count(*)::bigint
+    from public.organization_members
+    where user_id = '00000000-0000-0000-0000-000000000003'
+      and role = 'owner'
+  $$,
+  array[1::bigint],
+  'creating an initial organization also creates its owner membership'
+);
+
+select results_eq(
+  $$
+    select created_by
+    from public.organizations
+    where id = (
+      select organization_id
+      from public.organization_members
+      where user_id = '00000000-0000-0000-0000-000000000003'
+    )
+  $$,
+  array['00000000-0000-0000-0000-000000000003'::uuid],
+  'the organization is owned by the authenticated creator'
+);
+
+select is(
+  public.create_initial_organization('Tentative de doublon', 'MaÃ§onnerie'),
+  (
+    select organization_id
+    from public.organization_members
+    where user_id = '00000000-0000-0000-0000-000000000003'
+  ),
+  'repeating onboarding returns the existing organization'
 );
 
 reset role;

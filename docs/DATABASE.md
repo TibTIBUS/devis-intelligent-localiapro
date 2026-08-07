@@ -26,6 +26,14 @@ Les fonctions de vérification d’adhésion résident dans le schéma non expos
 `private`. Elles ne reçoivent jamais d’identifiant utilisateur : elles se
 fondent exclusivement sur `auth.uid()`.
 
+## Onboarding initial
+
+La fonction RPC `public.create_initial_organization(name, trade)` crée dans une
+seule transaction l’organisation et son adhésion `owner`. Elle s’exécute avec
+les droits de l’appelant, reste inaccessible au rôle anonyme et utilise
+`auth.uid()` côté base. Une deuxième soumission retourne l’organisation déjà
+liée à l’utilisateur : aucun espace de travail n’est créé par erreur.
+
 ## Tests
 
 Les tests pgTAP seront conservés dans `supabase/tests/` et exécutés par :
