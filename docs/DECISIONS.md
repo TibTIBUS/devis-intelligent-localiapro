@@ -112,3 +112,7 @@ affichées correspond exactement aux totaux du document, y compris en multi-TVA.
 ## QUOTE-003 — les totaux viennent toujours de la relecture serveur
 
 Le devis est modifié par opérations courtes (création, ajout, modification ou suppression), chacune validée et autorisée côté serveur avant d’être persistée. Après chaque opération, l’éditeur relit les lignes depuis Supabase et appelle le moteur de calcul unique. Les montants visibles ne sont donc jamais des valeurs client faisant autorité.
+
+## QUOTE-004 — la reprise ne contourne pas le moteur financier
+
+La liste est une vue de lecture du devis vivant. Elle ne stocke pas de total dupliqué : chaque TTC affiché est calculé à la lecture depuis les lignes, la remise et l’acompte du devis. Un devis incomplet reste visible, mais sans montant officiel.

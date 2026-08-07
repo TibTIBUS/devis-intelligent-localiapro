@@ -21,6 +21,7 @@ export default async function NewQuotePage() {
           <h1 className="text-3xl font-semibold tracking-tight">Nouveau devis</h1>
           <p className="text-sm text-muted-foreground">Commencez par choisir le client concerné. Le devis sera ensuite enregistré à chaque modification.</p>
         </div>
+        <Link className="inline-block text-sm font-medium underline" href="/devis">Voir les devis enregistrés</Link>
         {customers.length ? <CreateQuoteForm action={createQuote} customers={customers} /> : <div className="space-y-3 rounded-lg border border-border p-5"><p className="text-sm text-muted-foreground">Créez d’abord un client pour pouvoir ouvrir un devis.</p><Link className="text-sm font-medium underline" href="/clients">Gérer les clients</Link></div>}
       </section>
     </main>

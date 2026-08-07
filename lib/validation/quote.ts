@@ -112,6 +112,7 @@ export const quoteLineSchema = z.object({
 export const quoteIdSchema = z.string().uuid();
 export const quoteLineIdSchema = z.string().uuid();
 export const quoteSectionIdSchema = z.string().uuid();
+export const quoteSearchSchema = z.string().trim().max(100, "La recherche est trop longue.");
 
 export type QuoteFormState = {
   fieldErrors?: Partial<Record<string, string>>;

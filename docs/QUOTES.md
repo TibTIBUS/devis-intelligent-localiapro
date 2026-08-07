@@ -43,3 +43,7 @@ ligne de devis restent conservées.
 Un devis est créé depuis un client existant. L’éditeur permet ensuite de gérer les sections, les lignes manuelles, les lignes issues du catalogue, la remise globale et l’acompte. Chaque modification est validée par une Server Action, écrite avec la session Supabase de l’utilisateur puis relue depuis la base. Le navigateur ne transmet ni total HT, ni TVA, ni TTC à enregistrer.
 
 Une ligne issue du catalogue reprend côté serveur son libellé, son unité, sa description et son prix HT. Le taux de TVA reste une saisie explicite, car il n’est pas défini dans le catalogue V1.
+
+## Liste et reprise QUOTE-004
+
+La liste des devis est limitée côté serveur à l’organisation courante et reste soumise aux politiques RLS. Elle affiche le client, la dernière modification et, lorsque le devis est complet, un TTC calculé à partir des lignes relues en base. La recherche par client est validée et normalisée avant filtrage ; elle ne sert jamais à construire une requête SQL libre.

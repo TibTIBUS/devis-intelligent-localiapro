@@ -7,7 +7,9 @@ import {
   getQuoteLineValues,
   quoteFinancialSettingsSchema,
   quoteLineSchema,
+  quoteSearchSchema,
 } from "@/lib/validation/quote";
+import { filterQuotesByCustomerName } from "@/lib/quotes/queries";
 
 describe("quote validation", () => {
   it("normalizes manual financial values to integer storage units", () => {
@@ -77,5 +79,19 @@ describe("quote validation", () => {
     expect(formatAmountInput(5590)).toBe("55,90");
     expect(formatQuantityInput(1250)).toBe("1,25");
     expect(formatRateInput(550)).toBe("5,50");
+  });
+
+  it("validates a short optional customer search", () => {
+    expect(quoteSearchSchema.parse("  Martin  ")).toBe("Martin");
+    expect(quoteSearchSchema.safeParse("a".repeat(101)).success).toBe(false);
+  });
+
+  it("filters quote lists without case sensitivity", () => {
+    const quotes = [
+      { customerName: "Martin Bâtiment", id: "1" },
+      { customerName: "Durand plomberie", id: "2" },
+    ];
+    expect(filterQuotesByCustomerName(quotes, "BÂTI")).toEqual([quotes[0]]);
+    expect(filterQuotesByCustomerName(quotes, "")).toEqual(quotes);
   });
 });
