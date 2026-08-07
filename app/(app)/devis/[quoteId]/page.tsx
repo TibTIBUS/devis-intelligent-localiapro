@@ -11,6 +11,7 @@ import {
 } from "@/components/quotes/quote-forms";
 import { getCatalogItems } from "@/lib/catalog/queries";
 import { QuotePdfForm } from "@/components/quotes/quote-pdf-form";
+import { QuoteAcceptancePanel } from "@/components/quotes/quote-acceptance-form";
 import { validateQuoteCompliance, type QuoteComplianceResult } from "@/lib/compliance/quote-compliance";
 import { getCustomers } from "@/lib/customers/queries";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
@@ -22,6 +23,8 @@ import {
   saveQuoteLine,
   saveQuoteSection,
 } from "@/lib/quotes/actions";
+import { recordQuoteAcceptance } from "@/lib/quotes/acceptance-actions";
+import { getQuoteAcceptance } from "@/lib/quotes/acceptance-queries";
 import { getQuoteEditorData, type QuoteLine, type QuoteSection } from "@/lib/quotes/queries";
 import { createClient } from "@/lib/supabase/server";
 
@@ -100,10 +103,11 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
   const organizationId = await getCurrentOrganizationId(supabase);
   if (!organizationId) redirect("/onboarding");
 
-  const [editor, customers, catalogItems] = await Promise.all([
+  const [editor, customers, catalogItems, acceptance] = await Promise.all([
     getQuoteEditorData(supabase, organizationId, quoteId),
     getCustomers(supabase, organizationId),
     getCatalogItems(supabase, organizationId),
+    getQuoteAcceptance(supabase, organizationId, quoteId),
   ]);
   if (!editor) notFound();
   const compliance = editor.quote.status === "draft"
@@ -163,6 +167,7 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
           <>
             <FinalizedContent lines={editor.lines} />
             {editor.quote.quote_version_id ? <QuotePdfForm quoteId={editor.quote.id} versionId={editor.quote.quote_version_id} /> : null}
+            {editor.quote.quote_version_id ? <QuoteAcceptancePanel acceptance={acceptance} action={recordQuoteAcceptance} quoteId={editor.quote.id} versionId={editor.quote.quote_version_id} /> : null}
           </>
         ) : <DraftContent catalogItems={catalogItems} compliance={compliance!} lines={editor.lines} quoteId={editor.quote.id} sections={editor.sections} />}
       </section>

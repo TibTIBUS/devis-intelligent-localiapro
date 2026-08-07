@@ -66,6 +66,36 @@ Un devis finalisé et son contenu ne sont plus modifiables ni supprimables. Ce
 statut interne signifie que le document est figé ; il ne vaut pas acceptation
 par le client. L’acceptation commerciale sera modélisée séparément.
 
+## Périmètre QUOTE-006
+
+L'acceptation commerciale reste distincte du statut technique `finalized`. Un
+membre de l'entreprise peut constater une acceptation déjà reçue hors de
+l'application en indiquant la version immuable concernée, la date, le nom du
+signataire et la nature de la preuve disponible. Cet enregistrement est unique
+par version et ne peut ensuite être ni modifié ni supprimé.
+La date constatée doit être comprise entre l'émission et la date de validité du
+devis. Après cette échéance, l'offre est caduque et un nouveau devis doit être
+émis avant de constater une acceptation.
+
+Cette fonctionnalité n'est pas un procédé de signature électronique et ne
+certifie ni l'identité du client ni l'intégrité d'un fichier signé. La signature
+électronique demeure hors du MVP, conformément à l'architecture. Les modes
+proposés reflètent les situations décrites par Service Public Entreprendre :
+devis signé, confirmation écrite ou versement d'un acompte. L'artisan reste
+responsable de conserver la preuve d'origine.
+
+Références officielles :
+
+- Code civil, article 1113, formation du contrat par l'offre et l'acceptation :
+  <https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000032040896>
+- Code civil, article 1117, caducité de l'offre à l'expiration du délai fixé :
+  <https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000036829821>
+- Code civil, articles 1366 et 1367, écrit et signature électroniques :
+  <https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000032042461> et
+  <https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000032042456>
+- Service Public Entreprendre, effets de l'acceptation d'un devis :
+  <https://entreprendre.service-public.fr/vosdroits/F31144>
+
 ## Contrôle réglementaire COMPLIANCE-001
 
 Avant finalisation, l’éditeur affiche les erreurs bloquantes et les points
