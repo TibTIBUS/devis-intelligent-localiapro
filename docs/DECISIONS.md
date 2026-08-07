@@ -108,3 +108,7 @@ Une remise globale réduit la base taxable et est ventilée exactement entre les
 catégories de TVA. La taxe est ensuite calculée sur la base nette agrégée de
 chaque taux. Cette ventilation garantit que la somme des bases et taxes
 affichées correspond exactement aux totaux du document, y compris en multi-TVA.
+
+## QUOTE-003 — les totaux viennent toujours de la relecture serveur
+
+Le devis est modifié par opérations courtes (création, ajout, modification ou suppression), chacune validée et autorisée côté serveur avant d’être persistée. Après chaque opération, l’éditeur relit les lignes depuis Supabase et appelle le moteur de calcul unique. Les montants visibles ne sont donc jamais des valeurs client faisant autorité.

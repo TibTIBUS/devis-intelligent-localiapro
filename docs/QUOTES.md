@@ -37,3 +37,9 @@ unitaire HT et taux par prestation, réduction de la base taxable, puis total HT
 et TVA distincts par taux. La référence catalogue reste facultative et devient
 nulle si la prestation catalogue est supprimée ; les données copiées dans la
 ligne de devis restent conservées.
+
+## Édition manuelle QUOTE-003
+
+Un devis est créé depuis un client existant. L’éditeur permet ensuite de gérer les sections, les lignes manuelles, les lignes issues du catalogue, la remise globale et l’acompte. Chaque modification est validée par une Server Action, écrite avec la session Supabase de l’utilisateur puis relue depuis la base. Le navigateur ne transmet ni total HT, ni TVA, ni TTC à enregistrer.
+
+Une ligne issue du catalogue reprend côté serveur son libellé, son unité, sa description et son prix HT. Le taux de TVA reste une saisie explicite, car il n’est pas défini dans le catalogue V1.

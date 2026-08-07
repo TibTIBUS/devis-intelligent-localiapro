@@ -36,6 +36,9 @@ export default async function DashboardPage() {
       <Link className="mt-3 block text-sm font-medium underline" href="/clients">
         Gérer les clients
       </Link>
+      <Link className="mt-3 block text-sm font-medium underline" href="/devis/nouveau">
+        CrÃ©er un devis
+      </Link>
     </main>
   );
 }
