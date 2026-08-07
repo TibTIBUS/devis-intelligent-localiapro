@@ -38,3 +38,15 @@ Le logo reste dans un bucket privé et porte un chemin déterministe sans
 extension. Le remplacement utilise ainsi un `upsert` sur le même objet, sans
 colonne de chemin supplémentaire ni ancien fichier orphelin. Les politiques
 Storage exigent l’adhésion à l’organisation pour `SELECT`, `INSERT` et `UPDATE`.
+
+## COMPANY-001 — séparation de l’identité légale et des assurances
+
+L’identité légale est une ressource unique par organisation, tandis que les
+assurances sont des ressources multiples avec leurs propres périodes de
+validité. Les champs d’assurance ne sont pas intégrés à la fiche légale afin de
+ne pas limiter une entreprise à un seul contrat.
+
+Le type d’assurance n’est pas une énumération PostgreSQL : les obligations
+dépendent du métier et peuvent évoluer. La validation fonctionnelle des types
+attendus sera portée par l’application au moment du formulaire, sans rendre le
+schéma réglementairement rigide.
