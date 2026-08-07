@@ -18,6 +18,12 @@ export default async function DashboardPage() {
       <Link className="mt-6 inline-block text-sm font-medium underline" href="/entreprise/logo">
         Ajouter ou remplacer le logo de l’entreprise
       </Link>
+      <Link
+        className="mt-3 block text-sm font-medium underline"
+        href="/entreprise/informations-legales"
+      >
+        Gérer les informations légales de l’entreprise
+      </Link>
     </main>
   );
 }

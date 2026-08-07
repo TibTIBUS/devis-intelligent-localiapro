@@ -55,5 +55,5 @@ export async function uploadOrganizationLogo(
     };
   }
 
-  redirect("/tableau-de-bord?logo=ajoute");
+  redirect("/entreprise/informations-legales");
 }
