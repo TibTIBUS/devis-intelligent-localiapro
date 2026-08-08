@@ -2,11 +2,13 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
+import { createRequestId, logTechnicalError } from "@/lib/observability/logger";
 import { undoLastAiQuoteAction } from "@/lib/quotes/ai-actions";
 import { createClient } from "@/lib/supabase/server";
 import { undoAiQuoteActionSchema } from "@/lib/validation/ai";
 
 export async function POST(request: Request) {
+  const requestId = createRequestId();
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
@@ -22,7 +24,12 @@ export async function POST(request: Request) {
     revalidatePath(`/devis/${parsed.data.quoteId}`);
     return NextResponse.json({ message: "La dernière action de l’assistant a été annulée." });
   } catch (error) {
-    console.error("AI quote action undo failed", error);
+    logTechnicalError("ai.action_undo_failed", {
+      organizationId,
+      quoteId: parsed.data.quoteId,
+      requestId,
+      userId: claimsData.claims.sub,
+    }, error);
     return NextResponse.json({ error: "Aucune action récente ne peut être annulée sans risque." }, { status: 409 });
   }
 }

@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
+import { logTechnicalError } from "@/lib/observability/logger";
+
 const complianceIssueSchema = z.object({ code: z.string(), field: z.string() });
 const complianceResultSchema = z.object({
   errors: z.array(complianceIssueSchema),
@@ -52,10 +54,16 @@ export async function validateQuoteCompliance(
   quoteId: string,
 ): Promise<QuoteComplianceResult> {
   const { data, error } = await client.rpc("validate_quote_compliance", { p_quote_id: quoteId });
-  if (error) throw new Error("Impossible de contrôler la conformité du devis.");
+  if (error) {
+    logTechnicalError("quote.compliance_check_failed", { quoteId }, error);
+    throw new Error("Impossible de contrôler la conformité du devis.");
+  }
 
   const parsed = complianceResultSchema.safeParse(data);
-  if (!parsed.success) throw new Error("Le contrôle de conformité a renvoyé un résultat invalide.");
+  if (!parsed.success) {
+    logTechnicalError("quote.compliance_invalid_response", { quoteId }, parsed.error);
+    throw new Error("Le contrôle de conformité a renvoyé un résultat invalide.");
+  }
 
   return {
     ...parsed.data,

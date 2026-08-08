@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
+import { createRequestId, logTechnicalWarning } from "@/lib/observability/logger";
 import { validateQuoteCompliance } from "@/lib/compliance/quote-compliance";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -30,7 +31,7 @@ async function getAuthenticatedOrganizationId() {
   const organizationId = await getCurrentOrganizationId(supabase);
   if (!organizationId) redirect("/onboarding");
 
-  return { organizationId, supabase };
+  return { organizationId, supabase, userId: claimsData.claims.sub };
 }
 
 function invalidQuoteForm(error: Parameters<typeof getQuoteFieldErrors>[0]): QuoteFormState {
@@ -112,9 +113,16 @@ export async function finalizeQuote(
   const quoteId = quoteIdSchema.safeParse(formData.get("quoteId"));
   if (!quoteId.success) return { message: "Impossible dâ€™identifier ce devis.", status: "error" };
 
-  const { supabase } = await getAuthenticatedOrganizationId();
+  const { organizationId, supabase, userId } = await getAuthenticatedOrganizationId();
   const compliance = await validateQuoteCompliance(supabase, quoteId.data);
   if (!compliance.valid) {
+    logTechnicalWarning("quote.compliance_blocked_finalization", {
+      organizationId,
+      quoteId: quoteId.data,
+      requestId: createRequestId(),
+      ruleCodes: compliance.errors.map((issue) => issue.code),
+      userId,
+    });
     return {
       message: compliance.errors.map((issue) => issue.message).join(" "),
       status: "error",

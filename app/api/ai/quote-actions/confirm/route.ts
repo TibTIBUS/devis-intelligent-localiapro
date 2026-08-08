@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
+import { createRequestId, logTechnicalError } from "@/lib/observability/logger";
 import {
   addCatalogQuoteLineFromAi,
   deleteQuoteLineFromAi,
@@ -13,6 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 import { confirmAiQuoteActionSchema } from "@/lib/validation/ai";
 
 export async function POST(request: Request) {
+  const requestId = createRequestId();
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
@@ -78,7 +80,13 @@ export async function POST(request: Request) {
     revalidatePath(`/devis/${parsed.data.quoteId}`);
     return NextResponse.json({ message });
   } catch (error) {
-    console.error("AI quote line confirmation failed", error);
+    logTechnicalError("ai.action_confirmation_failed", {
+      actionType: parsed.data.actionType,
+      organizationId,
+      quoteId: parsed.data.quoteId,
+      requestId,
+      userId: claimsData.claims.sub,
+    }, error);
     return NextResponse.json({ error: "L’action n’a pas pu être appliquée au devis." }, { status: 409 });
   }
 }

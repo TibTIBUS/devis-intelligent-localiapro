@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 
 import { runQuoteAssistant } from "@/lib/ai/quote-assistant";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
+import { createRequestId, logTechnicalError } from "@/lib/observability/logger";
 import { getQuoteEditorData } from "@/lib/quotes/queries";
 import { createClient } from "@/lib/supabase/server";
 import { quoteAssistantRequestSchema } from "@/lib/validation/ai";
 
 export async function POST(request: Request) {
+  const requestId = createRequestId();
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) {
@@ -64,12 +66,23 @@ export async function POST(request: Request) {
         })),
       },
       messages: parsed.data.messages,
+      observability: {
+        organizationId,
+        quoteId: editor.quote.id,
+        requestId,
+        userId: claimsData.claims.sub,
+      },
       organizationId,
       supabase,
     });
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Quote assistant failed", error);
+    logTechnicalError("ai.assistant_failed", {
+      organizationId,
+      quoteId: parsed.data.quoteId,
+      requestId,
+      userId: claimsData.claims.sub,
+    }, error);
     return NextResponse.json(
       { error: "L’assistant est temporairement indisponible." },
       { status: 503 },

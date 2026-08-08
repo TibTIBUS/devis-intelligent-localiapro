@@ -5,12 +5,14 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { generateQuotePdf } from "@/lib/pdf/generate-quote-pdf";
+import { createRequestId, logTechnicalError, logTechnicalInfo } from "@/lib/observability/logger";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 const idSchema = z.uuid();
 
 export async function generateQuotePdfDocument(formData: FormData) {
+  const requestId = createRequestId();
   const quoteId = idSchema.parse(formData.get("quoteId"));
   const versionId = idSchema.parse(formData.get("versionId"));
   const supabase = await createClient();
@@ -37,7 +39,15 @@ export async function generateQuotePdfDocument(formData: FormData) {
     .maybeSingle();
   if (existing) redirect(`/api/documents/${existing.id}/download`);
 
-  const pdf = await generateQuotePdf(version.snapshot, version.compliance_snapshot);
+  const context = { organizationId, quoteId, requestId, userId: claims.claims.sub };
+  logTechnicalInfo("pdf.generation_started", context);
+  let pdf: Buffer;
+  try {
+    pdf = await generateQuotePdf(version.snapshot, version.compliance_snapshot);
+  } catch (error) {
+    logTechnicalError("pdf.generation_failed", context, error);
+    throw error;
+  }
   const checksum = createHash("sha256").update(pdf).digest("hex");
   const path = `organizations/${organizationId}/quotes/${quoteId}/${versionId}.pdf`;
   const admin = createAdminClient();
@@ -47,6 +57,7 @@ export async function generateQuotePdfDocument(formData: FormData) {
     upsert: false,
   });
   if (upload.error && !upload.error.message.toLowerCase().includes("already exists")) {
+    logTechnicalError("pdf.storage_upload_failed", context, upload.error);
     throw new Error("Impossible d'enregistrer le PDF.");
   }
 
@@ -76,8 +87,10 @@ export async function generateQuotePdfDocument(formData: FormData) {
         .single();
       if (concurrent) redirect(`/api/documents/${concurrent.id}/download`);
     }
+    logTechnicalError("pdf.document_record_failed", context, documentError);
     await admin.storage.from("quote-pdfs").remove([path]);
     throw new Error("Impossible d'enregistrer le document.");
   }
+  logTechnicalInfo("pdf.generated", { ...context, documentId: document.id });
   redirect(`/api/documents/${document.id}/download`);
 }

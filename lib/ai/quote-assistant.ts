@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ResponseInputItem } from "openai/resources/responses/responses";
 
 import { createOpenAIClient } from "@/lib/ai/client";
+import { logTechnicalError, type TechnicalLogContext } from "@/lib/observability/logger";
 import { buildQuoteAssistantPrompt, type QuoteAssistantContext } from "@/lib/ai/prompts/quote-assistant";
 import { addQuoteLineTool, prepareAddQuoteLineTool } from "@/lib/ai/tools/add-quote-line";
 import {
@@ -30,12 +31,14 @@ type RunQuoteAssistantOptions = {
   context: QuoteAssistantContext;
   messages: AiConversationMessage[];
   organizationId: string;
+  observability: TechnicalLogContext;
   supabase: SupabaseClient;
 };
 
 export async function runQuoteAssistant({
   context,
   messages,
+  observability,
   organizationId,
   supabase,
 }: RunQuoteAssistantOptions) {
@@ -47,14 +50,20 @@ export async function runQuoteAssistant({
   }));
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
-    const response = await client.responses.create({
-      input,
-      instructions: buildQuoteAssistantPrompt(context),
-      model,
-      parallel_tool_calls: false,
-      store: false,
-      tools: [searchCatalogTool, addQuoteLineTool, updateQuoteLineTool, deleteQuoteLineTool, setDiscountTool, setDepositTool, setPaymentTermsTool, setValidityTool, setWorksiteAddressTool, updateQuoteNoteTool],
-    });
+    let response;
+    try {
+      response = await client.responses.create({
+        input,
+        instructions: buildQuoteAssistantPrompt(context),
+        model,
+        parallel_tool_calls: false,
+        store: false,
+        tools: [searchCatalogTool, addQuoteLineTool, updateQuoteLineTool, deleteQuoteLineTool, setDiscountTool, setDepositTool, setPaymentTermsTool, setValidityTool, setWorksiteAddressTool, updateQuoteNoteTool],
+      });
+    } catch (error) {
+      logTechnicalError("ai.response_failed", observability, error);
+      throw error;
+    }
     const calls = response.output.filter((item) => item.type === "function_call");
 
     if (calls.length === 0) {
@@ -68,53 +77,58 @@ export async function runQuoteAssistant({
     input.push(...response.output as unknown as ResponseInputItem[]);
     for (const call of calls) {
       let output: unknown;
-      if (call.name === searchCatalogTool.name) {
-        output = await executeSearchCatalogTool(
-          supabase,
-          organizationId,
-          call.arguments,
-        );
-      } else if (call.name === addQuoteLineTool.name) {
-        const result = await prepareAddQuoteLineTool(
-          supabase,
-          organizationId,
-          call.arguments,
-        );
-        if (result.proposal) {
+      try {
+        if (call.name === searchCatalogTool.name) {
+          output = await executeSearchCatalogTool(
+            supabase,
+            organizationId,
+            call.arguments,
+          );
+        } else if (call.name === addQuoteLineTool.name) {
+          const result = await prepareAddQuoteLineTool(
+            supabase,
+            organizationId,
+            call.arguments,
+          );
+          if (result.proposal) {
+            if (pendingAction) throw new Error("Une seule proposition peut être préparée à la fois.");
+            pendingAction = result.proposal;
+          }
+          output = result.output;
+        } else if (call.name === updateQuoteLineTool.name) {
+          const result = await prepareUpdateQuoteLineTool(
+            supabase,
+            organizationId,
+            context.quoteId,
+            call.arguments,
+          );
           if (pendingAction) throw new Error("Une seule proposition peut être préparée à la fois.");
           pendingAction = result.proposal;
+          output = result.output;
+        } else if (call.name === deleteQuoteLineTool.name) {
+          const result = await prepareDeleteQuoteLineTool(
+            supabase,
+            organizationId,
+            context.quoteId,
+            call.arguments,
+          );
+          if (pendingAction) throw new Error("Une seule proposition peut être préparée à la fois.");
+          pendingAction = result.proposal;
+          output = result.output;
+        } else if ([setPaymentTermsTool.name, setValidityTool.name, setWorksiteAddressTool.name, updateQuoteNoteTool.name].includes(call.name)) {
+          if (pendingAction) throw new Error("Une seule proposition peut être préparée à la fois.");
+          pendingAction = prepareQuoteMetadataTool(call.name, call.arguments, context.workAddresses);
+          output = confirmationOutput;
+        } else if ([setDiscountTool.name, setDepositTool.name].includes(call.name)) {
+          if (pendingAction) throw new Error("Une seule proposition peut être préparée à la fois.");
+          pendingAction = prepareQuoteFinancialSettingTool(call.name, call.arguments, context);
+          output = confirmationOutput;
+        } else {
+          throw new Error("L’assistant a demandé un outil non autorisé.");
         }
-        output = result.output;
-      } else if (call.name === updateQuoteLineTool.name) {
-        const result = await prepareUpdateQuoteLineTool(
-          supabase,
-          organizationId,
-          context.quoteId,
-          call.arguments,
-        );
-        if (pendingAction) throw new Error("Une seule proposition peut être préparée à la fois.");
-        pendingAction = result.proposal;
-        output = result.output;
-      } else if (call.name === deleteQuoteLineTool.name) {
-        const result = await prepareDeleteQuoteLineTool(
-          supabase,
-          organizationId,
-          context.quoteId,
-          call.arguments,
-        );
-        if (pendingAction) throw new Error("Une seule proposition peut être préparée à la fois.");
-        pendingAction = result.proposal;
-        output = result.output;
-      } else if ([setPaymentTermsTool.name, setValidityTool.name, setWorksiteAddressTool.name, updateQuoteNoteTool.name].includes(call.name)) {
-        if (pendingAction) throw new Error("Une seule proposition peut être préparée à la fois.");
-        pendingAction = prepareQuoteMetadataTool(call.name, call.arguments, context.workAddresses);
-        output = confirmationOutput;
-      } else if ([setDiscountTool.name, setDepositTool.name].includes(call.name)) {
-        if (pendingAction) throw new Error("Une seule proposition peut être préparée à la fois.");
-        pendingAction = prepareQuoteFinancialSettingTool(call.name, call.arguments, context);
-        output = confirmationOutput;
-      } else {
-        throw new Error("L’assistant a demandé un outil non autorisé.");
+      } catch (error) {
+        logTechnicalError("ai.tool_call_failed", { ...observability, toolName: call.name }, error);
+        throw error;
       }
       input.push({
         call_id: call.call_id,
