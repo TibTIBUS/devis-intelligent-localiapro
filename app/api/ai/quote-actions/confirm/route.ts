@@ -11,6 +11,7 @@ import {
   updateQuoteMetadataFromAi,
 } from "@/lib/quotes/ai-actions";
 import { createClient } from "@/lib/supabase/server";
+import { parseBoundedAiJsonRequest } from "@/lib/security/bounded-json-request";
 import { confirmAiQuoteActionSchema } from "@/lib/validation/ai";
 
 export async function POST(request: Request) {
@@ -19,7 +20,12 @@ export async function POST(request: Request) {
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
 
-  const parsed = confirmAiQuoteActionSchema.safeParse(await request.json().catch(() => null));
+  const requestBody = await parseBoundedAiJsonRequest(request);
+  if (!requestBody.success) {
+    return NextResponse.json({ error: requestBody.error }, { status: requestBody.status });
+  }
+
+  const parsed = confirmAiQuoteActionSchema.safeParse(requestBody.data);
   if (!parsed.success) {
     return NextResponse.json({ error: "Vérifiez les informations de l’action proposée." }, { status: 400 });
   }

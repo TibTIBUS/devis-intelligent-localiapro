@@ -5,6 +5,7 @@ import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import { createRequestId, logTechnicalError, logTechnicalWarning } from "@/lib/observability/logger";
 import { getQuoteEditorData } from "@/lib/quotes/queries";
 import { consumeAiAssistantRequestQuota } from "@/lib/security/ai-assistant-rate-limit";
+import { parseBoundedAiJsonRequest } from "@/lib/security/bounded-json-request";
 import { createClient } from "@/lib/supabase/server";
 import { quoteAssistantRequestSchema } from "@/lib/validation/ai";
 
@@ -14,6 +15,11 @@ export async function POST(request: Request) {
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) {
     return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+  }
+
+  const requestBody = await parseBoundedAiJsonRequest(request);
+  if (!requestBody.success) {
+    return NextResponse.json({ error: requestBody.error }, { status: requestBody.status });
   }
 
   const quota = await consumeAiAssistantRequestQuota(claimsData.claims.sub);
@@ -31,7 +37,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "L’assistant est temporairement indisponible." }, { status: 503 });
   }
 
-  const parsed = quoteAssistantRequestSchema.safeParse(await request.json().catch(() => null));
+  const parsed = quoteAssistantRequestSchema.safeParse(requestBody.data);
   if (!parsed.success) {
     return NextResponse.json({ error: "Requête invalide." }, { status: 400 });
   }

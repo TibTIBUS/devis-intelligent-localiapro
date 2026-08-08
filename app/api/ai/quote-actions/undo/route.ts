@@ -5,6 +5,7 @@ import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import { createRequestId, logTechnicalError } from "@/lib/observability/logger";
 import { undoLastAiQuoteAction } from "@/lib/quotes/ai-actions";
 import { createClient } from "@/lib/supabase/server";
+import { parseBoundedAiJsonRequest } from "@/lib/security/bounded-json-request";
 import { undoAiQuoteActionSchema } from "@/lib/validation/ai";
 
 export async function POST(request: Request) {
@@ -13,7 +14,12 @@ export async function POST(request: Request) {
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
 
-  const parsed = undoAiQuoteActionSchema.safeParse(await request.json().catch(() => null));
+  const requestBody = await parseBoundedAiJsonRequest(request);
+  if (!requestBody.success) {
+    return NextResponse.json({ error: requestBody.error }, { status: requestBody.status });
+  }
+
+  const parsed = undoAiQuoteActionSchema.safeParse(requestBody.data);
   if (!parsed.success) return NextResponse.json({ error: "Requête invalide." }, { status: 400 });
 
   const organizationId = await getCurrentOrganizationId(supabase);

@@ -174,3 +174,9 @@ La Server Action établit l’identité à partir de la session vérifiée et re
 L’assistant de devis est limité à dix demandes par utilisateur et par minute. Le compteur est atomique dans PostgreSQL, afin de rester fiable sur plusieurs instances Netlify. Il est inaccessible aux rôles applicatifs et appelé exclusivement depuis la route serveur après vérification de la session.
 
 Une limite atteinte retourne `429` avec une indication de nouvelle tentative ; une indisponibilité du compteur refuse l’appel par précaution. Les routes de confirmation restent sous RLS et les liens de document ne sont signés qu’après la relecture autorisée de leur enregistrement.
+
+## SEC-003 — frontières HTTP bornées pour les routes IA
+
+Les routes de conversation, de confirmation et d’annulation acceptent exclusivement `application/json`. Leur corps est lu en flux et limité à 16 Kio avant validation Zod, appel au quota ou exécution d’un outil métier. Les contenus non JSON, invalides ou trop volumineux reçoivent respectivement `415`, `400` ou `413`.
+
+Cette limite couvre les messages et propositions du MVP tout en empêchant qu’une requête sans en-tête `Content-Length` force le serveur à charger un corps non borné en mémoire.
