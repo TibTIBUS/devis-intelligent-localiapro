@@ -168,3 +168,9 @@ Pour le MVP, l’assistant peut modifier la quantité et la nature d’une ligne
 La fonction `finalize_quote` conserve `SECURITY DEFINER` : ce privilège reste nécessaire pour attribuer le numéro, verrouiller le devis et créer son snapshot dans une seule transaction. Elle n’est toutefois plus exécutable par les rôles `anon` et `authenticated`, mais uniquement par `service_role` depuis une Server Action.
 
 La Server Action établit l’identité à partir de la session vérifiée et relit l’organisation autorisée. PostgreSQL recontrôle ensuite l’appartenance de cet acteur et impose que le devis appartienne à cette organisation avant toute écriture privilégiée. La logique métier, l’idempotence et la numérotation restent inchangées.
+
+## SEC-002 — limitation centrale des appels coûteux à l’assistant
+
+L’assistant de devis est limité à dix demandes par utilisateur et par minute. Le compteur est atomique dans PostgreSQL, afin de rester fiable sur plusieurs instances Netlify. Il est inaccessible aux rôles applicatifs et appelé exclusivement depuis la route serveur après vérification de la session.
+
+Une limite atteinte retourne `429` avec une indication de nouvelle tentative ; une indisponibilité du compteur refuse l’appel par précaution. Les routes de confirmation restent sous RLS et les liens de document ne sont signés qu’après la relecture autorisée de leur enregistrement.

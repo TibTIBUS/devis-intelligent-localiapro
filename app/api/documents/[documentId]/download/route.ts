@@ -4,7 +4,11 @@ import { z } from "zod";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ documentId: string }> }) {
-  const documentId = z.uuid().parse((await params).documentId);
+  const parsedDocumentId = z.uuid().safeParse((await params).documentId);
+  if (!parsedDocumentId.success) {
+    return NextResponse.json({ error: "Identifiant de document invalide." }, { status: 400 });
+  }
+  const documentId = parsedDocumentId.data;
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
   if (!claims) return NextResponse.json({ error: "Authentication required." }, { status: 401 });

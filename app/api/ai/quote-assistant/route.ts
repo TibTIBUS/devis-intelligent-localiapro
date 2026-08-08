@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 
 import { runQuoteAssistant } from "@/lib/ai/quote-assistant";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
-import { createRequestId, logTechnicalError } from "@/lib/observability/logger";
+import { createRequestId, logTechnicalError, logTechnicalWarning } from "@/lib/observability/logger";
 import { getQuoteEditorData } from "@/lib/quotes/queries";
+import { consumeAiAssistantRequestQuota } from "@/lib/security/ai-assistant-rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { quoteAssistantRequestSchema } from "@/lib/validation/ai";
 
@@ -13,6 +14,21 @@ export async function POST(request: Request) {
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) {
     return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+  }
+
+  const quota = await consumeAiAssistantRequestQuota(claimsData.claims.sub);
+  if (quota !== "allowed") {
+    logTechnicalWarning("ai.assistant_request_limited", {
+      requestId,
+      userId: claimsData.claims.sub,
+    });
+    if (quota === "limited") {
+      return NextResponse.json(
+        { error: "Trop de demandes à l’assistant. Réessayez dans une minute." },
+        { headers: { "Retry-After": "60" }, status: 429 },
+      );
+    }
+    return NextResponse.json({ error: "L’assistant est temporairement indisponible." }, { status: 503 });
   }
 
   const parsed = quoteAssistantRequestSchema.safeParse(await request.json().catch(() => null));
