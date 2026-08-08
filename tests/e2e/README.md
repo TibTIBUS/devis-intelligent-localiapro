@@ -17,4 +17,8 @@ Le contrôle inter-organisation utilise en plus `E2E_OTHER_EMAIL` et
 `E2E_OTHER_PASSWORD`. Les valeurs de production ne doivent jamais être
 placées dans `.env.local` utilisé par Playwright.
 
+Les contrôles IA utilisent le devis finalisé de test : les requêtes s’arrêtent
+sur son état métier avant tout appel OpenAI, ce qui permet de vérifier la
+limite HTTP et le quota sans consommer de crédits.
+
 Commande : `npm run test:e2e`.
