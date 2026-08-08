@@ -162,3 +162,9 @@ Le prix est relu dans PostgreSQL au moment de la confirmation et le taux de TVA 
 Les outils de modification et de suppression renvoient uniquement une proposition structurée. Une requête distincte issue de l’interface de confirmation appelle des fonctions métier transactionnelles et soumises à RLS.
 
 Pour le MVP, l’assistant peut modifier la quantité et la nature d’une ligne, mais pas son prix, sa TVA, son libellé ou son unité. La suppression journalise un instantané complet. L’annulation refuse d’écraser une ligne modifiée depuis l’action IA ; cette protection prévaut sur la facilité d’annulation.
+
+## SEC-001 — la finalisation privilégiée est exclusivement côté serveur
+
+La fonction `finalize_quote` conserve `SECURITY DEFINER` : ce privilège reste nécessaire pour attribuer le numéro, verrouiller le devis et créer son snapshot dans une seule transaction. Elle n’est toutefois plus exécutable par les rôles `anon` et `authenticated`, mais uniquement par `service_role` depuis une Server Action.
+
+La Server Action établit l’identité à partir de la session vérifiée et relit l’organisation autorisée. PostgreSQL recontrôle ensuite l’appartenance de cet acteur et impose que le devis appartienne à cette organisation avant toute écriture privilégiée. La logique métier, l’idempotence et la numérotation restent inchangées.

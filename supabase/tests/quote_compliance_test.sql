@@ -58,12 +58,15 @@ select is((public.validate_quote_compliance('31100000-0000-0000-0000-00000000008
 select is(public.validate_quote_compliance('31100000-0000-0000-0000-000000000081') #>> '{errors,0,code}', 'MISSING_TRAVEL_FEE_DECLARATION', 'compliance should return a stable error code');
 select throws_ok($$ select public.validate_quote_compliance('31000000-0000-0000-0000-000000000082') $$, 'P0002', 'Quote not found.', 'RLS should hide another organization quote');
 select throws_ok($$ insert into public.legal_rules_versions (code, jurisdiction, domain, effective_from, source_references) values ('FORGED', 'FR', 'test', current_date, '[]') $$, '42501', null, 'authenticated users should not forge legal rules');
-select lives_ok($$ select * from public.finalize_quote('31000000-0000-0000-0000-000000000081') $$, 'a compliant quote should finalize');
+set local role service_role;
+select lives_ok($$ select * from public.finalize_quote('31000000-0000-0000-0000-000000000081', '00000000-0000-0000-0000-000000000081', '10000000-0000-0000-0000-000000000081') $$, 'the server should finalize a compliant quote');
 select is((select legal_rules_version_id from public.quote_versions where quote_id = '31000000-0000-0000-0000-000000000081'), 'a1000000-0000-4000-8000-000000000001'::uuid, 'the finalized version should reference the legal rules');
 select is((select compliance_snapshot ->> 'professionalInsuranceRequired' from public.quote_versions where quote_id = '31000000-0000-0000-0000-000000000081'), 'true', 'the snapshot should preserve insurance applicability');
 select is((select compliance_snapshot #>> '{insurances,0,policy_number}' from public.quote_versions where quote_id = '31000000-0000-0000-0000-000000000081'), 'POLICE-A', 'the snapshot should preserve the active insurance');
 select is((select snapshot #>> '{lines,0,lineKind}' from public.quote_versions where quote_id = '31000000-0000-0000-0000-000000000081'), 'labor', 'the snapshot should preserve the line nature');
-select throws_ok($$ select * from public.finalize_quote('31100000-0000-0000-0000-000000000081') $$, '23514', 'Quote compliance validation failed.', 'database finalization should enforce compliance');
+select throws_ok($$ select * from public.finalize_quote('31100000-0000-0000-0000-000000000081', '00000000-0000-0000-0000-000000000081', '10000000-0000-0000-0000-000000000081') $$, '23514', 'Quote compliance validation failed.', 'database finalization should enforce compliance');
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000081', true);
 select throws_ok($$ update public.quote_versions set compliance_snapshot = '{}' where quote_id = '31000000-0000-0000-0000-000000000081' $$, '42501', null, 'authenticated users should not mutate compliance snapshots');
 select is((select count(*) from public.quote_versions), 1::bigint, 'RLS should expose only the current organization version');
 select is((select count(*) from public.legal_rules_versions), 1::bigint, 'the active ruleset should be unique in this test');

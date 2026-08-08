@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(41);
+select plan(44);
 
 select has_table('public', 'quote_versions', 'quote versions should exist');
 select has_column('public', 'quotes', 'status', 'quotes should store their lifecycle status');
@@ -13,9 +13,10 @@ select has_column('public', 'quotes', 'is_quote_free', 'quotes should state whet
 select has_column('public', 'quotes', 'work_address_id', 'quotes should reference their work address');
 select has_column('public', 'quotes', 'finalized_at', 'quotes should store their finalization instant');
 select ok((select relrowsecurity from pg_class where oid = 'public.quote_versions'::regclass), 'quote versions should have RLS enabled');
-select has_function('public', 'finalize_quote', array['uuid'], 'the finalization function should exist');
-select ok(not has_function_privilege('anon', 'public.finalize_quote(uuid)', 'EXECUTE'), 'anonymous users should not finalize quotes');
-select ok(has_function_privilege('authenticated', 'public.finalize_quote(uuid)', 'EXECUTE'), 'authenticated users may finalize their quotes');
+select has_function('public', 'finalize_quote', array['uuid', 'uuid', 'uuid'], 'the server-only finalization function should exist');
+select ok(not has_function_privilege('anon', 'public.finalize_quote(uuid,uuid,uuid)', 'EXECUTE'), 'anonymous users should not finalize quotes');
+select ok(not has_function_privilege('authenticated', 'public.finalize_quote(uuid,uuid,uuid)', 'EXECUTE'), 'authenticated users should not directly finalize quotes');
+select ok(has_function_privilege('service_role', 'public.finalize_quote(uuid,uuid,uuid)', 'EXECUTE'), 'the server role should finalize quotes');
 select ok(not has_column_privilege('authenticated', 'public.quotes', 'status', 'UPDATE'), 'authenticated users should not forge a status');
 
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at) values
@@ -50,7 +51,11 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000071', true);
 
 select lives_ok($$ update public.quotes set valid_until = valid_until + 1 where id = '31000000-0000-0000-0000-000000000071' $$, 'a draft quote should remain editable');
-select lives_ok($$ select * from public.finalize_quote('31000000-0000-0000-0000-000000000071') $$, 'an owner should finalize a complete quote');
+select throws_ok($$ select * from public.finalize_quote('31000000-0000-0000-0000-000000000071', '00000000-0000-0000-0000-000000000071', '10000000-0000-0000-0000-000000000071') $$, '42501', null, 'authenticated users should not call finalization directly');
+
+set local role service_role;
+select throws_ok($$ select * from public.finalize_quote('31000000-0000-0000-0000-000000000071', '00000000-0000-0000-0000-000000000072', '10000000-0000-0000-0000-000000000071') $$, '42501', 'Organization membership required.', 'the server should reject an actor outside the organization');
+select lives_ok($$ select * from public.finalize_quote('31000000-0000-0000-0000-000000000071', '00000000-0000-0000-0000-000000000071', '10000000-0000-0000-0000-000000000071') $$, 'the server should finalize for an organization member');
 select is((select status from public.quotes where id = '31000000-0000-0000-0000-000000000071'), 'finalized', 'the quote should become finalized');
 select matches((select quote_number from public.quotes where id = '31000000-0000-0000-0000-000000000071'), '^D-[0-9]{4}-00001$', 'the first annual number should be formatted');
 select is((select issued_on from public.quotes where id = '31000000-0000-0000-0000-000000000071'), timezone('Europe/Paris', now())::date, 'the issue date should use the French calendar date');
@@ -61,10 +66,13 @@ select is((select snapshot #>> '{quote,paymentTerms}' from public.quote_versions
 select is((select snapshot #>> '{quote,note}' from public.quote_versions where quote_id = '31000000-0000-0000-0000-000000000071'), 'Protéger le parquet', 'the snapshot should preserve the quote note');
 select is((select compliance_snapshot ->> 'rulesVersion' from public.quote_versions where quote_id = '31000000-0000-0000-0000-000000000071'), 'FR-BUILDING-QUOTE-2017-01', 'the snapshot should preserve the compliance rules version');
 select is((select snapshot #>> '{lines,0,lineKind}' from public.quote_versions where quote_id = '31000000-0000-0000-0000-000000000071'), 'service', 'the snapshot should preserve the line kind');
-select lives_ok($$ select * from public.finalize_quote('31000000-0000-0000-0000-000000000071') $$, 'repeating finalization should be idempotent');
+select lives_ok($$ select * from public.finalize_quote('31000000-0000-0000-0000-000000000071', '00000000-0000-0000-0000-000000000071', '10000000-0000-0000-0000-000000000071') $$, 'repeating finalization should be idempotent');
 select is((select count(*) from public.quote_versions where quote_id = '31000000-0000-0000-0000-000000000071'), 1::bigint, 'idempotence should not create another version');
-select lives_ok($$ select * from public.finalize_quote('31100000-0000-0000-0000-000000000071') $$, 'a second complete quote should finalize');
+select lives_ok($$ select * from public.finalize_quote('31100000-0000-0000-0000-000000000071', '00000000-0000-0000-0000-000000000071', '10000000-0000-0000-0000-000000000071') $$, 'a second complete quote should finalize');
 select matches((select quote_number from public.quotes where id = '31100000-0000-0000-0000-000000000071'), '^D-[0-9]{4}-00002$', 'the annual sequence should increment');
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000071', true);
 select throws_ok($$ update public.quotes set discount_rate_basis_points = 100 where id = '31000000-0000-0000-0000-000000000071' $$, '55000', null, 'a finalized quote should reject financial changes');
 select throws_ok($$ insert into public.quote_lines (organization_id, quote_id, label, unit, quantity_milliunits) values ('10000000-0000-0000-0000-000000000071', '31000000-0000-0000-0000-000000000071', 'Interdite', 'unite', 1000) $$, '55000', null, 'a finalized quote should reject new lines');
 select throws_ok($$ update public.quote_lines set label = 'Interdite' where id = '33000000-0000-0000-0000-000000000071' $$, '55000', null, 'a finalized quote should reject line changes');
@@ -73,7 +81,10 @@ select throws_ok($$ insert into public.quote_sections (organization_id, quote_id
 select throws_ok($$ delete from public.quotes where id = '31000000-0000-0000-0000-000000000071' $$, '55000', null, 'a finalized quote should not be deletable');
 select throws_ok($$ update public.quotes set status = 'draft' where id = '31000000-0000-0000-0000-000000000071' $$, '42501', null, 'authenticated users should not directly change lifecycle status');
 select throws_ok($$ insert into public.quote_versions (organization_id, quote_id, version_number, quote_number, issued_on, snapshot) values ('10000000-0000-0000-0000-000000000071', '31000000-0000-0000-0000-000000000071', 2, 'D-2099-99999', current_date, '{}') $$, '42501', null, 'authenticated users should not forge quote versions');
-select throws_ok($$ select * from public.finalize_quote('31000000-0000-0000-0000-000000000072') $$, 'P0002', null, 'an owner should not finalize another organization quote');
+set local role service_role;
+select throws_ok($$ select * from public.finalize_quote('31000000-0000-0000-0000-000000000072', '00000000-0000-0000-0000-000000000071', '10000000-0000-0000-0000-000000000071') $$, 'P0002', null, 'the server should reject a quote outside the validated organization');
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000071', true);
 select is((select count(*) from public.quote_versions), 2::bigint, 'RLS should expose only the current organization versions');
 
 select * from finish();

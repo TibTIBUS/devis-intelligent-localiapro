@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import { createRequestId, logTechnicalWarning } from "@/lib/observability/logger";
 import { validateQuoteCompliance } from "@/lib/compliance/quote-compliance";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import {
   getQuoteCreateValues,
   getQuoteFieldErrors,
@@ -129,7 +129,12 @@ export async function finalizeQuote(
     };
   }
 
-  const { data, error } = await supabase.rpc("finalize_quote", { p_quote_id: quoteId.data });
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("finalize_quote", {
+    p_actor_user_id: userId,
+    p_organization_id: organizationId,
+    p_quote_id: quoteId.data,
+  });
   if (error || !data?.[0]) {
     return {
       message: "Impossible de finaliser ce devis pour le moment. Relancez le contrôle de conformité.",
