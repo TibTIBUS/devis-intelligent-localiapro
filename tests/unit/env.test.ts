@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { parseOpenAIEnv, parsePublicEnv, parseServerEnv } from "@/lib/validation/env";
+import {
+  parseOpenAIEnv,
+  parsePublicEnv,
+  parseSupabaseAdminEnv,
+} from "@/lib/validation/env";
 
 const validEnv = {
   NEXT_PUBLIC_APP_URL: "http://localhost:3000",
@@ -31,10 +35,24 @@ describe("environment validation", () => {
     ).toThrow();
   });
 
-  it("keeps server secrets mandatory and server-only", () => {
-    expect(parseServerEnv(validEnv).SUPABASE_SERVICE_ROLE_KEY).toBe(
-      "service-role-test",
-    );
+  it("validates the minimum configuration required by the Supabase admin client", () => {
+    expect(
+      parseSupabaseAdminEnv({
+        NEXT_PUBLIC_SUPABASE_URL: validEnv.NEXT_PUBLIC_SUPABASE_URL,
+        SUPABASE_SERVICE_ROLE_KEY: validEnv.SUPABASE_SERVICE_ROLE_KEY,
+      }),
+    ).toEqual({
+      NEXT_PUBLIC_SUPABASE_URL: validEnv.NEXT_PUBLIC_SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: validEnv.SUPABASE_SERVICE_ROLE_KEY,
+    });
+  });
+
+  it("rejects a missing Supabase service role key", () => {
+    expect(() =>
+      parseSupabaseAdminEnv({
+        NEXT_PUBLIC_SUPABASE_URL: validEnv.NEXT_PUBLIC_SUPABASE_URL,
+      }),
+    ).toThrow();
   });
 
   it("can validate the OpenAI server configuration independently", () => {
