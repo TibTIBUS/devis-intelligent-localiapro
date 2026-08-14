@@ -16,6 +16,8 @@ const issueMessages: Record<string, string> = {
   INCOMPLETE_QUOTE_LINE: "Chaque ligne doit comporter un prix HT et un taux de TVA.",
   MISSING_COMPANY_LEGAL_FORM: "Renseignez la forme juridique de l’entreprise.",
   MISSING_COMPANY_LEGAL_INFORMATION: "Complétez les informations légales de l’entreprise.",
+  MISSING_EXECUTION_DURATION: "Indiquez la durée ou le délai estimé des travaux.",
+  MISSING_EXECUTION_START_DATE: "Indiquez la date prévue de début des travaux.",
   MISSING_INSURANCE_APPLICABILITY: "Indiquez si une assurance professionnelle est obligatoire pour votre activité.",
   MISSING_LABOR_OR_SERVICE_LINE: "Ajoutez au moins une ligne de main-d’œuvre ou de prestation.",
   MISSING_PAID_QUOTE_PRICE: "Indiquez le prix HT et la TVA de l’établissement du devis payant.",
