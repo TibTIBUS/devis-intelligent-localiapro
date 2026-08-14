@@ -4,8 +4,8 @@ import type { AiQuoteLineProposal } from "@/lib/validation/ai";
 
 type AddCatalogQuoteLineInput = Pick<
   AiQuoteLineProposal,
-  "catalogItemId" | "lineKind" | "quantityMilliunits"
-> & { vatRateBasisPoints: number | null };
+  "catalogItemId" | "lineKind" | "quantityMilliunits" | "vatRateBasisPoints"
+>;
 
 export async function addCatalogQuoteLineFromAi(
   client: SupabaseClient,
@@ -37,7 +37,7 @@ export async function updateQuoteLineFromAi(
   client: SupabaseClient,
   organizationId: string,
   quoteId: string,
-  input: { lineKind: AiQuoteLineProposal["lineKind"]; quantityMilliunits: number; quoteLineId: string },
+  input: { lineKind: AiQuoteLineProposal["lineKind"]; quantityMilliunits: number; quoteLineId: string; vatRateBasisPoints: number },
 ) {
   const { data, error } = await client.rpc("update_ai_quote_line", {
     p_line_id: input.quoteLineId,
@@ -45,6 +45,7 @@ export async function updateQuoteLineFromAi(
     p_organization_id: organizationId,
     p_quantity_milliunits: input.quantityMilliunits,
     p_quote_id: quoteId,
+    p_vat_rate_basis_points: input.vatRateBasisPoints,
   });
   const result = data?.[0] as { action_id: string; label: string; line_id: string } | undefined;
   if (error || !result) throw new Error("Impossible de modifier cette ligne de devis.");
