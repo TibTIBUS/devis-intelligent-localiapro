@@ -7,10 +7,12 @@ import {
   type AiQuoteLineProposal,
 } from "@/lib/validation/ai";
 
+const DEFAULT_VAT_RATE_BASIS_POINTS = 2_000;
+
 export const addQuoteLineTool = {
   type: "function" as const,
   name: "add_quote_line",
-  description: "Ajoute une prestation du catalogue au devis actif. Le serveur relit toujours la prestation et son prix avant l’écriture. La TVA peut rester à compléter.",
+  description: "Ajoute une prestation du catalogue au devis actif. Le serveur relit toujours la prestation et son prix avant l’écriture. La TVA est de 20 % par défaut, sauf taux explicitement demandé par l’artisan.",
   strict: true,
   parameters: {
     type: "object",
@@ -28,8 +30,12 @@ export const addQuoteLineTool = {
         type: "string",
         description: "Quantité positive exprimée en unité catalogue, sans calcul de montant.",
       },
+      vatRate: {
+        anyOf: [{ type: "string" }, { type: "null" }],
+        description: "Taux de TVA exact en pourcentage si l’artisan le précise, par exemple 10 ou 5.5. Sinon null : le serveur appliquera 20 %.",
+      },
     },
-    required: ["catalogItemId", "lineKind", "quantity"],
+    required: ["catalogItemId", "lineKind", "quantity", "vatRate"],
     additionalProperties: false,
   },
 };
@@ -72,6 +78,7 @@ export async function prepareAddQuoteLineTool(
     quantityMilliunits: parseAiQuantityToMilliunits(parsed.quantity),
     unit: item.unit,
     unitPriceHtCents: item.unit_price_ht_cents,
+    vatRateBasisPoints: parsed.vatRate ?? DEFAULT_VAT_RATE_BASIS_POINTS,
   };
 
   return {
