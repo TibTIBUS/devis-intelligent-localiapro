@@ -19,9 +19,9 @@ function pickSupportedMimeType(): string {
 
 function readbackForProposal(proposal: AiQuoteActionProposal): string {
   if (proposal.actionType === "add_quote_line") {
-    return `${proposal.label}, ${proposal.quantityMilliunits / 1_000} ${proposal.unit}. Dites le taux de TVA pour confirmer, par exemple : je confirme, dix pour cent. Ou dites : j’annule.`;
+    return `${proposal.label}, ${proposal.quantityMilliunits / 1_000} ${proposal.unit}. Dites oui et le taux de TVA, par exemple : oui, dix pour cent. Ou dites non.`;
   }
-  return "Dites : je confirme. Ou : j’annule.";
+  return "Dites oui pour confirmer, ou non pour annuler.";
 }
 
 export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {

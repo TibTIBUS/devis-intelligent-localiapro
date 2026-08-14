@@ -37,7 +37,7 @@ L’échange se fait tour par tour (appui, parole, relâchement), et non en flux
 
 ## AI-005 — confirmation vocale déterministe, jamais par le modèle
 
-La décision d’exécuter une proposition à la voix ne passe jamais par le LLM. `matchVoiceConfirmation` (`lib/ai/voice-confirmation.ts`) est une correspondance stricte sur un petit ensemble de formulations non ambiguës (« je confirme », « j’annule ») ; toute formulation ambiguë renvoie « unclear » et redemande plutôt que d’agir.
+La décision d’exécuter une proposition à la voix ne passe jamais par le LLM. `matchVoiceConfirmation` (`lib/ai/voice-confirmation.ts`) est une correspondance stricte sur un petit ensemble de formulations fermées (« je confirme », « oui », « j’annule », « non »…) ; toute formulation en dehors de cet ensemble renvoie « unclear » et redemande plutôt que d’agir. La relecture systématique du contenu exact avant chaque confirmation reste le garde-fou principal : un « oui » n’est accepté qu’en réponse directe à cette relecture, jamais comme déclencheur autonome.
 
 Pour l’ajout d’une ligne catalogue, le taux de TVA doit être énoncé explicitement dans le même tour de parole (`extractVoiceVatRate`) : l’assistant ne le complète, ni ne le déduit jamais. Sans taux clairement reconnu, aucune confirmation n’est possible.
 

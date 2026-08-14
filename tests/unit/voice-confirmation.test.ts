@@ -9,9 +9,18 @@ describe("matchVoiceConfirmation", () => {
     expect(matchVoiceConfirmation("  je   confirme  ")).toBe("confirm");
   });
 
+  it("recognizes a short natural confirmation, since it always follows a direct yes/no readback", () => {
+    expect(matchVoiceConfirmation("oui")).toBe("confirm");
+    expect(matchVoiceConfirmation("Oui.")).toBe("confirm");
+    expect(matchVoiceConfirmation("d'accord")).toBe("confirm");
+    expect(matchVoiceConfirmation("ok")).toBe("confirm");
+    expect(matchVoiceConfirmation("c'est bon")).toBe("confirm");
+  });
+
   it("recognizes an explicit cancellation", () => {
     expect(matchVoiceConfirmation("j'annule")).toBe("cancel");
     expect(matchVoiceConfirmation("annule")).toBe("cancel");
+    expect(matchVoiceConfirmation("non")).toBe("cancel");
   });
 
   it("is accent and case insensitive", () => {
@@ -20,11 +29,10 @@ describe("matchVoiceConfirmation", () => {
   });
 
   it("treats anything ambiguous as unclear rather than acting", () => {
-    expect(matchVoiceConfirmation("oui")).toBe("unclear");
-    expect(matchVoiceConfirmation("ouais c'est bon")).toBe("unclear");
-    expect(matchVoiceConfirmation("d'accord")).toBe("unclear");
+    expect(matchVoiceConfirmation("ouais c'est bon je pense")).toBe("unclear");
     expect(matchVoiceConfirmation("")).toBe("unclear");
     expect(matchVoiceConfirmation("confirme peut-être")).toBe("unclear");
+    expect(matchVoiceConfirmation("peut-être")).toBe("unclear");
   });
 });
 

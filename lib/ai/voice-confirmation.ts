@@ -3,16 +3,30 @@ export type VoiceConfirmationResult = "cancel" | "confirm" | "unclear";
 const CONFIRM_PHRASES = new Set([
   "je confirme",
   "confirme",
+  "confirmer",
   "je valide",
   "valide",
+  "valider",
   "c'est bon je confirme",
+  "oui",
+  "oui je confirme",
+  "oui confirme",
+  "d'accord",
+  "ok",
+  "okay",
+  "c'est bon",
 ]);
 
 const CANCEL_PHRASES = new Set([
   "j'annule",
   "annule",
+  "annuler",
   "j'annule tout",
   "non j'annule",
+  "non",
+  "non annule",
+  "j'abandonne",
+  "abandonne",
 ]);
 
 function normalize(transcript: string): string {
