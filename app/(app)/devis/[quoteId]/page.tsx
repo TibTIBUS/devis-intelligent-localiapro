@@ -1,15 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import {
-  ArrowLeft,
-  CheckCircle2,
-  FileText,
-  Mail,
-  MapPin,
-  Phone,
-  ReceiptText,
-  UserRound,
-} from "lucide-react";
+import { ArrowLeft, CheckCircle2, FileText, Mail, MapPin, Phone, ReceiptText, UserRound } from "lucide-react";
 
 import { DeleteDraftQuoteForm } from "@/components/quotes/delete-draft-quote-form";
 import {
@@ -23,6 +14,7 @@ import {
 import { QuotePdfForm } from "@/components/quotes/quote-pdf-form";
 import { QuoteAcceptancePanel } from "@/components/quotes/quote-acceptance-form";
 import { QuoteAssistant } from "@/components/quotes/quote-assistant";
+import { QuoteWorkflowPanel } from "@/components/quotes/quote-workflow-panel";
 import { VoiceActionLink } from "@/components/voice/voice-action-link";
 import { getCatalogItems } from "@/lib/catalog/queries";
 import { validateQuoteCompliance, type QuoteComplianceResult } from "@/lib/compliance/quote-compliance";
@@ -64,16 +56,10 @@ function DraftContent({ catalogItems, lines, quoteId, sections }: {
     <div className="space-y-5">
       <section className="rounded-2xl border border-border bg-background shadow-sm">
         <div className="flex flex-col gap-2 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <div>
-            <h2 className="font-semibold">Détail des prestations</h2>
-            <p className="text-sm text-muted-foreground">Organisez les prestations et ajustez les lignes du devis.</p>
-          </div>
+          <div><h2 className="font-semibold">Détail des prestations</h2><p className="text-sm text-muted-foreground">Organisez les prestations et ajustez les lignes du devis.</p></div>
         </div>
         <div className="space-y-5 p-4 sm:p-5">
-          <div className="rounded-xl border border-dashed border-primary/30 bg-primary/5 p-4">
-            <p className="mb-3 text-sm font-medium">Ajouter une section</p>
-            <QuoteSectionForm action={saveQuoteSection} quoteId={quoteId} />
-          </div>
+          <div className="rounded-xl border border-dashed border-primary/30 bg-primary/5 p-4"><p className="mb-3 text-sm font-medium">Ajouter une section</p><QuoteSectionForm action={saveQuoteSection} quoteId={quoteId} /></div>
           {sections.map((section) => (
             <article className="space-y-4 rounded-xl border border-border bg-muted/10 p-3 sm:p-4" key={section.id}>
               <QuoteSectionForm action={saveQuoteSection} quoteId={quoteId} section={section} />
@@ -97,10 +83,7 @@ function DraftContent({ catalogItems, lines, quoteId, sections }: {
               ))}
             </div>
           ) : null}
-          <div className="rounded-xl border border-dashed border-border p-4">
-            <h3 className="mb-3 font-semibold">Ajouter une prestation</h3>
-            <QuoteLineForm action={saveQuoteLine} catalogItems={catalogItems} quoteId={quoteId} sections={sections} />
-          </div>
+          <div className="rounded-xl border border-dashed border-border p-4"><h3 className="mb-3 font-semibold">Ajouter une prestation</h3><QuoteLineForm action={saveQuoteLine} catalogItems={catalogItems} quoteId={quoteId} sections={sections} /></div>
         </div>
       </section>
     </div>
@@ -199,6 +182,8 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
               <div className="mb-4 flex items-center gap-2"><div className="rounded-xl bg-violet-50 p-2 text-violet-700"><FileText className="size-4" /></div><h2 className="font-semibold">Informations du devis</h2></div>
               <dl className="space-y-3 text-sm">
                 <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Validité</dt><dd className="text-right font-medium">{formatDate(editor.quote.valid_until)}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Début travaux</dt><dd className="text-right font-medium">{formatDate(editor.quote.execution_start_date)}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Durée estimée</dt><dd className="text-right font-medium">{editor.quote.execution_duration || "À définir"}</dd></div>
                 <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Conditions</dt><dd className="text-right font-medium">{editor.quote.payment_terms || "À définir"}</dd></div>
                 <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Remise</dt><dd className="font-medium">{editor.quote.discount_rate_basis_points / 100} %</dd></div>
                 <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Acompte</dt><dd className="font-medium">{editor.quote.deposit_rate_basis_points / 100} %</dd></div>
@@ -208,6 +193,7 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
           </aside>
 
           <section className="min-w-0 space-y-5 lg:col-start-1 xl:col-start-2">
+            <QuoteWorkflowPanel quoteId={editor.quote.id} />
             {!finalized ? <section className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm"><div className="border-b border-border px-4 py-4 sm:px-5"><h2 className="font-semibold">Paramètres du devis</h2><p className="text-sm text-muted-foreground">Conditions financières, adresse du chantier et notes visibles.</p></div><div className="p-4 sm:p-5"><QuoteFinancialSettingsForm action={saveQuoteFinancialSettings} addresses={customer?.addresses ?? []} depositRateBasisPoints={editor.quote.deposit_rate_basis_points} discountRateBasisPoints={editor.quote.discount_rate_basis_points} isQuoteFree={editor.quote.is_quote_free} note={editor.quote.note} paymentTerms={editor.quote.payment_terms} preparationFeeHtCents={editor.quote.preparation_fee_ht_cents} preparationFeeVatRateBasisPoints={editor.quote.preparation_fee_vat_rate_basis_points} quoteId={editor.quote.id} travelFeeApplicable={editor.quote.travel_fee_applicable} validUntil={editor.quote.valid_until} workAddressId={editor.quote.work_address_id} /></div></section> : null}
             {finalized ? <><FinalizedContent lines={editor.lines} /><section id="acceptation">{editor.quote.quote_version_id ? <QuoteAcceptancePanel acceptance={acceptance} action={recordQuoteAcceptance} quoteId={editor.quote.id} versionId={editor.quote.quote_version_id} /> : null}</section></> : <DraftContent catalogItems={catalogItems} lines={editor.lines} quoteId={editor.quote.id} sections={editor.sections} />}
             {!finalized ? <section className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm"><div className="border-b border-border px-4 py-4 sm:px-5"><h2 className="font-semibold">Assistant texte</h2><p className="text-sm text-muted-foreground">Vous pouvez également modifier le devis par conversation.</p></div><div className="p-4 sm:p-5"><QuoteAssistant quoteId={editor.quote.id} /></div></section> : null}
