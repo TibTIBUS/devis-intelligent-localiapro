@@ -1,12 +1,44 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(46);
+select plan(53);
 
 select has_table('public', 'quote_ai_actions', 'AI quote actions should exist');
 select ok((select relrowsecurity from pg_class where oid = 'public.quote_ai_actions'::regclass), 'AI quote actions should have RLS enabled');
 select ok(not has_table_privilege('anon', 'public.quote_ai_actions', 'select'), 'anonymous users should not read AI actions');
 select ok(not has_table_privilege('authenticated', 'public.quote_ai_actions', 'delete'), 'authenticated users should not delete the audit trail');
+select ok(not has_table_privilege('authenticated', 'public.quote_ai_actions', 'insert'), 'authenticated users should not forge audit entries');
+select ok(not has_table_privilege('authenticated', 'public.quote_ai_actions', 'update'), 'authenticated users should not alter the audit trail');
+select is(
+  (
+    select count(*)
+    from pg_proc
+    where oid = any(array[
+      'public.add_catalog_quote_line(uuid,uuid,uuid,bigint,text,integer)'::regprocedure,
+      'public.update_ai_quote_line(uuid,uuid,uuid,bigint,text)'::regprocedure,
+      'public.delete_ai_quote_line(uuid,uuid,uuid)'::regprocedure,
+      'public.set_ai_quote_payment_terms(uuid,uuid,text)'::regprocedure,
+      'public.set_ai_quote_validity(uuid,uuid,date)'::regprocedure,
+      'public.set_ai_quote_worksite_address(uuid,uuid,uuid)'::regprocedure,
+      'public.update_ai_quote_note(uuid,uuid,text)'::regprocedure,
+      'public.set_ai_quote_discount(uuid,uuid,integer,integer)'::regprocedure,
+      'public.set_ai_quote_deposit(uuid,uuid,integer,integer)'::regprocedure,
+      'public.undo_last_ai_quote_action(uuid,uuid)'::regprocedure
+    ])
+      and prosecdef
+      and proowner = 'quote_ai_action_executor'::regrole
+  ),
+  10::bigint,
+  'only controlled AI action RPCs should write the immutable audit trail'
+);
+select ok(
+  not (select rolbypassrls from pg_roles where rolname = 'quote_ai_action_executor'),
+  'the AI action executor should remain subject to RLS'
+);
+select ok(
+  not has_schema_privilege('quote_ai_action_executor', 'public', 'create'),
+  'the AI action executor should not create public database objects'
+);
 select has_function('public', 'add_catalog_quote_line', array['uuid', 'uuid', 'uuid', 'bigint', 'text', 'integer'], 'the controlled add function should exist');
 select has_function('public', 'undo_last_ai_quote_action', array['uuid', 'uuid'], 'the undo function should exist');
 select ok(not has_function_privilege('anon', 'public.add_catalog_quote_line(uuid,uuid,uuid,bigint,text,integer)', 'EXECUTE'), 'anonymous users should not add quote lines');
@@ -42,6 +74,12 @@ insert into public.catalog_items (id, organization_id, name, unit, unit_price_ht
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000091', true);
 
+select throws_ok(
+  $$ insert into public.quote_ai_actions (organization_id, quote_id, action_type, payload)
+     values ('10000000-0000-0000-0000-000000000091', '31000000-0000-0000-0000-000000000091', 'set_discount', '{"before":0,"after":1000}') $$,
+  '42501', null, 'an authenticated user should not forge an audit entry'
+);
+
 select lives_ok(
   $$ select * from public.add_catalog_quote_line('10000000-0000-0000-0000-000000000091', '31000000-0000-0000-0000-000000000091', '13000000-0000-0000-0000-000000000091', 4000, 'labor', 1000) $$,
   'an owner should confirm a catalog line for their draft quote'
@@ -51,6 +89,10 @@ select is((select unit_price_ht_cents from public.quote_lines where quote_id = '
 select is((select quantity_milliunits from public.quote_lines where quote_id = '31000000-0000-0000-0000-000000000091'), 4000::bigint, 'the server should preserve the confirmed quantity');
 select is((select vat_rate_basis_points from public.quote_lines where quote_id = '31000000-0000-0000-0000-000000000091'), 1000, 'the server should preserve the confirmed VAT rate');
 select is((select count(*) from public.quote_ai_actions), 1::bigint, 'confirmation should create one actor-scoped audit entry');
+select throws_ok(
+  $$ update public.quote_ai_actions set payload = '{"forged":true}' where quote_id = '31000000-0000-0000-0000-000000000091' $$,
+  '42501', null, 'an authenticated user should not rewrite an audit entry'
+);
 
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000092', true);
 select is((select count(*) from public.quote_ai_actions), 0::bigint, 'another actor should not read the audit entry');
