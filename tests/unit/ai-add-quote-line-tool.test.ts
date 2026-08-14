@@ -32,22 +32,36 @@ describe("add quote line AI tool", () => {
     expect(addQuoteLineTool.parameters.properties).not.toHaveProperty("vatRateBasisPoints");
   });
 
-  it("builds a confirmation proposal from the authoritative catalog price", async () => {
+  it("builds a directly applicable proposal from the authoritative catalog price with 20 % VAT by default", async () => {
     const { client, eqOrganization } = catalogClient(5_500);
     const result = await prepareAddQuoteLineTool(client, "organization-1", JSON.stringify({
       catalogItemId,
       lineKind: "labor",
       quantity: "4",
+      vatRate: null,
     }));
 
     expect(eqOrganization).toHaveBeenCalledWith("organization_id", "organization-1");
-    expect(result.output.status).toBe("confirmation_required");
+    expect(result.output.status).toBe("ready_to_apply");
     expect(result.proposal).toMatchObject({
       actionType: "add_quote_line",
       catalogItemId,
       quantityMilliunits: 4_000,
       unitPriceHtCents: 5_500,
+      vatRateBasisPoints: 2_000,
     });
+  });
+
+  it("keeps an explicitly requested VAT rate", async () => {
+    const { client } = catalogClient(5_500);
+    const result = await prepareAddQuoteLineTool(client, "organization-1", JSON.stringify({
+      catalogItemId,
+      lineKind: "labor",
+      quantity: "4",
+      vatRate: "10",
+    }));
+
+    expect(result.proposal?.vatRateBasisPoints).toBe(1_000);
   });
 
   it("refuses to propose a line when the catalog price is missing", async () => {
@@ -56,6 +70,7 @@ describe("add quote line AI tool", () => {
       catalogItemId,
       lineKind: "service",
       quantity: "1",
+      vatRate: null,
     }));
 
     expect(result.output.status).toBe("missing_catalog_price");
