@@ -195,6 +195,9 @@ export async function runQuoteAssistant({
           }
         } else if (call.name === requestSendQuoteEmailTool.name) {
           const proposal = prepareRequestSendQuoteEmailTool(call.arguments, context.contacts);
+          if (proposal.actionType !== "send_quote_email") {
+            throw new Error("Action d’envoi non prise en charge.");
+          }
           const result = await sendQuoteDocumentByEmail(
             supabase,
             organizationId,
