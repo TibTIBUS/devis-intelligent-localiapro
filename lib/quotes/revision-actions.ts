@@ -8,12 +8,10 @@ import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 const quoteIdSchema = z.string().uuid();
 
-export type QuoteRevisionState = {
+type QuoteRevisionState = {
   message?: string;
   status: "error" | "idle";
 };
-
-export const initialQuoteRevisionState: QuoteRevisionState = { status: "idle" };
 
 export async function createQuoteRevision(
   previousState: QuoteRevisionState,
