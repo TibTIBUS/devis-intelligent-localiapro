@@ -31,12 +31,12 @@ async function runScenario(scenario: (typeof quoteAssistantEvalScenarios)[number
   const input: ResponseInputItem[] = [{ content: scenario.userMessage, role: "user" }];
   const calls: QuoteAssistantEvalCall[] = [];
 
-  for (let round = 0; round < 3; round += 1) {
+  for (let round = 0; round < 5; round += 1) {
     const response = await client.responses.create({
       input,
       instructions: buildQuoteAssistantPrompt(context),
       model: env.OPENAI_TEXT_MODEL,
-      parallel_tool_calls: false,
+      parallel_tool_calls: true,
       store: false,
       tools: [searchCatalogTool, addQuoteLineTool, updateQuoteLineTool, deleteQuoteLineTool, setDiscountTool, setDepositTool, setPaymentTermsTool, setValidityTool, setWorksiteAddressTool, updateQuoteNoteTool],
     });
@@ -49,7 +49,7 @@ async function runScenario(scenario: (typeof quoteAssistantEvalScenarios)[number
       calls.push({ arguments: parsedArguments, name: call.name });
       const output = call.name === searchCatalogTool.name
         ? { items: scenario.catalogItems, priceSource: "catalog" }
-        : { message: "Proposition en attente de confirmation humaine.", status: "confirmation_required" };
+        : { message: "Action appliquée côté serveur.", status: "applied" };
       input.push({ call_id: call.call_id, output: JSON.stringify(output), type: "function_call_output" });
     }
   }
