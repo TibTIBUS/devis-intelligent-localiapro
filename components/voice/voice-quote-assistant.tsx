@@ -209,8 +209,13 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
         streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
       }
 
+      const stream = streamRef.current;
+      if (!stream) {
+        throw new Error("Microphone stream unavailable");
+      }
+
       const mimeType = pickSupportedMimeType();
-      const recorder = new MediaRecorder(streamRef.current, mimeType ? { mimeType } : undefined);
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       chunksRef.current = [];
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) chunksRef.current.push(event.data);
