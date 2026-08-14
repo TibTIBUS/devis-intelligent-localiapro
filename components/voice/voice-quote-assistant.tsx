@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { CheckCircle2, Mic } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -213,41 +214,69 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
   }
 
   const statusLabel = {
-    idle: proposal ? "Maintenez pour confirmer ou annuler à voix haute" : "Maintenez pour parler",
+    idle: proposal ? "Maintenez pour confirmer ou annuler à voix haute" : "Assistant prêt",
     processing: "Traitement en cours…",
     recording: "Je vous écoute…",
-    speaking: "L’assistant parle…",
+    speaking: "L’assistant vous répond…",
   }[state];
 
   return (
-    <section aria-labelledby="voice-assistant-title" className="flex min-h-[70svh] flex-col items-center justify-between gap-6 px-4 py-8 text-center">
-      <div>
-        <h1 className="text-lg font-semibold" id="voice-assistant-title">Devis à la voix</h1>
-        <p aria-live="polite" className="mt-2 text-sm text-muted-foreground">{statusLabel}</p>
-        {error ? <p aria-live="assertive" className="mt-2 text-sm text-destructive" role="alert">{error}</p> : null}
+    <section aria-labelledby="voice-assistant-title" className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
+      <div className="px-5 pb-6 pt-7 text-center sm:px-7 sm:pt-8">
+        <h2 className="text-xl font-semibold tracking-tight" id="voice-assistant-title">Parlez, je crée votre devis</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Maintenez le bouton pendant que vous parlez.</p>
+
+        <div className="relative mx-auto mt-8 flex h-52 w-52 items-center justify-center sm:h-56 sm:w-56">
+          <div className={`absolute inset-3 rounded-full border-2 border-dashed ${state === "recording" ? "animate-pulse border-red-300" : "border-muted-foreground/25"}`} />
+          <Button
+            aria-label={state === "recording" ? "Relâcher pour envoyer" : "Maintenir pour parler"}
+            className="relative z-10 h-36 w-36 touch-none rounded-full bg-neutral-950 text-white shadow-xl transition-transform hover:bg-neutral-900 active:scale-95 sm:h-40 sm:w-40"
+            disabled={state === "processing" || state === "speaking"}
+            onPointerCancel={stopRecording}
+            onPointerDown={(event) => {
+              event.preventDefault();
+              void startRecording();
+            }}
+            onPointerLeave={stopRecording}
+            onPointerUp={stopRecording}
+            type="button"
+          >
+            <span className="flex flex-col items-center gap-2">
+              <Mic className="h-12 w-12" strokeWidth={1.8} />
+              <span className="text-sm font-semibold">{state === "recording" ? "Relâchez" : "Parlez"}</span>
+            </span>
+          </Button>
+        </div>
+
+        <p className="mx-auto -mt-1 inline-flex rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm">
+          {state === "recording" ? "Relâchez pour envoyer" : "Maintenez pour parler"}
+        </p>
+
+        {error ? <p aria-live="assertive" className="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">{error}</p> : null}
       </div>
 
-      <Button
-        className="h-40 w-40 rounded-full text-lg font-semibold select-none"
-        disabled={state === "processing" || state === "speaking"}
-        onPointerCancel={stopRecording}
-        onPointerDown={(event) => {
-          event.preventDefault();
-          void startRecording();
-        }}
-        onPointerLeave={stopRecording}
-        onPointerUp={stopRecording}
-        type="button"
-        variant={state === "recording" ? "destructive" : "default"}
-      >
-        {state === "recording" ? "Relâchez" : "Parlez"}
-      </Button>
+      <div className="border-t border-border bg-muted/25 px-5 py-5 sm:px-7">
+        <div className="flex items-start gap-3 rounded-xl bg-background p-4 shadow-sm ring-1 ring-border">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+          <div className="min-w-0 text-left">
+            <p className="text-sm font-semibold">{statusLabel}</p>
+            <p aria-live="polite" className="mt-1 text-xs text-muted-foreground">
+              {proposal ? "Une action attend votre confirmation vocale." : state === "idle" ? "Je vous écoute dès que vous maintenez le bouton." : "Votre devis reste visible à droite pendant l’échange."}
+            </p>
+          </div>
+        </div>
 
-      <ol aria-label="Historique de la conversation" className="w-full max-w-md space-y-1 text-left text-sm text-muted-foreground">
-        {transcriptLog.map((line, index) => (
-          <li key={`${index}-${line}`}>{line}</li>
-        ))}
-      </ol>
+        {transcriptLog.length > 0 ? (
+          <div className="mt-5">
+            <h3 className="text-left text-sm font-semibold">Dernières actions</h3>
+            <ol aria-label="Historique de la conversation" className="mt-3 max-h-64 divide-y divide-border overflow-auto rounded-xl border border-border bg-background text-left text-sm">
+              {transcriptLog.map((line, index) => (
+                <li className="px-4 py-3 text-muted-foreground" key={`${index}-${line}`}>{line}</li>
+              ))}
+            </ol>
+          </div>
+        ) : null}
+      </div>
     </section>
   );
 }
