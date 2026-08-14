@@ -10,7 +10,7 @@ import {
 export const addQuoteLineTool = {
   type: "function" as const,
   name: "add_quote_line",
-  description: "Prépare l’ajout d’une prestation du catalogue au devis actif. L’ajout reste soumis à la confirmation explicite de l’artisan.",
+  description: "Ajoute une prestation du catalogue au devis actif. Le serveur relit toujours la prestation et son prix avant l’écriture. La TVA peut rester à compléter.",
   strict: true,
   parameters: {
     type: "object",
@@ -76,7 +76,7 @@ export async function prepareAddQuoteLineTool(
 
   return {
     output: {
-      message: "La proposition est prête. Demande à l’artisan de vérifier la quantité, la nature et la TVA, puis d’utiliser le bouton de confirmation.",
+      message: "La prestation a été validée côté serveur et peut être ajoutée immédiatement.",
       status: "confirmation_required",
     },
     proposal,
