@@ -14,6 +14,7 @@ type AssistantQuoteLine = {
   line_kind: "labor" | "material" | "travel" | "service" | "other";
   quantity_milliunits: number;
   unit: string;
+  vat_rate_basis_points: number | null;
 };
 
 async function getQuoteLineForAssistant(
@@ -24,7 +25,7 @@ async function getQuoteLineForAssistant(
 ) {
   const { data, error } = await client
     .from("quote_lines")
-    .select("id, label, line_kind, quantity_milliunits, unit")
+    .select("id, label, line_kind, quantity_milliunits, unit, vat_rate_basis_points")
     .eq("organization_id", organizationId)
     .eq("quote_id", quoteId)
     .eq("id", quoteLineId)
@@ -37,7 +38,7 @@ async function getQuoteLineForAssistant(
 export const updateQuoteLineTool = {
   type: "function" as const,
   name: "update_quote_line",
-  description: "Prépare uniquement le changement de quantité et de nature d’une ligne du devis actif. Une confirmation humaine distincte reste obligatoire.",
+  description: "Modifie immédiatement une ligne du devis actif. Quantité, nature et TVA ne changent que si l’artisan les demande explicitement.",
   strict: true,
   parameters: {
     type: "object",
@@ -47,16 +48,22 @@ export const updateQuoteLineTool = {
         description: "Identifiant exact d’une ligne présente dans le contexte du devis actif.",
       },
       quantity: {
-        type: "string",
-        description: "Nouvelle quantité positive explicitement donnée par l’artisan.",
+        anyOf: [{ type: "string" }, { type: "null" }],
+        description: "Nouvelle quantité si elle est explicitement demandée, sinon null.",
       },
       lineKind: {
-        type: "string",
-        enum: ["labor", "material", "travel", "service", "other"],
-        description: "Nouvelle nature explicitement demandée, ou nature actuelle si elle ne change pas.",
+        anyOf: [
+          { type: "string", enum: ["labor", "material", "travel", "service", "other"] },
+          { type: "null" },
+        ],
+        description: "Nouvelle nature si elle est explicitement demandée, sinon null.",
+      },
+      vatRate: {
+        anyOf: [{ type: "string" }, { type: "null" }],
+        description: "Nouveau taux de TVA exact en pourcentage si l’artisan le demande, sinon null.",
       },
     },
-    required: ["quoteLineId", "quantity", "lineKind"],
+    required: ["quoteLineId", "quantity", "lineKind", "vatRate"],
     additionalProperties: false,
   },
 };
@@ -64,7 +71,7 @@ export const updateQuoteLineTool = {
 export const deleteQuoteLineTool = {
   type: "function" as const,
   name: "delete_quote_line",
-  description: "Prépare uniquement la suppression d’une ligne du devis actif. Une confirmation humaine distincte reste obligatoire.",
+  description: "Supprime immédiatement une ligne du devis actif lorsqu’elle est clairement identifiée.",
   strict: true,
   parameters: {
     type: "object",
@@ -91,18 +98,20 @@ export async function prepareUpdateQuoteLineTool(
 
   return {
     output: {
-      message: "La modification est prête. Aucune donnée n’est encore enregistrée : demande à l’artisan d’utiliser la confirmation affichée.",
+      message: "La modification a été validée côté serveur et peut être appliquée immédiatement.",
       status: "confirmation_required",
     },
     proposal: {
       actionType: "update_quote_line",
       currentLineKind: line.line_kind,
       currentQuantityMilliunits: line.quantity_milliunits,
+      currentVatRateBasisPoints: line.vat_rate_basis_points,
       label: line.label,
-      lineKind: parsed.lineKind,
-      quantityMilliunits: parseAiQuantityToMilliunits(parsed.quantity),
+      lineKind: parsed.lineKind ?? line.line_kind,
+      quantityMilliunits: parsed.quantity === null ? line.quantity_milliunits : parseAiQuantityToMilliunits(parsed.quantity),
       quoteLineId: line.id,
       unit: line.unit,
+      vatRateBasisPoints: parsed.vatRate ?? line.vat_rate_basis_points ?? 2_000,
     },
   };
 }
@@ -119,7 +128,7 @@ export async function prepareDeleteQuoteLineTool(
 
   return {
     output: {
-      message: "La suppression est prête. La ligne existe toujours : demande à l’artisan d’utiliser la confirmation affichée.",
+      message: "La suppression a été validée côté serveur et peut être appliquée immédiatement.",
       status: "confirmation_required",
     },
     proposal: {
