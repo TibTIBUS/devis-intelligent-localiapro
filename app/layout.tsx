@@ -1,22 +1,32 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import "./globals.css";
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
+import { Instrument_Sans, Inter } from "next/font/google";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+import { cn } from "@/lib/utils";
+import "./globals.css";
+
+const instrumentSans = Instrument_Sans({
+  subsets: ["latin"],
+  variable: "--font-display",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-body",
+});
 
 export const metadata: Metadata = {
+  applicationName: "Nalto",
   title: {
-    default: "Devis Intelligent",
-    template: "%s | Devis Intelligent",
+    default: "Nalto",
+    template: "%s | Nalto",
   },
-  description: "Créez des devis professionnels avec Localiapro.fr.",
+  description: "Du chantier au devis, sans repasser au bureau.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="fr" className={cn("font-sans", geist.variable)}>
+    <html lang="fr" className={cn("font-sans", instrumentSans.variable, inter.variable)}>
       <body className="min-h-svh antialiased">{children}</body>
     </html>
   );
