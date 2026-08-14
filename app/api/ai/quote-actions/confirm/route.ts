@@ -47,11 +47,25 @@ export async function POST(request: Request) {
       );
       message = `« ${result.label} » a été ajouté au devis depuis votre catalogue.`;
     } else if (parsed.data.actionType === "update_quote_line") {
+      const { data: currentLine, error: currentLineError } = await supabase
+        .from("quote_lines")
+        .select("vat_rate_basis_points")
+        .eq("organization_id", organizationId)
+        .eq("quote_id", parsed.data.quoteId)
+        .eq("id", parsed.data.proposal.quoteLineId)
+        .maybeSingle();
+      if (currentLineError || !currentLine) {
+        throw new Error("Impossible de vérifier la TVA actuelle de cette ligne.");
+      }
+
       const result = await updateQuoteLineFromAi(
         supabase,
         organizationId,
         parsed.data.quoteId,
-        parsed.data.proposal,
+        {
+          ...parsed.data.proposal,
+          vatRateBasisPoints: currentLine.vat_rate_basis_points ?? 2_000,
+        },
       );
       message = `La ligne « ${result.label} » a été modifiée.`;
     } else if (parsed.data.actionType === "delete_quote_line") {
