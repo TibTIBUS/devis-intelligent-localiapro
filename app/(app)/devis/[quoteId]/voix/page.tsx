@@ -25,7 +25,7 @@ export default async function VoiceQuoteEditorPage({ params }: { params: Promise
   const customer = customers.find((item) => item.id === editor.quote.customer_id);
 
   return (
-    <main className="min-h-svh bg-muted/20 px-3 py-4 min-[375px]:px-4 sm:px-6 sm:py-5 lg:px-8 lg:py-8">
+    <main className="min-h-svh bg-[#F5F1E8] px-3 py-4 min-[375px]:px-4 sm:px-6 sm:py-5 lg:px-8 lg:py-8">
       <div className="mx-auto w-full max-w-[1500px] space-y-5">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
@@ -33,8 +33,8 @@ export default async function VoiceQuoteEditorPage({ params }: { params: Promise
               Revenir à l’éditeur complet
             </Link>
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Devis à la voix</h1>
-              <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800">
+              <h1 className="text-2xl font-semibold tracking-tight text-primary sm:text-3xl">Devis à la voix</h1>
+              <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-primary">
                 {editor.quote.status === "draft" ? "Brouillon" : "Finalisé"}
               </span>
             </div>
@@ -45,7 +45,7 @@ export default async function VoiceQuoteEditorPage({ params }: { params: Promise
           </div>
 
           <Link
-            className="inline-flex w-full shrink-0 items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 sm:w-auto"
+            className="inline-flex w-full shrink-0 items-center justify-center rounded-xl bg-[#E8672E] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#D95E27] sm:w-auto"
             href={`/devis/${quoteId}`}
           >
             Terminer la saisie vocale
