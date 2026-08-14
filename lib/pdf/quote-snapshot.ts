@@ -104,8 +104,16 @@ export type QuotePdfData = {
 };
 
 export function parseQuotePdfData(snapshot: unknown, complianceSnapshot: unknown): QuotePdfData {
+  const parsedComplianceSnapshot = complianceSnapshotSchema.parse(complianceSnapshot);
+
   return {
-    complianceSnapshot: complianceSnapshotSchema.parse(complianceSnapshot),
+    complianceSnapshot: {
+      ...parsedComplianceSnapshot,
+      // A declared insurance must be rendered on the PDF even when the
+      // separate "insurance required" business flag is false.
+      professionalInsuranceRequired:
+        parsedComplianceSnapshot.professionalInsuranceRequired || parsedComplianceSnapshot.insurances.length > 0,
+    },
     snapshot: snapshotSchema.parse(snapshot),
   };
 }
