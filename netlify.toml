@@ -1,6 +1,8 @@
 [build]
   command = "npm run build"
   publish = ".next"
+  # Les validations passent par GitHub Actions. Une publication Netlify se fait manuellement.
+  ignore = "true"
 
 [build.environment]
   NODE_VERSION = "22"
