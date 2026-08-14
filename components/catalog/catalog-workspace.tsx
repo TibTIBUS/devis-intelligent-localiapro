@@ -22,20 +22,9 @@ import type {
   CatalogItemFormState,
 } from "@/lib/validation/catalog";
 
-type CategoryAction = (
-  previousState: CatalogCategoryFormState,
-  formData: FormData,
-) => Promise<CatalogCategoryFormState>;
-
-type ItemAction = (
-  previousState: CatalogItemFormState,
-  formData: FormData,
-) => Promise<CatalogItemFormState>;
-
-type DeleteAction = (
-  previousState: CatalogDeleteFormState,
-  formData: FormData,
-) => Promise<CatalogDeleteFormState>;
+type CategoryAction = (previousState: CatalogCategoryFormState, formData: FormData) => Promise<CatalogCategoryFormState>;
+type ItemAction = (previousState: CatalogItemFormState, formData: FormData) => Promise<CatalogItemFormState>;
+type DeleteAction = (previousState: CatalogDeleteFormState, formData: FormData) => Promise<CatalogDeleteFormState>;
 
 type EditorMode =
   | { type: "new-category" }
@@ -102,170 +91,63 @@ export function CatalogWorkspace({
   const uncategorizedCount = items.filter((item) => item.category_id === null).length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div className="space-y-5 sm:space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">Localiapro.fr</p>
-          <h1 className="text-3xl font-semibold tracking-tight">Catalogue</h1>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            Organisez vos catégories et vos prestations en un seul endroit. Les tarifs peuvent rester vides tant qu’ils ne sont pas définis.
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Catalogue</h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">Organisez vos catégories et vos prestations en un seul endroit. Les tarifs peuvent rester vides tant qu’ils ne sont pas définis.</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button onClick={() => setEditor({ type: "new-category" })} type="button" variant="outline">
-            <Plus className="size-4" /> Nouvelle catégorie
-          </Button>
-          <Button onClick={() => setEditor({ type: "new-item" })} type="button">
-            <PackagePlus className="size-4" /> Ajouter une prestation
-          </Button>
+        <div className="grid gap-2 min-[420px]:grid-cols-2 sm:flex">
+          <Button className="min-h-11" onClick={() => setEditor({ type: "new-category" })} type="button" variant="outline"><Plus className="size-4" /> Nouvelle catégorie</Button>
+          <Button className="min-h-11" onClick={() => setEditor({ type: "new-item" })} type="button"><PackagePlus className="size-4" /> Ajouter une prestation</Button>
         </div>
       </div>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Résumé du catalogue">
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-600"><Folder className="size-5" /></span>
-            <div><p className="text-xs text-muted-foreground">Catégories</p><p className="text-2xl font-semibold">{categories.length}</p></div>
-          </div>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-600"><Tag className="size-5" /></span>
-            <div><p className="text-xs text-muted-foreground">Prestations</p><p className="text-2xl font-semibold">{items.length}</p></div>
-          </div>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-xl bg-violet-50 text-violet-600"><Tag className="size-5" /></span>
-            <div><p className="text-xs text-muted-foreground">Prix moyen HT</p><p className="text-xl font-semibold">{formatAveragePrice(items)}</p></div>
-          </div>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-xl bg-amber-50 text-amber-600"><BarChart3 className="size-5" /></span>
-            <div><p className="text-xs text-muted-foreground">Valeur catalogue</p><p className="text-xl font-semibold">{formatCatalogValue(items)}</p></div>
-          </div>
-        </div>
+      <section className="grid gap-3 min-[420px]:grid-cols-2 xl:grid-cols-4" aria-label="Résumé du catalogue">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-600"><Folder className="size-5" /></span><div><p className="text-xs text-muted-foreground">Catégories</p><p className="text-2xl font-semibold">{categories.length}</p></div></div></div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-600"><Tag className="size-5" /></span><div><p className="text-xs text-muted-foreground">Prestations</p><p className="text-2xl font-semibold">{items.length}</p></div></div></div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-violet-50 text-violet-600"><Tag className="size-5" /></span><div><p className="text-xs text-muted-foreground">Prix moyen HT</p><p className="text-xl font-semibold">{formatAveragePrice(items)}</p></div></div></div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-amber-50 text-amber-600"><BarChart3 className="size-5" /></span><div><p className="text-xs text-muted-foreground">Valeur catalogue</p><p className="text-xl font-semibold">{formatCatalogValue(items)}</p></div></div></div>
       </section>
 
-      <div className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)_360px]">
-        <aside className="rounded-xl border border-border bg-card p-4 shadow-sm">
-          <div className="mb-4 flex items-center justify-between gap-2">
-            <h2 className="font-semibold">Catégories</h2>
-            <Button className="size-8" onClick={() => setEditor({ type: "new-category" })} size="icon" type="button" variant="ghost" aria-label="Ajouter une catégorie">
-              <Plus className="size-4" />
-            </Button>
-          </div>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[260px_minmax(0,1fr)_360px] xl:items-start">
+        <aside className="rounded-xl border border-border bg-card p-4 shadow-sm lg:col-span-2 xl:col-span-1">
+          <div className="mb-4 flex items-center justify-between gap-2"><h2 className="font-semibold">Catégories</h2><Button className="size-8" onClick={() => setEditor({ type: "new-category" })} size="icon" type="button" variant="ghost" aria-label="Ajouter une catégorie"><Plus className="size-4" /></Button></div>
           <div className="flex gap-2 overflow-x-auto pb-1 xl:block xl:space-y-2 xl:overflow-visible">
-            <button
-              className={`min-w-44 rounded-lg border p-3 text-left transition xl:w-full ${selectedCategoryId === null ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}
-              onClick={() => setSelectedCategoryId(null)}
-              type="button"
-            >
-              <div className="flex items-center justify-between gap-3"><span className="font-medium">Toutes</span><ChevronRight className="size-4 text-muted-foreground" /></div>
-              <p className="mt-1 text-xs text-muted-foreground">{items.length} prestations</p>
-            </button>
+            <button className={`min-w-40 rounded-lg border p-3 text-left transition xl:w-full ${selectedCategoryId === null ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`} onClick={() => setSelectedCategoryId(null)} type="button"><div className="flex items-center justify-between gap-3"><span className="font-medium">Toutes</span><ChevronRight className="size-4 text-muted-foreground" /></div><p className="mt-1 text-xs text-muted-foreground">{items.length} prestations</p></button>
             {categories.map((category) => (
-              <div className="min-w-44 xl:min-w-0" key={category.id}>
-                <button
-                  className={`w-full rounded-lg border p-3 text-left transition ${selectedCategoryId === category.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}
-                  onClick={() => setSelectedCategoryId(category.id)}
-                  type="button"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="truncate font-medium">{category.name}</span>
-                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{countsByCategory.get(category.id) ?? 0} prestations</p>
-                </button>
-                <button
-                  className="mt-1 flex items-center gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
-                  onClick={() => setEditor({ category, type: "edit-category" })}
-                  type="button"
-                >
-                  <Pencil className="size-3" /> Modifier
-                </button>
+              <div className="min-w-40 xl:min-w-0" key={category.id}>
+                <button className={`w-full rounded-lg border p-3 text-left transition ${selectedCategoryId === category.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`} onClick={() => setSelectedCategoryId(category.id)} type="button"><div className="flex items-center justify-between gap-3"><span className="truncate font-medium">{category.name}</span><ChevronRight className="size-4 shrink-0 text-muted-foreground" /></div><p className="mt-1 text-xs text-muted-foreground">{countsByCategory.get(category.id) ?? 0} prestations</p></button>
+                <button className="mt-1 flex items-center gap-1 px-2 text-xs text-muted-foreground hover:text-foreground" onClick={() => setEditor({ category, type: "edit-category" })} type="button"><Pencil className="size-3" /> Modifier</button>
               </div>
             ))}
-            {uncategorizedCount > 0 ? (
-              <button
-                className="min-w-44 rounded-lg border border-dashed border-border p-3 text-left text-sm text-muted-foreground xl:w-full"
-                onClick={() => setSelectedCategoryId(null)}
-                type="button"
-              >
-                Sans catégorie · {uncategorizedCount}
-              </button>
-            ) : null}
+            {uncategorizedCount > 0 ? <button className="min-w-40 rounded-lg border border-dashed border-border p-3 text-left text-sm text-muted-foreground xl:w-full" onClick={() => setSelectedCategoryId(null)} type="button">Sans catégorie · {uncategorizedCount}</button> : null}
           </div>
         </aside>
 
-        <section className="min-w-0 rounded-xl border border-border bg-card p-4 shadow-sm">
+        <section className="min-w-0 rounded-xl border border-border bg-card p-3 shadow-sm min-[375px]:p-4">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="font-semibold">Prestations enregistrées</h2>
-              <p className="text-xs text-muted-foreground">Cliquez sur une prestation pour la modifier.</p>
-            </div>
-            <div className="relative w-full sm:max-w-xs">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm"
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Rechercher une prestation…"
-                type="search"
-                value={search}
-              />
-            </div>
+            <div><h2 className="font-semibold">Prestations enregistrées</h2><p className="text-xs text-muted-foreground">Cliquez sur une prestation pour la modifier.</p></div>
+            <div className="relative w-full sm:max-w-xs"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><input className="h-11 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm" onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher une prestation…" type="search" value={search} /></div>
           </div>
-
           <div className="space-y-2">
             {visibleItems.length ? visibleItems.map((item) => (
-              <button
-                className="grid w-full gap-3 rounded-lg border border-border p-4 text-left transition hover:border-primary/40 hover:bg-muted/30 sm:grid-cols-[minmax(0,1fr)_90px_120px_auto] sm:items-center"
-                key={item.id}
-                onClick={() => setEditor({ item, type: "edit-item" })}
-                type="button"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{item.name}</p>
-                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{item.description || "Aucune description"}</p>
-                </div>
+              <button className="grid w-full gap-3 rounded-lg border border-border p-3 text-left transition hover:border-primary/40 hover:bg-muted/30 min-[420px]:p-4 sm:grid-cols-[minmax(0,1fr)_90px_120px_auto] sm:items-center" key={item.id} onClick={() => setEditor({ item, type: "edit-item" })} type="button">
+                <div className="min-w-0"><p className="truncate font-medium">{item.name}</p><p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{item.description || "Aucune description"}</p></div>
                 <div><p className="text-[11px] uppercase tracking-wide text-muted-foreground">Unité</p><p className="text-sm font-medium">{item.unit}</p></div>
                 <div><p className="text-[11px] uppercase tracking-wide text-muted-foreground">Prix HT</p><p className="text-sm font-semibold">{formatPrice(item.unit_price_ht_cents)}</p></div>
                 <span className="inline-flex items-center gap-1 text-sm font-medium text-primary"><Pencil className="size-4" /> Modifier</span>
               </button>
-            )) : (
-              <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-                Aucune prestation ne correspond à cette sélection.
-              </div>
-            )}
+            )) : <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Aucune prestation ne correspond à cette sélection.</div>}
           </div>
         </section>
 
-        <aside className="self-start rounded-xl border border-border bg-card p-4 shadow-sm xl:sticky xl:top-24">
-          {editor.type === "new-category" ? (
-            <div className="space-y-4">
-              <div><h2 className="font-semibold">Nouvelle catégorie</h2><p className="text-xs text-muted-foreground">Créez un nouveau groupe de prestations.</p></div>
-              <CategoryForm action={categoryAction} />
-            </div>
-          ) : null}
-          {editor.type === "edit-category" ? (
-            <div className="space-y-4">
-              <div><h2 className="font-semibold">Modifier la catégorie</h2><p className="text-xs text-muted-foreground">Les prestations associées restent conservées.</p></div>
-              <CategoryForm action={categoryAction} category={editor.category} deleteAction={deleteCategoryAction} key={editor.category.id} />
-            </div>
-          ) : null}
-          {editor.type === "new-item" ? (
-            <div className="space-y-4">
-              <div><h2 className="font-semibold">Nouvelle prestation</h2><p className="text-xs text-muted-foreground">Ajoutez une prestation à votre catalogue.</p></div>
-              <ItemForm action={itemAction} categories={categories} />
-            </div>
-          ) : null}
-          {editor.type === "edit-item" ? (
-            <div className="space-y-4">
-              <div><h2 className="font-semibold">Modifier la prestation</h2><p className="text-xs text-muted-foreground">Les changements seront utilisés pour les prochains devis.</p></div>
-              <ItemForm action={itemAction} categories={categories} deleteAction={deleteItemAction} item={editor.item} key={editor.item.id} />
-            </div>
-          ) : null}
+        <aside className="self-start rounded-xl border border-border bg-card p-4 shadow-sm lg:sticky lg:top-24 xl:col-start-3">
+          {editor.type === "new-category" ? <div className="space-y-4"><div><h2 className="font-semibold">Nouvelle catégorie</h2><p className="text-xs text-muted-foreground">Créez un nouveau groupe de prestations.</p></div><CategoryForm action={categoryAction} /></div> : null}
+          {editor.type === "edit-category" ? <div className="space-y-4"><div><h2 className="font-semibold">Modifier la catégorie</h2><p className="text-xs text-muted-foreground">Les prestations associées restent conservées.</p></div><CategoryForm action={categoryAction} category={editor.category} deleteAction={deleteCategoryAction} key={editor.category.id} /></div> : null}
+          {editor.type === "new-item" ? <div className="space-y-4"><div><h2 className="font-semibold">Nouvelle prestation</h2><p className="text-xs text-muted-foreground">Ajoutez une prestation à votre catalogue.</p></div><ItemForm action={itemAction} categories={categories} /></div> : null}
+          {editor.type === "edit-item" ? <div className="space-y-4"><div><h2 className="font-semibold">Modifier la prestation</h2><p className="text-xs text-muted-foreground">Les changements seront utilisés pour les prochains devis.</p></div><ItemForm action={itemAction} categories={categories} deleteAction={deleteItemAction} item={editor.item} key={editor.item.id} /></div> : null}
         </aside>
       </div>
     </div>
