@@ -84,6 +84,7 @@ export async function POST(request: Request) {
           lineKind: line.line_kind,
           quantityMilliunits: line.quantity_milliunits,
           unit: line.unit,
+          vatRateBasisPoints: line.vat_rate_basis_points,
         })),
         quoteId: editor.quote.id,
         status: editor.quote.status,
