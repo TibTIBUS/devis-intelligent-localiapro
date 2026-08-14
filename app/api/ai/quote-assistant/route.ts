@@ -76,6 +76,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await runQuoteAssistant({
+      actorUserId: claimsData.claims.sub,
       context: {
         lines: editor.lines.map((line) => ({
           id: line.id,
