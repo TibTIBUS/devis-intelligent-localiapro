@@ -5,9 +5,7 @@ import { CheckCircle2, Mic } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { buildConfirmActionPayload } from "@/lib/ai/build-confirm-payload";
-import { extractVoiceVatRate, matchVoiceConfirmation } from "@/lib/ai/voice-confirmation";
-import type { AiConversationMessage, AiQuoteActionProposal } from "@/lib/validation/ai";
+import type { AiConversationMessage } from "@/lib/validation/ai";
 
 type VoiceState = "idle" | "recording" | "processing" | "speaking";
 
@@ -27,9 +25,7 @@ function microphoneErrorMessage(error: unknown): string {
     if (error.name === "NotAllowedError" || error.name === "SecurityError") {
       return "L’accès au microphone est bloqué. Autorisez le micro pour ce site dans les paramètres du navigateur puis réessayez.";
     }
-    if (error.name === "NotFoundError") {
-      return "Aucun microphone n’a été détecté sur cet appareil.";
-    }
+    if (error.name === "NotFoundError") return "Aucun microphone n’a été détecté sur cet appareil.";
     if (error.name === "NotReadableError" || error.name === "AbortError") {
       return "Le microphone est détecté mais ne peut pas être utilisé. Fermez les applications qui utilisent le micro puis réessayez.";
     }
@@ -41,19 +37,11 @@ function microphoneErrorMessage(error: unknown): string {
   return "Impossible d’accéder au microphone. Vérifiez l’autorisation du site et le microphone sélectionné dans le navigateur.";
 }
 
-function readbackForProposal(proposal: AiQuoteActionProposal): string {
-  if (proposal.actionType === "add_quote_line") {
-    return `${proposal.label}, ${proposal.quantityMilliunits / 1_000} ${proposal.unit}. Dites oui et le taux de TVA, par exemple : oui, dix pour cent. Ou dites non.`;
-  }
-  return "Dites oui pour confirmer, ou non pour annuler.";
-}
-
 export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
   const router = useRouter();
   const [state, setState] = useState<VoiceState>("idle");
   const [transcriptLog, setTranscriptLog] = useState<string[]>([]);
   const [error, setError] = useState("");
-  const [proposal, setProposal] = useState<AiQuoteActionProposal | null>(null);
   const messagesRef = useRef<AiConversationMessage[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -73,12 +61,14 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
       });
       if (!response.ok) return;
       const audioBlob = await response.blob();
-      const audio = new Audio(URL.createObjectURL(audioBlob));
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
       await new Promise<void>((resolve) => {
         audio.onended = () => resolve();
         audio.onerror = () => resolve();
         void audio.play().catch(() => resolve());
       });
+      URL.revokeObjectURL(audioUrl);
     } finally {
       setState("idle");
     }
@@ -98,66 +88,11 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
     return data.transcript;
   }
 
-  async function handleConfirmationTurn(transcript: string) {
-    const currentProposal = proposal;
-    if (!currentProposal) return;
-
-    if (currentProposal.actionType === "add_quote_line") {
-      const decision = matchVoiceConfirmation(transcript);
-      if (decision === "cancel") {
-        setProposal(null);
-        logLine("Assistant : proposition annulée.");
-        await speak("D’accord, j’annule cette ligne.");
-        return;
-      }
-      const vatRate = extractVoiceVatRate(transcript);
-      if (decision !== "confirm" || !vatRate) {
-        await speak("Merci de redire : je confirme, puis le taux de TVA. Par exemple : je confirme, dix pour cent.");
-        return;
-      }
-      await confirmProposal(currentProposal, { vatRate });
-      return;
-    }
-
-    const decision = matchVoiceConfirmation(transcript);
-    if (decision === "confirm") {
-      await confirmProposal(currentProposal);
-      return;
-    }
-    if (decision === "cancel") {
-      setProposal(null);
-      logLine("Assistant : proposition annulée.");
-      await speak("D’accord, j’annule.");
-      return;
-    }
-    await speak("Je n’ai pas compris. Dites : je confirme. Ou : j’annule.");
-  }
-
-  async function confirmProposal(currentProposal: AiQuoteActionProposal, overrides?: { vatRate?: string }) {
-    setState("processing");
-    setError("");
-    try {
-      const payload = buildConfirmActionPayload(currentProposal, quoteId, overrides);
-      const response = await fetch("/api/ai/quote-actions/confirm", {
-        body: JSON.stringify(payload),
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
-      });
-      const data = (await response.json()) as { error?: string; message?: string };
-      if (!response.ok || !data.message) throw new Error(data.error ?? "Confirmation invalide.");
-      setProposal(null);
-      logLine(`Assistant : ${data.message}`);
-      router.refresh();
-      await speak(data.message);
-    } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "L’action n’a pas pu être appliquée.";
-      setError(message);
-      await speak(message);
-    }
-  }
-
   async function handleAssistantTurn(transcript: string) {
-    const nextMessages: AiConversationMessage[] = [...messagesRef.current, { content: transcript, role: "user" as const }].slice(-10);
+    const nextMessages: AiConversationMessage[] = [
+      ...messagesRef.current,
+      { content: transcript, role: "user" as const },
+    ].slice(-10);
     messagesRef.current = nextMessages;
     logLine(`Vous : ${transcript}`);
     setState("processing");
@@ -169,24 +104,13 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
-      const data = (await response.json()) as {
-        error?: string;
-        message?: string;
-        pendingAction?: AiQuoteActionProposal;
-      };
+      const data = (await response.json()) as { error?: string; message?: string };
       if (!response.ok || !data.message) throw new Error(data.error ?? "Réponse invalide.");
+
       messagesRef.current = [...nextMessages, { content: data.message, role: "assistant" as const }].slice(-10);
-      logLine(`Assistant : ${data.message}`);
-
+      logLine(`Nalto : ${data.message}`);
       router.refresh();
-
-      if (data.pendingAction) {
-        setProposal(data.pendingAction);
-        await speak(`${data.message} ${readbackForProposal(data.pendingAction)}`);
-      } else {
-        setProposal(null);
-        await speak(data.message);
-      }
+      await speak(data.message);
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "L’assistant est indisponible.";
       setError(message);
@@ -198,9 +122,7 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
     if (state !== "idle") return;
     setError("");
     try {
-      if (typeof MediaRecorder === "undefined") {
-        throw new Error("MediaRecorder unavailable");
-      }
+      if (typeof MediaRecorder === "undefined") throw new Error("MediaRecorder unavailable");
 
       const currentStream = streamRef.current;
       const currentTrack = currentStream?.getAudioTracks()[0];
@@ -210,9 +132,7 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
       }
 
       const stream = streamRef.current;
-      if (!stream) {
-        throw new Error("Microphone stream unavailable");
-      }
+      if (!stream) throw new Error("Microphone stream unavailable");
 
       const mimeType = pickSupportedMimeType();
       const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
@@ -243,34 +163,30 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
         setState("idle");
         return;
       }
-      if (proposal) {
-        await handleConfirmationTurn(transcript);
-      } else {
-        await handleAssistantTurn(transcript);
-      }
+      await handleAssistantTurn(transcript);
       setState("idle");
     };
     recorder.stop();
   }
 
   const statusLabel = {
-    idle: proposal ? "Maintenez pour confirmer ou annuler à voix haute" : "Assistant prêt",
-    processing: "Traitement en cours…",
+    idle: "Nalto est prêt",
+    processing: "Nalto met le devis à jour…",
     recording: "Je vous écoute…",
-    speaking: "L’assistant vous répond…",
+    speaking: "Nalto vous répond…",
   }[state];
 
   return (
     <section aria-labelledby="voice-assistant-title" className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
       <div className="px-4 pb-4 pt-5 text-center sm:px-7 sm:pb-6 sm:pt-8">
-        <h2 className="text-lg font-semibold tracking-tight sm:text-xl" id="voice-assistant-title">Parlez, je crée votre devis</h2>
-        <p className="mt-1.5 text-xs text-muted-foreground sm:mt-2 sm:text-sm">Maintenez le bouton pendant que vous parlez.</p>
+        <h2 className="text-lg font-semibold tracking-tight text-primary sm:text-xl" id="voice-assistant-title">Parlez, Nalto met le devis à jour</h2>
+        <p className="mt-1.5 text-xs text-muted-foreground sm:mt-2 sm:text-sm">Maintenez le bouton et dites tout ce que vous voulez ajouter ou modifier.</p>
 
         <div className="relative mx-auto mt-4 flex h-44 w-44 items-center justify-center sm:mt-8 sm:h-56 sm:w-56">
-          <div className={`absolute inset-3 rounded-full border-2 border-dashed ${state === "recording" ? "animate-pulse border-red-300" : "border-muted-foreground/25"}`} />
+          <div className={`absolute inset-3 rounded-full border-2 border-dashed ${state === "recording" ? "animate-pulse border-[#E8672E]" : "border-primary/20"}`} />
           <Button
             aria-label={state === "recording" ? "Relâcher pour envoyer" : "Maintenir pour parler"}
-            className="relative z-10 h-28 w-28 touch-none rounded-full bg-neutral-950 text-white shadow-xl transition-transform hover:bg-neutral-900 active:scale-95 sm:h-40 sm:w-40"
+            className="relative z-10 h-28 w-28 touch-none rounded-full bg-primary text-primary-foreground shadow-xl transition-transform hover:bg-primary/90 active:scale-95 sm:h-40 sm:w-40"
             disabled={state === "processing" || state === "speaking"}
             onPointerCancel={stopRecording}
             onPointerDown={(event) => {
@@ -291,18 +207,15 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
         <p className="mx-auto -mt-1 inline-flex rounded-lg border border-border bg-background px-3 py-2 text-xs font-medium shadow-sm sm:text-sm">
           {state === "recording" ? "Relâchez pour envoyer" : "Maintenez pour parler"}
         </p>
-
         {error ? <p aria-live="assertive" className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive sm:mt-4" role="alert">{error}</p> : null}
       </div>
 
-      <div className="border-t border-border bg-muted/25 px-3 py-3 sm:px-7 sm:py-5">
+      <div className="border-t border-border bg-secondary px-3 py-3 sm:px-7 sm:py-5">
         <div className="flex items-start gap-3 rounded-xl bg-background p-3 shadow-sm ring-1 ring-border sm:p-4">
-          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#397255]" />
           <div className="min-w-0 text-left">
             <p className="text-sm font-semibold">{statusLabel}</p>
-            <p aria-live="polite" className="mt-1 text-xs text-muted-foreground">
-              {proposal ? "Une action attend votre confirmation vocale." : state === "idle" ? "Je vous écoute dès que vous maintenez le bouton." : "Votre devis reste visible pendant l’échange."}
-            </p>
+            <p aria-live="polite" className="mt-1 text-xs text-muted-foreground">{state === "idle" ? "Les actions comprises sont appliquées directement au brouillon." : "Votre devis reste visible pendant l’échange."}</p>
           </div>
         </div>
 
@@ -310,9 +223,7 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
           <div className="mt-4 sm:mt-5">
             <h3 className="text-left text-sm font-semibold">Dernières actions</h3>
             <ol aria-label="Historique de la conversation" className="mt-2 max-h-48 divide-y divide-border overflow-auto rounded-xl border border-border bg-background text-left text-sm sm:mt-3 sm:max-h-64">
-              {transcriptLog.map((line, index) => (
-                <li className="px-3 py-2.5 text-muted-foreground sm:px-4 sm:py-3" key={`${index}-${line}`}>{line}</li>
-              ))}
+              {transcriptLog.map((line, index) => <li className="px-3 py-2.5 text-muted-foreground sm:px-4 sm:py-3" key={`${index}-${line}`}>{line}</li>)}
             </ol>
           </div>
         ) : null}
