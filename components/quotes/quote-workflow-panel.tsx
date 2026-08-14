@@ -40,9 +40,9 @@ export function QuoteWorkflowPanel({
 
       {!finalized && compliance ? (
         compliance.valid ? (
-          <section className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 shadow-sm sm:p-5">
-            <p className="font-semibold text-emerald-900">✓ Devis prêt à être finalisé</p>
-            <p className="mt-1 text-sm text-emerald-800">Tous les éléments obligatoires sont renseignés.</p>
+          <section className="rounded-2xl border border-[#B8CDBE] bg-[#E7EFE8] p-4 shadow-sm sm:p-5">
+            <p className="font-semibold text-[#28563D]">✓ Devis prêt à être finalisé</p>
+            <p className="mt-1 text-sm text-[#397255]">Tous les éléments obligatoires sont renseignés.</p>
           </section>
         ) : (
           <section
