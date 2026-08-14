@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ResponseInputItem } from "openai/resources/responses/responses";
 
 import { createOpenAIClient } from "@/lib/ai/client";
+import { MAX_OPENAI_OUTPUT_TOKENS } from "@/lib/ai/limits";
 import { logTechnicalError, type TechnicalLogContext } from "@/lib/observability/logger";
 import { buildQuoteAssistantPrompt, type QuoteAssistantContext } from "@/lib/ai/prompts/quote-assistant";
 import { addQuoteLineTool, prepareAddQuoteLineTool } from "@/lib/ai/tools/add-quote-line";
@@ -56,6 +57,7 @@ export async function runQuoteAssistant({
         input,
         instructions: buildQuoteAssistantPrompt(context),
         model,
+        max_output_tokens: MAX_OPENAI_OUTPUT_TOKENS,
         parallel_tool_calls: false,
         store: false,
         tools: [searchCatalogTool, addQuoteLineTool, updateQuoteLineTool, deleteQuoteLineTool, setDiscountTool, setDepositTool, setPaymentTermsTool, setValidityTool, setWorksiteAddressTool, updateQuoteNoteTool],

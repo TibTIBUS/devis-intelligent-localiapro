@@ -1,0 +1,3 @@
+export const OPENAI_MAX_RETRIES = 1;
+export const OPENAI_REQUEST_TIMEOUT_MS = 20_000;
+export const MAX_OPENAI_OUTPUT_TOKENS = 800;

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { isOpenAITimeoutError } from "@/lib/ai/errors";
 import { runQuoteAssistant } from "@/lib/ai/quote-assistant";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import { createRequestId, logTechnicalError, logTechnicalWarning } from "@/lib/observability/logger";
@@ -99,6 +100,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(result);
   } catch (error) {
+    const isTimeout = isOpenAITimeoutError(error);
     logTechnicalError("ai.assistant_failed", {
       organizationId,
       quoteId: parsed.data.quoteId,
@@ -106,7 +108,11 @@ export async function POST(request: Request) {
       userId: claimsData.claims.sub,
     }, error);
     return NextResponse.json(
-      { error: "L’assistant est temporairement indisponible." },
+      {
+        error: isTimeout
+          ? "L’assistant met trop de temps à répondre. Réessayez dans un instant."
+          : "L’assistant est temporairement indisponible.",
+      },
       { status: 503 },
     );
   }
