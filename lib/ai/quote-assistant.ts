@@ -50,6 +50,10 @@ type RunQuoteAssistantOptions = {
   supabase: SupabaseClient;
 };
 
+function formatVatRate(rateBasisPoints: number) {
+  return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(rateBasisPoints / 100);
+}
+
 export async function runQuoteAssistant({
   actorUserId,
   context,
@@ -118,6 +122,7 @@ export async function runQuoteAssistant({
               prepared.proposal.catalogItemId,
               prepared.proposal.lineKind,
               prepared.proposal.quantityMilliunits,
+              prepared.proposal.vatRateBasisPoints,
             ].join(":");
 
             if (appliedMutationKeys.has(mutationKey)) {
@@ -135,12 +140,12 @@ export async function runQuoteAssistant({
                   catalogItemId: prepared.proposal.catalogItemId,
                   lineKind: prepared.proposal.lineKind,
                   quantityMilliunits: prepared.proposal.quantityMilliunits,
-                  vatRateBasisPoints: null,
+                  vatRateBasisPoints: prepared.proposal.vatRateBasisPoints,
                 },
               );
               output = {
                 label: applied.label,
-                message: `${applied.label} a été ajouté au devis. Le taux de TVA reste à compléter avant finalisation.`,
+                message: `${applied.label} a été ajouté au devis avec une TVA de ${formatVatRate(prepared.proposal.vatRateBasisPoints)} %.`,
                 status: "applied",
               };
             }
@@ -157,6 +162,7 @@ export async function runQuoteAssistant({
             prepared.proposal.quoteLineId,
             prepared.proposal.lineKind,
             prepared.proposal.quantityMilliunits,
+            prepared.proposal.vatRateBasisPoints,
           ].join(":");
           if (appliedMutationKeys.has(mutationKey)) {
             output = { message: "Cette modification était déjà appliquée pour cette demande.", status: "duplicate_ignored" };
@@ -166,8 +172,9 @@ export async function runQuoteAssistant({
               lineKind: prepared.proposal.lineKind,
               quantityMilliunits: prepared.proposal.quantityMilliunits,
               quoteLineId: prepared.proposal.quoteLineId,
+              vatRateBasisPoints: prepared.proposal.vatRateBasisPoints,
             });
-            output = { message: `${prepared.proposal.label} a été modifié.`, status: "applied" };
+            output = { message: `${prepared.proposal.label} a été modifié. TVA : ${formatVatRate(prepared.proposal.vatRateBasisPoints)} %.`, status: "applied" };
           }
         } else if (call.name === deleteQuoteLineTool.name) {
           const prepared = await prepareDeleteQuoteLineTool(
