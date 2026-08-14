@@ -186,3 +186,16 @@ Cette limite couvre les messages et propositions du MVP tout en empêchant qu’
 Les en-têtes de sécurité sont déclarés dans `next.config.ts` et non dans `netlify.toml`, car les règles de CDN Netlify ne couvrent pas les réponses SSR et les handlers. Toutes les routes reçoivent donc les protections MIME, référent, transport HTTPS, permissions navigateur et anti-encapsulation.
 
 La CSP MVP bloque les ancêtres de frame, les objets, les formulaires externes et l’injection de base URL. Une CSP plus restrictive avec nonce est différée : elle nécessiterait de rendre dynamiques les pages Next.js et de valider tous les scripts et styles, ce qui dépasse ce durcissement sans changer le comportement de l’application.
+
+## DEPLOY-005 — un seul environnement Supabase pour le MVP
+
+Faute de capacité pour un second projet Supabase, le MVP utilise un seul
+environnement, déclaré comme production. Les Deploy Previews et les branch
+deploys Netlify sont désactivés dans l'interface Netlify : aucune branche de
+travail ne peut ainsi recevoir les secrets ou accéder aux données de
+production.
+
+La publication passe uniquement par `main`, après les contrôles locaux. Les
+tests E2E qui créent des données ne s'exécutent pas contre le site public ; les
+vérifications en ligne utilisent un compte de démonstration dédié. Cette
+dérogation sera levée dès qu'un environnement Supabase isolé sera disponible.

@@ -6,9 +6,10 @@ Netlify détecte Next.js et déploie automatiquement les Server Components, les
 Server Actions, le proxy d'authentification et les routes `app/api`. Aucun
 adaptateur ou dossier de fonctions Netlify ne doit être ajouté au projet.
 
-La branche de production et les deploy previews doivent utiliser des projets
-Supabase distincts. Une preview ne doit jamais recevoir les secrets du projet
-de production.
+Le MVP utilise un unique projet Supabase, qui est l'environnement de
+production. Cette dérogation temporaire interdit les Deploy Previews et les
+branch deploys : une branche de travail ne doit jamais recevoir les secrets ni
+accéder aux données de production.
 
 ## Configuration du site
 
@@ -16,29 +17,30 @@ de production.
 2. Définir la branche de production dans Netlify.
 3. Conserver les réglages de build du fichier `netlify.toml` : Node 22 et
    `npm run build`.
-4. Activer les Deploy Previews pour les pull requests.
+4. Désactiver les **Deploy Previews** dans **Project configuration > Build &
+   deploy > Continuous Deployment > Branches and deploy contexts**.
+5. Ne configurer aucune branche de déploiement supplémentaire.
 
-`netlify.toml` fixe les valeurs non secrètes suivantes : `APP_ENV=production`
-pour le site de production et `APP_ENV=preview` pour les deploy previews et
-les branch deploys. `NODE_ENV` n'est pas forcé pendant l'installation afin que
-Netlify installe les dépendances de compilation. Les valeurs propres à un
-environnement restent configurées dans Netlify.
+`netlify.toml` fixe la valeur non secrète `APP_ENV=production` pour le site.
+`NODE_ENV` n'est pas forcé pendant l'installation afin que Netlify installe les
+dépendances de compilation. Les valeurs propres à l'environnement restent
+configurées dans Netlify.
 
 ## Variables Netlify
 
 Définir ces valeurs dans Netlify, par contexte, sans les inscrire dans
 `netlify.toml` :
 
-| Variable | Deploy Preview / branche | Production |
-| --- | --- | --- |
-| `APP_ENV` | `preview` | `production` |
-| `NEXT_PUBLIC_APP_URL` | URL publique de la preview | URL publique de production |
-| `NEXT_PUBLIC_SUPABASE_URL` | Projet Supabase isolé | Projet Supabase de production |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clé publiable isolée | Clé publiable de production |
-| `SUPABASE_SERVICE_ROLE_KEY` | Secret isolé | Secret de production |
-| `OPENAI_API_KEY` | Secret isolé | Secret de production |
-| `OPENAI_TEXT_MODEL` | Modèle autorisé | Modèle autorisé |
-| `OPENAI_REALTIME_MODEL` | Modèle autorisé | Modèle autorisé |
+| Variable | Production |
+| --- | --- |
+| `APP_ENV` | `production` (fourni par `netlify.toml`) |
+| `NEXT_PUBLIC_APP_URL` | URL publique de production |
+| `NEXT_PUBLIC_SUPABASE_URL` | Projet Supabase de production |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clé publiable de production |
+| `SUPABASE_SERVICE_ROLE_KEY` | Secret de production |
+| `OPENAI_API_KEY` | Secret de production |
+| `OPENAI_TEXT_MODEL` | Modèle autorisé |
+| `OPENAI_REALTIME_MODEL` | Modèle autorisé |
 
 Les secrets (`SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`) doivent être
 marqués comme secrets dans Netlify. Les variables préfixées `NEXT_PUBLIC_`
@@ -47,16 +49,16 @@ sont exposées au navigateur : elles ne doivent contenir aucun secret.
 La configuration du dépôt ne suffit pas à créer un site Netlify. Avant la
 première publication, relier explicitement ce dépôt au site retenu avec
 `netlify link` (site existant) ou `netlify init` (nouveau site), puis renseigner
-les variables ci-dessus dans les contextes correspondants. Une publication
-manuelle doit d'abord être une preview (`netlify deploy`), puis une production
-après validation (`netlify deploy --prod`).
+les variables ci-dessus. La publication se fait uniquement depuis `main`, après
+les contrôles locaux obligatoires. Les tests authentifiés ne créent pas de
+données sur le site public ; un compte de démonstration dédié est utilisé pour
+les vérifications manuelles.
 
 ## Supabase Auth
 
-Ajouter les URLs de production et de preview autorisées dans **Supabase Auth >
-URL Configuration**. Pour les previews Netlify, utiliser le domaine de preview
-autorisé par Supabase ; ne pas rediriger les flux d'authentification vers la
-production.
+Ajouter l'URL de production autorisée dans **Supabase Auth > URL
+Configuration**. Les redirections d'authentification utilisent exclusivement
+le domaine de production.
 
 ## Validation avant publication
 

@@ -12,20 +12,6 @@
   APP_ENV = "production"
   NEXT_TELEMETRY_DISABLED = "1"
 
-[context.deploy-preview]
-  command = "npm run build"
-
-[context.deploy-preview.environment]
-  APP_ENV = "preview"
-  NEXT_TELEMETRY_DISABLED = "1"
-
-[context.branch-deploy]
-  command = "npm run build"
-
-[context.branch-deploy.environment]
-  APP_ENV = "preview"
-  NEXT_TELEMETRY_DISABLED = "1"
-
 [dev]
   command = "npm run dev"
   port = 8888
