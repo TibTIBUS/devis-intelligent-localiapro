@@ -2,6 +2,7 @@ import { calculateLine } from "@/lib/calculations/quotes";
 import type { CompanyLegalInformation } from "@/lib/company/queries";
 import type { Customer } from "@/lib/customers/queries";
 import type { Quote, QuoteLine } from "@/lib/quotes/queries";
+import { QuoteLiveLineDelete } from "@/components/quotes/quote-live-line-delete";
 
 type QuoteTotals = Awaited<ReturnType<typeof import("@/lib/quotes/queries").getQuoteEditorData>> extends infer Editor
   ? Editor extends { totals: infer Totals }
@@ -50,7 +51,7 @@ export function QuoteLivePreview({
       <div className="mb-3 flex items-start justify-between gap-3 sm:mb-4 sm:items-center">
         <div>
           <h2 className="text-base font-semibold sm:text-lg" id="quote-preview-title">Aperçu du devis</h2>
-          <p className="text-[11px] text-muted-foreground sm:text-xs">Mis à jour après chaque action confirmée.</p>
+          <p className="text-[11px] text-muted-foreground sm:text-xs">Mis à jour automatiquement après chaque action.</p>
         </div>
         <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-medium text-emerald-800 sm:px-3 sm:text-xs">
           {quote.status === "draft" ? "Brouillon" : "Finalisé"}
@@ -104,7 +105,12 @@ export function QuoteLivePreview({
             {lines.length > 0 ? lines.map((line) => {
               const lineTotal = calculateLine(BigInt(line.quantity_milliunits), line.unit_price_ht_cents === null ? null : BigInt(line.unit_price_ht_cents));
               return (
-                <article className="rounded-md border border-neutral-300 p-2.5 text-[9px]" key={line.id}>
+                <article className="relative rounded-md border border-neutral-300 p-2.5 pr-10 text-[9px]" key={line.id}>
+                  {quote.status === "draft" ? (
+                    <div className="absolute right-2 top-2">
+                      <QuoteLiveLineDelete label={line.label} lineId={line.id} quoteId={quote.id} />
+                    </div>
+                  ) : null}
                   <p className="font-semibold">{line.label}</p>
                   {line.description ? <p className="mt-0.5 text-[8px] text-neutral-500">{line.description}</p> : null}
                   <div className="mt-2 grid grid-cols-4 gap-1.5 border-t border-neutral-200 pt-2 text-center">
@@ -116,7 +122,7 @@ export function QuoteLivePreview({
                 </article>
               );
             }) : (
-              <div className="rounded-md border border-neutral-300 px-3 py-5 text-center text-[9px] text-neutral-500">Les lignes confirmées apparaîtront ici en direct.</div>
+              <div className="rounded-md border border-neutral-300 px-3 py-5 text-center text-[9px] text-neutral-500">Les lignes ajoutées apparaîtront ici en direct.</div>
             )}
           </div>
 
@@ -129,6 +135,7 @@ export function QuoteLivePreview({
                   <th className="px-2 py-2 font-semibold">Unité</th>
                   <th className="px-2 py-2 text-right font-semibold">PU HT</th>
                   <th className="px-3 py-2 text-right font-semibold">Total HT</th>
+                  {quote.status === "draft" ? <th className="w-10 px-2 py-2" aria-label="Actions" /> : null}
                 </tr>
               </thead>
               <tbody>
@@ -144,11 +151,16 @@ export function QuoteLivePreview({
                       <td className="px-2 py-2.5">{line.unit}</td>
                       <td className="px-2 py-2.5 text-right">{line.unit_price_ht_cents === null ? "—" : formatCents(BigInt(line.unit_price_ht_cents))}</td>
                       <td className="px-3 py-2.5 text-right font-medium">{lineTotal === null ? "—" : formatCents(lineTotal)}</td>
+                      {quote.status === "draft" ? (
+                        <td className="px-2 py-2 text-right">
+                          <QuoteLiveLineDelete label={line.label} lineId={line.id} quoteId={quote.id} />
+                        </td>
+                      ) : null}
                     </tr>
                   );
                 }) : (
                   <tr className="border-t border-neutral-200">
-                    <td className="px-3 py-8 text-center text-neutral-500" colSpan={5}>Les lignes confirmées apparaîtront ici en direct.</td>
+                    <td className="px-3 py-8 text-center text-neutral-500" colSpan={quote.status === "draft" ? 6 : 5}>Les lignes ajoutées apparaîtront ici en direct.</td>
                   </tr>
                 )}
               </tbody>
