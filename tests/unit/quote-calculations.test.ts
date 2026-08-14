@@ -64,6 +64,42 @@ describe("quote financial calculations", () => {
     expect(result.depositCents).toBe(6_210n);
   });
 
+  it("covers a complete electrician field quote with targeted VAT and a 30 percent deposit", () => {
+    const result = calculateQuoteTotals(
+      [
+        { quantityMilliunits: 8_000n, unitPriceHtCents: 8_500n, vatRateBasisPoints: 1_000 },
+        { quantityMilliunits: 3_000n, unitPriceHtCents: 7_000n, vatRateBasisPoints: 2_000 },
+        { quantityMilliunits: 1_000n, unitPriceHtCents: 42_000n, vatRateBasisPoints: 2_000 },
+      ],
+      0,
+      3_000,
+    );
+
+    expect(result.isComplete).toBe(true);
+    if (!result.isComplete) return;
+
+    expect(result.subtotalHtCents).toBe(131_000n);
+    expect(result.totalVatCents).toBe(19_400n);
+    expect(result.totalTtcCents).toBe(150_400n);
+    expect(result.depositCents).toBe(45_120n);
+    expect(result.vatBreakdown).toEqual([
+      {
+        discountHtCents: 0n,
+        grossHtCents: 68_000n,
+        netHtCents: 68_000n,
+        vatCents: 6_800n,
+        vatRateBasisPoints: 1_000,
+      },
+      {
+        discountHtCents: 0n,
+        grossHtCents: 63_000n,
+        netHtCents: 63_000n,
+        vatCents: 12_600n,
+        vatRateBasisPoints: 2_000,
+      },
+    ]);
+  });
+
   it("marks totals incomplete when a price or VAT rate is missing", () => {
     expect(
       calculateQuoteTotals([
