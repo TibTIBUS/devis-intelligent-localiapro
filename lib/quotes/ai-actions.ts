@@ -5,7 +5,7 @@ import type { AiQuoteLineProposal } from "@/lib/validation/ai";
 type AddCatalogQuoteLineInput = Pick<
   AiQuoteLineProposal,
   "catalogItemId" | "lineKind" | "quantityMilliunits"
-> & { vatRateBasisPoints: number };
+> & { vatRateBasisPoints: number | null };
 
 export async function addCatalogQuoteLineFromAi(
   client: SupabaseClient,
