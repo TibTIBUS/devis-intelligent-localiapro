@@ -3,6 +3,7 @@ import { z } from "zod";
 const optionalId = z
   .string()
   .trim()
+  .nullish()
   .transform((value) => value || undefined)
   .pipe(z.string().uuid().optional());
 
@@ -27,30 +28,36 @@ const decimalInteger = (scale: number, label: string) =>
     .transform((value) => Math.round(Number(value) * scale))
     .refine(Number.isSafeInteger, `${label} est trop élevé.`);
 
-const optionalPriceCents = z
-  .string()
-  .trim()
-  .transform((value) => value.replaceAll(/\s/g, "").replace(",", "."))
-  .refine(
-    (value) => value === "" || /^\d+(?:\.\d{1,2})?$/.test(value),
-    "Saisissez un prix valide, avec deux décimales maximum.",
-  )
-  .transform((value) => (value === "" ? undefined : Math.round(Number(value) * 100)))
-  .refine((value) => value === undefined || Number.isSafeInteger(value), "Le prix est trop élevé.");
+const optionalPriceCents = z.preprocess(
+  (value) => value ?? "",
+  z
+    .string()
+    .trim()
+    .transform((value) => value.replaceAll(/\s/g, "").replace(",", "."))
+    .refine(
+      (value) => value === "" || /^\d+(?:\.\d{1,2})?$/.test(value),
+      "Saisissez un prix valide, avec deux décimales maximum.",
+    )
+    .transform((value) => (value === "" ? undefined : Math.round(Number(value) * 100)))
+    .refine((value) => value === undefined || Number.isSafeInteger(value), "Le prix est trop élevé."),
+);
 
-const optionalVatRateBasisPoints = z
-  .string()
-  .trim()
-  .transform((value) => value.replaceAll(/\s/g, "").replace(",", "."))
-  .refine(
-    (value) => value === "" || /^\d+(?:\.\d{1,2})?$/.test(value),
-    "Saisissez un taux de TVA valide, avec deux décimales maximum.",
-  )
-  .transform((value) => (value === "" ? undefined : Math.round(Number(value) * 100)))
-  .refine(
-    (value) => value === undefined || (Number.isInteger(value) && value >= 0 && value <= 10_000),
-    "Le taux de TVA doit être compris entre 0 et 100 %.",
-  );
+const optionalVatRateBasisPoints = z.preprocess(
+  (value) => value ?? "",
+  z
+    .string()
+    .trim()
+    .transform((value) => value.replaceAll(/\s/g, "").replace(",", "."))
+    .refine(
+      (value) => value === "" || /^\d+(?:\.\d{1,2})?$/.test(value),
+      "Saisissez un taux de TVA valide, avec deux décimales maximum.",
+    )
+    .transform((value) => (value === "" ? undefined : Math.round(Number(value) * 100)))
+    .refine(
+      (value) => value === undefined || (Number.isInteger(value) && value >= 0 && value <= 10_000),
+      "Le taux de TVA doit être compris entre 0 et 100 %.",
+    ),
+);
 
 const percentageBasisPoints = (label: string) =>
   z

@@ -4,6 +4,7 @@ import {
   catalogCategorySchema,
   catalogItemSchema,
   formatUnitPrice,
+  getCatalogCategoryValues,
   getCatalogItemValues,
 } from "@/lib/validation/catalog";
 
@@ -13,6 +14,25 @@ describe("catalog validation", () => {
       catalogCategorySchema.safeParse({ categoryId: "", description: "", name: "Plomberie" })
         .success,
     ).toBe(true);
+  });
+
+  it("accepts creating a brand new category, whose hidden id field is absent from the form", () => {
+    const formData = new FormData();
+    formData.set("name", "Plomberie");
+    formData.set("description", "");
+
+    expect(catalogCategorySchema.safeParse(getCatalogCategoryValues(formData)).success).toBe(true);
+  });
+
+  it("accepts creating a brand new item, whose hidden id field is absent from the form", () => {
+    const formData = new FormData();
+    formData.set("name", "Pose de robinet");
+    formData.set("unit", "forfait");
+    formData.set("categoryId", "");
+    formData.set("unitPriceHt", "");
+    formData.set("description", "");
+
+    expect(catalogItemSchema.safeParse(getCatalogItemValues(formData)).success).toBe(true);
   });
 
   it("normalizes a decimal price to cents", () => {

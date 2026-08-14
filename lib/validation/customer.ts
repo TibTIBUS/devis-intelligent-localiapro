@@ -3,6 +3,7 @@ import { z } from "zod";
 const optionalId = z
   .string()
   .trim()
+  .nullish()
   .transform((value) => value || undefined)
   .pipe(z.string().uuid().optional());
 

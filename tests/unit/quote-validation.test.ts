@@ -5,9 +5,11 @@ import {
   formatQuantityInput,
   formatRateInput,
   getQuoteLineValues,
+  getQuoteSectionValues,
   quoteFinancialSettingsSchema,
   quoteLineSchema,
   quoteSearchSchema,
+  quoteSectionSchema,
 } from "@/lib/validation/quote";
 import { filterQuotesByCustomerName } from "@/lib/quotes/queries";
 
@@ -85,6 +87,21 @@ describe("quote validation", () => {
     expect(quoteFinancialSettingsSchema.safeParse({ ...details, depositRateBasisPoints: "101" }).success).toBe(false);
     expect(quoteFinancialSettingsSchema.safeParse({ ...details, workAddressId: "" }).success).toBe(false);
     expect(quoteFinancialSettingsSchema.safeParse({ ...details, preparationFeeHtCents: "" }).success).toBe(false);
+  });
+
+  it("accepts creating a brand new line or section, whose hidden id fields are absent from the form", () => {
+    const lineFormData = new FormData();
+    lineFormData.set("quoteId", "63000000-0000-4000-8000-000000000001");
+    lineFormData.set("label", "Pose de robinet");
+    lineFormData.set("unit", "forfait");
+    lineFormData.set("lineKind", "labor");
+    lineFormData.set("quantity", "1");
+    expect(quoteLineSchema.safeParse(getQuoteLineValues(lineFormData)).success).toBe(true);
+
+    const sectionFormData = new FormData();
+    sectionFormData.set("quoteId", "63000000-0000-4000-8000-000000000001");
+    sectionFormData.set("title", "Gros œuvre");
+    expect(quoteSectionSchema.safeParse(getQuoteSectionValues(sectionFormData)).success).toBe(true);
   });
 
   it("collects form values and formats stored values for fields", () => {

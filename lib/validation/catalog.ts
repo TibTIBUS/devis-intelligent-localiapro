@@ -13,22 +13,26 @@ const requiredText = (maxLength: number, message: string) =>
 const optionalId = z
   .string()
   .trim()
+  .nullish()
   .transform((value) => value || undefined)
   .pipe(z.string().uuid().optional());
 
-const priceCentsSchema = z
-  .string()
-  .trim()
-  .transform((value) => value.replaceAll(/\s/g, "").replace(",", "."))
-  .refine(
-    (value) => value === "" || /^\d+(?:\.\d{1,2})?$/.test(value),
-    "Saisissez un prix valide, avec deux décimales maximum.",
-  )
-  .transform((value) => (value === "" ? undefined : Math.round(Number(value) * 100)))
-  .refine(
-    (value) => value === undefined || Number.isSafeInteger(value),
-    "Le prix est trop élevé.",
-  );
+const priceCentsSchema = z.preprocess(
+  (value) => value ?? "",
+  z
+    .string()
+    .trim()
+    .transform((value) => value.replaceAll(/\s/g, "").replace(",", "."))
+    .refine(
+      (value) => value === "" || /^\d+(?:\.\d{1,2})?$/.test(value),
+      "Saisissez un prix valide, avec deux décimales maximum.",
+    )
+    .transform((value) => (value === "" ? undefined : Math.round(Number(value) * 100)))
+    .refine(
+      (value) => value === undefined || Number.isSafeInteger(value),
+      "Le prix est trop élevé.",
+    ),
+);
 
 export const catalogCategorySchema = z.object({
   categoryId: optionalId,
