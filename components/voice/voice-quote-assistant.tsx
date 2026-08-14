@@ -155,6 +155,10 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
       messagesRef.current = [...nextMessages, { content: data.message, role: "assistant" as const }].slice(-10);
       logLine(`Assistant : ${data.message}`);
 
+      // Les actions comprises par l’assistant sont maintenant appliquées directement côté serveur.
+      // On relit immédiatement le Server Component afin que l’aperçu reflète le devis sans rechargement manuel.
+      router.refresh();
+
       if (data.pendingAction) {
         setProposal(data.pendingAction);
         await speak(`${data.message} ${readbackForProposal(data.pendingAction)}`);
