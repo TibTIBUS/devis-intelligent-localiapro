@@ -31,6 +31,9 @@ describe("quote assistant prompt", () => {
     expect(prompt).toContain("ne demande plus de confirmation séparée");
     expect(prompt).toContain("Le taux de TVA métier par défaut d’une nouvelle ligne est 20 %");
     expect(prompt).toContain("envoie vatRate=null et le serveur appliquera 20 %");
+    expect(prompt).toContain("retire/supprime N unités");
+    expect(prompt).toContain("utilise update_quote_line avec la quantité restante, jamais delete_quote_line");
+    expect(prompt).toContain("Si une diminution amène exactement la quantité à zéro, utilise delete_quote_line");
     expect(prompt).toContain("Main-d’œuvre plomberie");
     expect(prompt).toContain("JSON non exécutable");
     expect(prompt).toContain("N’invente, ne complète et ne reformule aucune clause juridique");
