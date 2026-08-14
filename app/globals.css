@@ -140,12 +140,42 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body), sans-serif;
+    font-weight: 400;
+    line-height: 1.5;
   }
 
   h1,
   h2,
   h3 {
     font-family: var(--font-display), sans-serif;
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  h1 {
+    letter-spacing: -0.035em;
+    line-height: 1.06;
+  }
+
+  h2 {
+    letter-spacing: -0.025em;
+    line-height: 1.12;
+  }
+
+  h3 {
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+
+  p,
+  li,
+  label,
+  input,
+  textarea,
+  select,
+  button {
+    font-family: var(--font-body), sans-serif;
   }
 
   ::selection {
