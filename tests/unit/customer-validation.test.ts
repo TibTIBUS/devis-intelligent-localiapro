@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { customerAddressIdSchema, customerAddressSchema, customerContactIdSchema, customerContactSchema, customerIdSchema, customerSchema, getCustomerAddressValues, getCustomerContactValues } from "@/lib/validation/customer";
+import { customerAddressIdSchema, customerAddressSchema, customerContactIdSchema, customerContactSchema, customerIdSchema, customerSchema, getCustomerAddressValues, getCustomerContactValues, getCustomerValues } from "@/lib/validation/customer";
 
 describe("customer validation", () => {
   it("accepts a neutral customer identity", () => {
     expect(customerSchema.safeParse({ customerId: "", displayName: "Martin Dupont" }).success).toBe(true);
+  });
+
+  it("accepts a new customer form without an identifier", () => {
+    const formData = new FormData();
+    formData.set("displayName", "Martin Dupont");
+    expect(customerSchema.safeParse(getCustomerValues(formData)).success).toBe(true);
   });
 
   it("requires contact information and validates an optional email", () => {

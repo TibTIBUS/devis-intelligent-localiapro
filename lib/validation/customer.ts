@@ -98,14 +98,14 @@ export const initialCustomerDeleteFormState: CustomerDeleteFormState = { status:
 
 export function getCustomerValues(formData: FormData) {
   return {
-    customerId: formData.get("customerId"),
+    customerId: formData.get("customerId") ?? "",
     displayName: formData.get("displayName"),
   };
 }
 
 export function getCustomerContactValues(formData: FormData) {
   return {
-    contactId: formData.get("contactId"),
+    contactId: formData.get("contactId") ?? "",
     customerId: formData.get("customerId"),
     email: formData.get("email"),
     isPrimary: formData.get("isPrimary") === "on",
@@ -116,7 +116,7 @@ export function getCustomerContactValues(formData: FormData) {
 
 export function getCustomerAddressValues(formData: FormData) {
   return {
-    addressId: formData.get("addressId"),
+    addressId: formData.get("addressId") ?? "",
     addressLine1: formData.get("addressLine1"),
     addressLine2: formData.get("addressLine2"),
     city: formData.get("city"),
