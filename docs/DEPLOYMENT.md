@@ -18,6 +18,11 @@ de production.
    `npm run build`.
 4. Activer les Deploy Previews pour les pull requests.
 
+`netlify.toml` fixe les valeurs non secrètes suivantes : `APP_ENV=production`
+pour le site de production et `APP_ENV=preview` pour les deploy previews et
+les branch deploys. `NODE_ENV=production` est appliqué aux trois contextes de
+build. Les valeurs propres à un environnement restent configurées dans Netlify.
+
 ## Variables Netlify
 
 Définir ces valeurs dans Netlify, par contexte, sans les inscrire dans
@@ -37,6 +42,13 @@ Définir ces valeurs dans Netlify, par contexte, sans les inscrire dans
 Les secrets (`SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`) doivent être
 marqués comme secrets dans Netlify. Les variables préfixées `NEXT_PUBLIC_`
 sont exposées au navigateur : elles ne doivent contenir aucun secret.
+
+La configuration du dépôt ne suffit pas à créer un site Netlify. Avant la
+première publication, relier explicitement ce dépôt au site retenu avec
+`netlify link` (site existant) ou `netlify init` (nouveau site), puis renseigner
+les variables ci-dessus dans les contextes correspondants. Une publication
+manuelle doit d'abord être une preview (`netlify deploy`), puis une production
+après validation (`netlify deploy --prod`).
 
 ## Supabase Auth
 

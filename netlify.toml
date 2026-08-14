@@ -8,11 +8,26 @@
 [context.production]
   command = "npm run build"
 
+[context.production.environment]
+  APP_ENV = "production"
+  NEXT_TELEMETRY_DISABLED = "1"
+  NODE_ENV = "production"
+
 [context.deploy-preview]
   command = "npm run build"
 
+[context.deploy-preview.environment]
+  APP_ENV = "preview"
+  NEXT_TELEMETRY_DISABLED = "1"
+  NODE_ENV = "production"
+
 [context.branch-deploy]
   command = "npm run build"
+
+[context.branch-deploy.environment]
+  APP_ENV = "preview"
+  NEXT_TELEMETRY_DISABLED = "1"
+  NODE_ENV = "production"
 
 [dev]
   command = "npm run dev"
