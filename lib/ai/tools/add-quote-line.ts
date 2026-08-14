@@ -24,7 +24,7 @@ export const addQuoteLineTool = {
       lineKind: {
         type: "string",
         enum: ["labor", "material", "travel", "service", "other"],
-        description: "Nature de la prestation explicitement demandée.",
+        description: "Nature de la prestation demandée.",
       },
       quantity: {
         type: "string",
@@ -43,7 +43,7 @@ export const addQuoteLineTool = {
 export type AddQuoteLineToolResult = {
   output: {
     message: string;
-    status: "confirmation_required" | "missing_catalog_price";
+    status: "ready_to_apply" | "missing_catalog_price";
   };
   proposal?: AiQuoteLineProposal;
 };
@@ -83,8 +83,8 @@ export async function prepareAddQuoteLineTool(
 
   return {
     output: {
-      message: "La prestation a été validée côté serveur et peut être ajoutée immédiatement.",
-      status: "confirmation_required",
+      message: "La prestation a été validée côté serveur et peut être appliquée immédiatement.",
+      status: "ready_to_apply",
     },
     proposal,
   };
