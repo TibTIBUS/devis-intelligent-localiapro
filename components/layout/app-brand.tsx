@@ -37,14 +37,14 @@ export function AppBrand({
       <NaltoMark className={compact ? "h-8 w-8 shrink-0" : "h-10 w-10 shrink-0"} />
       <span className="min-w-0 leading-none">
         <span
-          className={`block truncate text-base font-semibold uppercase tracking-[0.28em] sm:text-lg ${
+          className={`block truncate font-heading text-base font-semibold uppercase tracking-[0.24em] sm:text-lg ${
             inverse ? "text-[#F5F1E8]" : "text-[#17382D]"
           }`}
         >
           NALTO
         </span>
         {!compact ? (
-          <span className={`mt-1.5 block text-[10px] tracking-[0.08em] ${inverse ? "text-[#F5F1E8]/60" : "text-muted-foreground"}`}>
+          <span className={`mt-1.5 block text-[10px] font-medium tracking-[0.08em] ${inverse ? "text-[#F5F1E8]/60" : "text-muted-foreground"}`}>
             par Localia
           </span>
         ) : null}
