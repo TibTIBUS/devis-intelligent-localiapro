@@ -25,10 +25,10 @@ export default async function VoiceQuoteEditorPage({ params }: { params: Promise
   const customer = customers.find((item) => item.id === editor.quote.customer_id);
 
   return (
-    <main className="min-h-svh bg-muted/20 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
+    <main className="min-h-svh bg-muted/20 px-3 py-4 min-[375px]:px-4 sm:px-6 sm:py-5 lg:px-8 lg:py-8">
       <div className="mx-auto w-full max-w-[1500px] space-y-5">
         <header className="flex flex-wrap items-center justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <Link className="text-sm font-medium text-muted-foreground underline underline-offset-4" href={`/devis/${quoteId}`}>
               Revenir à l’éditeur complet
             </Link>
@@ -38,24 +38,18 @@ export default async function VoiceQuoteEditorPage({ params }: { params: Promise
                 {editor.quote.status === "draft" ? "Brouillon" : "Finalisé"}
               </span>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 break-words text-sm text-muted-foreground">
               Client : <span className="font-medium text-foreground">{customer?.display_name ?? "Client"}</span>
               {editor.quote.quote_number ? ` · ${editor.quote.quote_number}` : ""}
             </p>
           </div>
         </header>
 
-        <div className="grid items-start gap-5 lg:grid-cols-[minmax(340px,0.78fr)_minmax(0,1.22fr)] xl:gap-7">
-          <div className="lg:sticky lg:top-6">
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(320px,0.78fr)_minmax(0,1.22fr)] xl:gap-7">
+          <div className="lg:sticky lg:top-24">
             <VoiceQuoteAssistant quoteId={quoteId} />
           </div>
-          <QuoteLivePreview
-            company={company}
-            customer={customer}
-            lines={editor.lines}
-            quote={editor.quote}
-            totals={editor.totals}
-          />
+          <QuoteLivePreview company={company} customer={customer} lines={editor.lines} quote={editor.quote} totals={editor.totals} />
         </div>
       </div>
     </main>
