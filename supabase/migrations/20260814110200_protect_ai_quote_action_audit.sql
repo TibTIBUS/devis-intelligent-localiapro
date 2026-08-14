@@ -50,6 +50,9 @@ create role quote_ai_action_executor
   nobypassrls;
 
 grant authenticated to quote_ai_action_executor;
+-- PostgreSQL requires the migration role to be able to SET ROLE to the new
+-- owner before ALTER FUNCTION ... OWNER TO can be applied.
+grant quote_ai_action_executor to postgres;
 
 revoke insert, update on table public.quote_ai_actions from authenticated;
 grant select, insert, update on table public.quote_ai_actions to quote_ai_action_executor;
@@ -75,6 +78,8 @@ alter function public.set_ai_quote_deposit(uuid, uuid, integer, integer)
 owner to quote_ai_action_executor;
 alter function public.undo_last_ai_quote_action(uuid, uuid)
 owner to quote_ai_action_executor;
+
+revoke quote_ai_action_executor from postgres;
 
 revoke create on schema public from quote_ai_action_executor;
 
