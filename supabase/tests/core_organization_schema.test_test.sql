@@ -192,7 +192,7 @@ select set_config(
 );
 
 select lives_ok(
-  $$ select public.create_initial_organization('Entreprise C', 'MaÃ§onnerie') $$,
+  $$ select public.create_initial_organization('Entreprise C', 'Maçonnerie') $$,
   'an authenticated user can create an initial organization atomically'
 );
 
@@ -222,7 +222,7 @@ select results_eq(
 );
 
 select is(
-  public.create_initial_organization('Tentative de doublon', 'MaÃ§onnerie'),
+  public.create_initial_organization('Tentative de doublon', 'Maçonnerie'),
   (
     select organization_id
     from public.organization_members

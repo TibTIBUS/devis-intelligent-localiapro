@@ -38,7 +38,7 @@ async function getAuthenticatedOrganizationId() {
 function invalidQuoteForm(error: Parameters<typeof getQuoteFieldErrors>[0]): QuoteFormState {
   return {
     fieldErrors: getQuoteFieldErrors(error),
-    message: "VÃ©rifiez les informations saisies.",
+    message: "Vérifiez les informations saisies.",
     status: "error",
   };
 }
@@ -64,7 +64,7 @@ export async function createQuote(
     .maybeSingle();
 
   if (error || !data) {
-    return { message: "Impossible de crÃ©er ce devis pour le moment.", status: "error" };
+    return { message: "Impossible de créer ce devis pour le moment.", status: "error" };
   }
 
   redirect(`/devis/${data.id}`);
@@ -99,11 +99,11 @@ export async function saveQuoteFinancialSettings(
     .maybeSingle();
 
   if (error || !data) {
-    return { message: "Impossible de mettre Ã  jour les conditions du devis.", status: "error" };
+    return { message: "Impossible de mettre à jour les conditions du devis.", status: "error" };
   }
 
   revalidateQuote(parsed.data.quoteId);
-  return { message: "EnregistrÃ©.", status: "success" };
+  return { message: "Enregistré.", status: "success" };
 }
 
 export async function finalizeQuote(
@@ -168,11 +168,11 @@ export async function saveQuoteSection(
       quote_id: parsed.data.quoteId,
       title: parsed.data.title,
     });
-    if (error) return { message: "Impossible dâ€™ajouter cette section.", status: "error" };
+    if (error) return { message: "Impossible d’ajouter cette section.", status: "error" };
   }
 
   revalidateQuote(parsed.data.quoteId);
-  return { message: "EnregistrÃ©.", status: "success" };
+  return { message: "Enregistré.", status: "success" };
 }
 
 export async function saveQuoteLine(
@@ -231,11 +231,11 @@ export async function saveQuoteLine(
       organization_id: organizationId,
       quote_id: parsed.data.quoteId,
     });
-    if (error) return { message: "Impossible dâ€™ajouter cette ligne.", status: "error" };
+    if (error) return { message: "Impossible d’ajouter cette ligne.", status: "error" };
   }
 
   revalidateQuote(parsed.data.quoteId);
-  return { message: "EnregistrÃ©.", status: "success" };
+  return { message: "Enregistré.", status: "success" };
 }
 
 export async function deleteQuoteLine(
@@ -246,7 +246,7 @@ export async function deleteQuoteLine(
   const quoteId = quoteIdSchema.safeParse(formData.get("quoteId"));
   const lineId = quoteLineIdSchema.safeParse(formData.get("lineId"));
   if (!quoteId.success || !lineId.success) {
-    return { message: "Impossible dâ€™identifier cette ligne.", status: "error" };
+    return { message: "Impossible d’identifier cette ligne.", status: "error" };
   }
 
   const { organizationId, supabase } = await getAuthenticatedOrganizationId();
@@ -261,7 +261,7 @@ export async function deleteQuoteLine(
   if (error || !data) return { message: "Impossible de supprimer cette ligne.", status: "error" };
 
   revalidateQuote(quoteId.data);
-  return { message: "Ligne supprimÃ©e.", status: "success" };
+  return { message: "Ligne supprimée.", status: "success" };
 }
 
 export async function deleteQuoteSection(
@@ -272,7 +272,7 @@ export async function deleteQuoteSection(
   const quoteId = quoteIdSchema.safeParse(formData.get("quoteId"));
   const sectionId = quoteSectionIdSchema.safeParse(formData.get("sectionId"));
   if (!quoteId.success || !sectionId.success) {
-    return { message: "Impossible dâ€™identifier cette section.", status: "error" };
+    return { message: "Impossible d’identifier cette section.", status: "error" };
   }
 
   const { organizationId, supabase } = await getAuthenticatedOrganizationId();
@@ -286,11 +286,11 @@ export async function deleteQuoteSection(
     .maybeSingle();
   if (error || !data) {
     return {
-      message: error?.code === "23503" ? "Retirez dâ€™abord les lignes de cette section." : "Impossible de supprimer cette section.",
+      message: error?.code === "23503" ? "Retirez d’abord les lignes de cette section." : "Impossible de supprimer cette section.",
       status: "error",
     };
   }
 
   revalidateQuote(quoteId.data);
-  return { message: "Section supprimÃ©e.", status: "success" };
+  return { message: "Section supprimée.", status: "success" };
 }

@@ -52,7 +52,7 @@ export async function saveCustomer(
   if (!parsed.success) {
     return {
       fieldErrors: getCustomerFieldErrors(parsed.error),
-      message: "VÃ©rifiez les informations saisies.",
+      message: "Vérifiez les informations saisies.",
       status: "error",
     };
   }
@@ -102,7 +102,7 @@ export async function saveCustomerContact(
   if (!parsed.success) {
     return {
       fieldErrors: getCustomerContactFieldErrors(parsed.error),
-      message: "VÃ©rifiez les informations saisies.",
+      message: "Vérifiez les informations saisies.",
       status: "error",
     };
   }
@@ -128,7 +128,7 @@ export async function saveCustomerContact(
       return {
         message:
           error?.code === "23505"
-            ? "Ce client possÃ¨de dÃ©jÃ  un contact principal."
+            ? "Ce client possède déjà un contact principal."
             : "Impossible de modifier ce contact pour le moment.",
         status: "error",
       };
@@ -144,7 +144,7 @@ export async function saveCustomerContact(
       return {
         message:
           error.code === "23505"
-            ? "Ce client possÃ¨de dÃ©jÃ  un contact principal."
+            ? "Ce client possède déjà un contact principal."
             : "Impossible d’enregistrer ce contact pour le moment.",
         status: "error",
       };
@@ -165,7 +165,7 @@ export async function saveCustomerAddress(
   if (!parsed.success) {
     return {
       fieldErrors: getCustomerAddressFieldErrors(parsed.error),
-      message: "VÃ©rifiez les informations saisies.",
+      message: "Vérifiez les informations saisies.",
       status: "error",
     };
   }
@@ -194,7 +194,7 @@ export async function saveCustomerAddress(
       return {
         message:
           error?.code === "23505"
-            ? "Ce client possÃ¨de dÃ©jÃ  une adresse principale."
+            ? "Ce client possède déjà une adresse principale."
             : "Impossible de modifier cette adresse pour le moment.",
         status: "error",
       };
@@ -210,7 +210,7 @@ export async function saveCustomerAddress(
       return {
         message:
           error.code === "23505"
-            ? "Ce client possÃ¨de dÃ©jÃ  une adresse principale."
+            ? "Ce client possède déjà une adresse principale."
             : "Impossible d’enregistrer cette adresse pour le moment.",
         status: "error",
       };
