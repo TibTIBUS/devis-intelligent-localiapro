@@ -20,8 +20,9 @@ de production.
 
 `netlify.toml` fixe les valeurs non secrètes suivantes : `APP_ENV=production`
 pour le site de production et `APP_ENV=preview` pour les deploy previews et
-les branch deploys. `NODE_ENV=production` est appliqué aux trois contextes de
-build. Les valeurs propres à un environnement restent configurées dans Netlify.
+les branch deploys. `NODE_ENV` n'est pas forcé pendant l'installation afin que
+Netlify installe les dépendances de compilation. Les valeurs propres à un
+environnement restent configurées dans Netlify.
 
 ## Variables Netlify
 
