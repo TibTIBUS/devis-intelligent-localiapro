@@ -1,0 +1,41 @@
+name: Manual production deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type DEPLOY_PRODUCTION to publish the current main branch.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main' && inputs.confirmation == 'DEPLOY_PRODUCTION'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout selected revision
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate release
+        run: npm run release:check
+
+      - name: Publish production deploy
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: >-
+          npx netlify deploy --prod --context production
+          --site 1b90e162-a6d8-4cb2-be9f-d366f3828a3f
+          --message "Manual production release from $GITHUB_SHA"

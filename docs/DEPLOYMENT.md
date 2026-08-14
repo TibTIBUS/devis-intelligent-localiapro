@@ -49,10 +49,12 @@ sont exposées au navigateur : elles ne doivent contenir aucun secret.
 La configuration du dépôt ne suffit pas à créer un site Netlify. Avant la
 première publication, relier explicitement ce dépôt au site retenu avec
 `netlify link` (site existant) ou `netlify init` (nouveau site), puis renseigner
-les variables ci-dessus. La publication se fait uniquement depuis `main`, après
-les contrôles locaux obligatoires. Les tests authentifiés ne créent pas de
-données sur le site public ; un compte de démonstration dédié est utilisé pour
-les vérifications manuelles.
+les variables ci-dessus.
+
+Les builds déclenchés par Git sont volontairement ignorés par `netlify.toml`.
+Un push GitHub lance la CI, mais ne publie jamais le site Netlify. Cette règle
+évite de consommer des publications pendant le développement et protège le
+projet Supabase de production.
 
 ## Supabase Auth
 
@@ -72,3 +74,52 @@ npm run build
 
 Pour reproduire le contexte Netlify une fois le site lié : `netlify build` ou
 `netlify dev`.
+
+## Publication manuelle en production
+
+Une publication est une action volontaire qui impacte immédiatement les
+utilisateurs du site. Ne la lancez que lorsque les corrections à mettre en
+ligne sont regroupées et validées.
+
+1. Vérifier que la branche locale est `main`, à jour, et sans fichier modifié :
+
+   ```text
+   git status
+   git pull --ff-only origin main
+   ```
+
+2. Vérifier que la CI GitHub du dernier commit est verte.
+
+3. Vérifier les variables de production par leur nom uniquement :
+
+   ```text
+   npx netlify env:list --context production
+   ```
+
+   Ne jamais afficher, copier ou committer les valeurs des secrets.
+
+4. Dans GitHub, ajouter une seule fois le secret d'action `NETLIFY_AUTH_TOKEN`.
+   Créez ce jeton dans Netlify depuis **User settings > Applications > Personal
+   access tokens**, puis GitHub depuis **Settings > Secrets and variables >
+   Actions > New repository secret**. Ne placez jamais ce jeton dans Netlify,
+   dans un fichier local ou dans le dépôt.
+
+5. Dans GitHub Actions, ouvrir **Manual production deploy**, cliquer sur
+   **Run workflow**, choisir `main`, puis saisir exactement :
+
+   ```text
+   DEPLOY_PRODUCTION
+   ```
+
+   Le workflow rejoue lint, typecheck, tests et build sur un runner Linux,
+   avant de créer un unique déploiement Netlify de production. Cette exécution
+   explicite évite la limitation Windows rencontrée avec les liens symboliques
+   du plugin Next.js et ne peut pas être déclenchée par un push Git.
+
+6. Ouvrir l'URL donnée par Netlify et vérifier au minimum : connexion,
+   création de client, création de devis et téléchargement de document avec le
+   compte de démonstration.
+
+En cas d'incident, ne republiez pas à l'aveugle. Ouvrez la page **Deploys**
+Netlify et republiez le dernier déploiement sain depuis l'interface, puis
+consignez le problème avant de préparer un correctif.
