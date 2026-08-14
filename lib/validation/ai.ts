@@ -39,16 +39,28 @@ const aiQuantitySchema = z
   .transform((value) => Math.round(Number(value) * 1_000))
   .pipe(z.number().int().positive().max(Number.MAX_SAFE_INTEGER));
 
+const aiVatRateSchema = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(",", "."))
+  .refine((value) => /^\d+(?:\.\d{1,2})?$/.test(value), "Le taux de TVA doit être explicite.")
+  .transform((value) => Math.round(Number(value) * 100))
+  .pipe(z.number().int().min(0).max(10_000));
+
+const aiQuantityInputSchema = z.string().trim().min(1).max(40).refine((value) => /^\d+(?:[.,]\d{1,3})?$/.test(value));
+
 export const addQuoteLineArgumentsSchema = z.object({
   catalogItemId: z.uuid(),
   lineKind: aiQuoteLineKindSchema,
-  quantity: z.string().trim().min(1).max(40).refine((value) => /^\d+(?:[.,]\d{1,3})?$/.test(value)),
+  quantity: aiQuantityInputSchema,
+  vatRate: z.union([aiVatRateSchema, z.null()]),
 }).strict();
 
 export const updateQuoteLineArgumentsSchema = z.object({
-  lineKind: aiQuoteLineKindSchema,
-  quantity: z.string().trim().min(1).max(40).refine((value) => /^\d+(?:[.,]\d{1,3})?$/.test(value)),
+  lineKind: aiQuoteLineKindSchema.nullable(),
+  quantity: z.union([aiQuantityInputSchema, z.null()]),
   quoteLineId: z.uuid(),
+  vatRate: z.union([aiVatRateSchema, z.null()]),
 }).strict();
 
 export const deleteQuoteLineArgumentsSchema = z.object({
@@ -90,17 +102,20 @@ export const aiQuoteLineProposalSchema = z.object({
   quantityMilliunits: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   unit: z.string().trim().min(1).max(80),
   unitPriceHtCents: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  vatRateBasisPoints: z.number().int().min(0).max(10_000),
 }).strict();
 
 export const aiUpdateQuoteLineProposalSchema = z.object({
   actionType: z.literal("update_quote_line"),
   currentLineKind: aiQuoteLineKindSchema,
   currentQuantityMilliunits: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  currentVatRateBasisPoints: z.number().int().min(0).max(10_000).nullable(),
   label: z.string().trim().min(1).max(200),
   lineKind: aiQuoteLineKindSchema,
   quantityMilliunits: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   quoteLineId: z.uuid(),
   unit: z.string().trim().min(1).max(80),
+  vatRateBasisPoints: z.number().int().min(0).max(10_000),
 }).strict();
 
 export const aiDeleteQuoteLineProposalSchema = z.object({
