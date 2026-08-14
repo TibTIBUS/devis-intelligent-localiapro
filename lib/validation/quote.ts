@@ -25,7 +25,7 @@ const decimalInteger = (scale: number, label: string) =>
       `Saisissez ${label} valide.`,
     )
     .transform((value) => Math.round(Number(value) * scale))
-    .refine(Number.isSafeInteger, `${label} est trop Ã©levÃ©.`);
+    .refine(Number.isSafeInteger, `${label} est trop élevé.`);
 
 const optionalPriceCents = z
   .string()
@@ -33,10 +33,10 @@ const optionalPriceCents = z
   .transform((value) => value.replaceAll(/\s/g, "").replace(",", "."))
   .refine(
     (value) => value === "" || /^\d+(?:\.\d{1,2})?$/.test(value),
-    "Saisissez un prix valide, avec deux dÃ©cimales maximum.",
+    "Saisissez un prix valide, avec deux décimales maximum.",
   )
   .transform((value) => (value === "" ? undefined : Math.round(Number(value) * 100)))
-  .refine((value) => value === undefined || Number.isSafeInteger(value), "Le prix est trop Ã©levÃ©.");
+  .refine((value) => value === undefined || Number.isSafeInteger(value), "Le prix est trop élevé.");
 
 const optionalVatRateBasisPoints = z
   .string()
@@ -44,12 +44,12 @@ const optionalVatRateBasisPoints = z
   .transform((value) => value.replaceAll(/\s/g, "").replace(",", "."))
   .refine(
     (value) => value === "" || /^\d+(?:\.\d{1,2})?$/.test(value),
-    "Saisissez un taux de TVA valide, avec deux dÃ©cimales maximum.",
+    "Saisissez un taux de TVA valide, avec deux décimales maximum.",
   )
   .transform((value) => (value === "" ? undefined : Math.round(Number(value) * 100)))
   .refine(
     (value) => value === undefined || (Number.isInteger(value) && value >= 0 && value <= 10_000),
-    "Le taux de TVA doit Ãªtre compris entre 0 et 100 %.",
+    "Le taux de TVA doit être compris entre 0 et 100 %.",
   );
 
 const percentageBasisPoints = (label: string) =>
@@ -59,16 +59,16 @@ const percentageBasisPoints = (label: string) =>
     .transform((value) => value.replaceAll(/\s/g, "").replace(",", "."))
     .refine(
       (value) => /^\d+(?:\.\d{1,2})?$/.test(value),
-      `Saisissez ${label} valide, avec deux dÃ©cimales maximum.`,
+      `Saisissez ${label} valide, avec deux décimales maximum.`,
     )
     .transform((value) => Math.round(Number(value) * 100))
     .refine(
       (value) => Number.isInteger(value) && value >= 0 && value <= 10_000,
-      `${label} doit Ãªtre compris entre 0 et 100 %.`,
+      `${label} doit être compris entre 0 et 100 %.`,
     );
 
 export const quoteCreateSchema = z.object({
-  customerId: z.string().uuid("SÃ©lectionnez un client."),
+  customerId: z.string().uuid("Sélectionnez un client."),
 });
 
 export const quoteFinancialSettingsSchema = z.object({
@@ -81,8 +81,8 @@ export const quoteFinancialSettingsSchema = z.object({
   quoteId: z.string().uuid(),
   note: optionalText(4_000, "La note est trop longue."),
   travelFeeApplicable: z.enum(["yes", "no"], { message: "Indiquez si des frais de déplacement s’appliquent." }).transform((value) => value === "yes"),
-  validUntil: z.string().date("Saisissez une date de validitÃ© valide."),
-  workAddressId: z.string().uuid("SÃ©lectionnez le lieu dâ€™exÃ©cution."),
+  validUntil: z.string().date("Saisissez une date de validité valide."),
+  workAddressId: z.string().uuid("Sélectionnez le lieu d’exécution."),
 }).superRefine((value, context) => {
   if (!value.isQuoteFree) {
     if (!value.preparationFeeHtCents) {
@@ -103,16 +103,16 @@ export const quoteSectionSchema = z.object({
 export const quoteLineSchema = z.object({
   catalogItemId: optionalId,
   description: optionalText(1_000, "La description est trop longue."),
-  label: optionalText(200, "Le libellÃ© est trop long."),
+  label: optionalText(200, "Le libellé est trop long."),
   lineId: optionalId,
   lineKind: z.enum(["labor", "material", "travel", "service", "other"], { message: "Sélectionnez la nature de la ligne." }),
-  quantityMilliunits: decimalInteger(1_000, "une quantitÃ©").refine(
+  quantityMilliunits: decimalInteger(1_000, "une quantité").refine(
     (value) => value > 0,
-    "La quantitÃ© doit Ãªtre supÃ©rieure Ã  zÃ©ro.",
+    "La quantité doit être supérieure à zéro.",
   ),
   quoteId: z.string().uuid(),
   sectionId: optionalId,
-  unit: optionalText(80, "Lâ€™unitÃ© est trop longue."),
+  unit: optionalText(80, "L’unité est trop longue."),
   unitPriceHtCents: optionalPriceCents,
   vatRateBasisPoints: optionalVatRateBasisPoints,
 }).superRefine((value, context) => {

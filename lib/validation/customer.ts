@@ -38,13 +38,13 @@ export const customerContactSchema = z
     email: optionalEmail,
     isPrimary: z.boolean(),
     name: optionalText(200, "Le nom du contact est trop long."),
-    phone: optionalText(50, "Le numÃ©ro de tÃ©lÃ©phone est trop long."),
+    phone: optionalText(50, "Le numéro de téléphone est trop long."),
   })
   .superRefine((value, context) => {
     if (!value.name && !value.email && !value.phone) {
       context.addIssue({
         code: "custom",
-        message: "Renseignez au moins un nom, un e-mail ou un tÃ©lÃ©phone.",
+        message: "Renseignez au moins un nom, un e-mail ou un téléphone.",
         path: ["name"],
       });
     }
@@ -53,16 +53,16 @@ export const customerContactSchema = z
 export const customerAddressSchema = z.object({
   addressId: optionalId,
   addressLine1: requiredText(200, "L’adresse est trop longue."),
-  addressLine2: optionalText(200, "Le complÃ©ment d’adresse est trop long."),
+  addressLine2: optionalText(200, "Le complément d’adresse est trop long."),
   city: requiredText(120, "La ville est trop longue."),
   countryCode: z
     .string()
     .trim()
     .toUpperCase()
-    .regex(/^[A-Z]{2}$/, "Utilisez un code pays Ã  deux lettres."),
+    .regex(/^[A-Z]{2}$/, "Utilisez un code pays à deux lettres."),
   customerId: z.string().uuid(),
   isPrimary: z.boolean(),
-  label: optionalText(120, "Le libellÃ© est trop long."),
+  label: optionalText(120, "Le libellé est trop long."),
   postalCode: requiredText(20, "Le code postal est trop long."),
 });
 
