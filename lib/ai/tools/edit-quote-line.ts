@@ -91,7 +91,7 @@ export async function prepareUpdateQuoteLineTool(
   organizationId: string,
   quoteId: string,
   rawArguments: string,
-): Promise<{ output: { message: string; status: "confirmation_required" }; proposal: AiUpdateQuoteLineProposal }> {
+): Promise<{ output: { message: string; status: "ready_to_apply" }; proposal: AiUpdateQuoteLineProposal }> {
   const parsed = updateQuoteLineArgumentsSchema.parse(JSON.parse(rawArguments));
   const line = await getQuoteLineForAssistant(client, organizationId, quoteId, parsed.quoteLineId);
   if (!line) throw new Error("Cette ligne n’appartient pas au devis actif.");
@@ -99,7 +99,7 @@ export async function prepareUpdateQuoteLineTool(
   return {
     output: {
       message: "La modification a été validée côté serveur et peut être appliquée immédiatement.",
-      status: "confirmation_required",
+      status: "ready_to_apply",
     },
     proposal: {
       actionType: "update_quote_line",
@@ -121,7 +121,7 @@ export async function prepareDeleteQuoteLineTool(
   organizationId: string,
   quoteId: string,
   rawArguments: string,
-): Promise<{ output: { message: string; status: "confirmation_required" }; proposal: AiDeleteQuoteLineProposal }> {
+): Promise<{ output: { message: string; status: "ready_to_apply" }; proposal: AiDeleteQuoteLineProposal }> {
   const parsed = deleteQuoteLineArgumentsSchema.parse(JSON.parse(rawArguments));
   const line = await getQuoteLineForAssistant(client, organizationId, quoteId, parsed.quoteLineId);
   if (!line) throw new Error("Cette ligne n’appartient pas au devis actif.");
@@ -129,7 +129,7 @@ export async function prepareDeleteQuoteLineTool(
   return {
     output: {
       message: "La suppression a été validée côté serveur et peut être appliquée immédiatement.",
-      status: "confirmation_required",
+      status: "ready_to_apply",
     },
     proposal: {
       actionType: "delete_quote_line",
