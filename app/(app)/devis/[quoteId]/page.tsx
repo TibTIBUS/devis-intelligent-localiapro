@@ -137,14 +137,14 @@ function FinalizedContent({ lines }: { lines: QuoteLine[] }) {
 function TotalsCard({ totals }: { totals: Awaited<ReturnType<typeof getQuoteEditorData>> extends infer Editor ? Editor extends { totals: infer Totals } ? Totals : never : never }) {
   return (
     <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:p-5">
-      <div className="mb-4 flex items-center gap-2"><div className="rounded-xl bg-emerald-50 p-2 text-emerald-700"><ReceiptText className="size-4" /></div><h2 className="font-semibold">Récapitulatif</h2></div>
+      <div className="mb-4 flex items-center gap-2"><div className="rounded-xl bg-[#F3E4D9] p-2 text-[#E8672E]"><ReceiptText className="size-4" /></div><h2 className="font-semibold">Récapitulatif</h2></div>
       {totals.isComplete ? (
         <div className="space-y-2.5 text-sm">
           <div className="flex justify-between gap-4"><span className="text-muted-foreground">Sous-total HT</span><span>{formatCents(totals.subtotalHtCents)}</span></div>
           <div className="flex justify-between gap-4"><span className="text-muted-foreground">Remise HT</span><span>- {formatCents(totals.discountHtCents)}</span></div>
           <div className="flex justify-between gap-4"><span className="text-muted-foreground">Total HT</span><span>{formatCents(totals.totalHtCents)}</span></div>
           {totals.vatBreakdown.map((vat) => <div className="flex justify-between gap-4" key={vat.vatRateBasisPoints}><span className="text-muted-foreground">TVA {vat.vatRateBasisPoints / 100} %</span><span>{formatCents(vat.vatCents)}</span></div>)}
-          <div className="flex justify-between gap-4 border-t border-border pt-3 text-base font-semibold text-emerald-700"><span>Total TTC</span><span>{formatCents(totals.totalTtcCents)}</span></div>
+          <div className="flex justify-between gap-4 border-t border-border pt-3 text-base font-semibold text-[#17382D]"><span>Total TTC</span><span>{formatCents(totals.totalTtcCents)}</span></div>
           <div className="flex justify-between gap-4"><span className="text-muted-foreground">Acompte demandé</span><span>{formatCents(totals.depositCents)}</span></div>
         </div>
       ) : <p className="text-sm text-muted-foreground">Total en attente : renseignez le prix HT et la TVA des lignes {totals.missingLineIndexes.map((index) => index + 1).join(", ")}.</p>}
@@ -175,16 +175,20 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
   const primaryContact = customer?.contacts.find((contact) => contact.is_primary) ?? customer?.contacts[0];
   const primaryAddress = customer?.addresses.find((address) => address.is_primary) ?? customer?.addresses[0];
   const statusLabel = !finalized ? "Brouillon" : acceptance ? "Accepté" : "Finalisé";
-  const statusClassName = !finalized ? "bg-amber-50 text-amber-700" : acceptance ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-blue-700";
+  const statusClassName = !finalized
+    ? "bg-[#F7E8D9] text-[#9A4E23]"
+    : acceptance
+      ? "bg-[#E7EFE8] text-[#397255]"
+      : "bg-[#ECE7DD] text-[#17382D]";
 
   return (
-    <main className="min-h-svh bg-muted/20 px-3 py-5 min-[375px]:px-4 sm:px-6 lg:px-8 lg:py-8">
+    <main className="min-h-svh bg-[#F5F1E8] px-3 py-5 min-[375px]:px-4 sm:px-6 lg:px-8 lg:py-8">
       <section className="mx-auto w-full max-w-[1500px] space-y-5 sm:space-y-6">
         <div className="space-y-4">
           <Link className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" href="/devis"><ArrowLeft className="size-4" />Retour à la liste des devis</Link>
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-3"><h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl">{editor.quote.quote_number ?? `Devis de ${customer?.display_name ?? "client"}`}</h1><span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClassName}`}>{statusLabel}</span></div>
+              <div className="flex flex-wrap items-center gap-3"><h1 className="break-words text-2xl font-semibold tracking-tight text-[#17382D] sm:text-3xl">{editor.quote.quote_number ?? `Devis de ${customer?.display_name ?? "client"}`}</h1><span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClassName}`}>{statusLabel}</span></div>
               <p className="mt-2 text-sm text-muted-foreground">{finalized ? "Devis finalisé et immuable." : `Devis en cours de préparation pour ${customer?.display_name ?? "ce client"}.`}</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
@@ -197,7 +201,7 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start xl:grid-cols-[260px_minmax(0,1fr)_300px]">
           <aside className="space-y-5 lg:col-span-2 lg:grid lg:grid-cols-2 lg:gap-5 lg:space-y-0 xl:sticky xl:top-24 xl:col-span-1 xl:block xl:space-y-5">
             <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:p-5">
-              <div className="mb-4 flex items-center gap-2"><div className="rounded-xl bg-blue-50 p-2 text-blue-700"><UserRound className="size-4" /></div><h2 className="font-semibold">Informations client</h2></div>
+              <div className="mb-4 flex items-center gap-2"><div className="rounded-xl bg-[#ECE7DD] p-2 text-[#17382D]"><UserRound className="size-4" /></div><h2 className="font-semibold">Informations client</h2></div>
               <p className="font-semibold">{customer?.display_name ?? "Client"}</p>
               <div className="mt-4 space-y-3 text-sm text-muted-foreground">
                 {primaryContact?.email ? <p className="flex items-start gap-2"><Mail className="mt-0.5 size-4 shrink-0" /><span className="break-all">{primaryContact.email}</span></p> : null}
@@ -207,7 +211,7 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
               {customer ? <Link className="mt-4 inline-block text-sm font-medium text-primary underline underline-offset-4" href={`/clients?client=${customer.id}`}>Voir la fiche client</Link> : null}
             </section>
             <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:p-5">
-              <div className="mb-4 flex items-center gap-2"><div className="rounded-xl bg-violet-50 p-2 text-violet-700"><FileText className="size-4" /></div><h2 className="font-semibold">Informations du devis</h2></div>
+              <div className="mb-4 flex items-center gap-2"><div className="rounded-xl bg-[#F3E4D9] p-2 text-[#E8672E]"><FileText className="size-4" /></div><h2 className="font-semibold">Informations du devis</h2></div>
               <dl className="space-y-3 text-sm">
                 <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Validité</dt><dd className="text-right font-medium">{formatDate(editor.quote.valid_until)}</dd></div>
                 <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Début travaux</dt><dd className="text-right font-medium">{formatDate(editor.quote.execution_start_date)}</dd></div>
@@ -217,7 +221,7 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
                 <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Acompte</dt><dd className="font-medium">{editor.quote.deposit_rate_basis_points / 100} %</dd></div>
               </dl>
             </section>
-            {!finalized ? <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900 lg:col-span-2 xl:col-span-1"><p className="font-semibold">Conseil</p><p className="mt-1">Utilisez la voix pour ajouter rapidement plusieurs prestations sans quitter le devis.</p></div> : null}
+            {!finalized ? <div className="rounded-2xl border border-[#D8CDBD] bg-[#FFFCF6] p-4 text-sm text-[#17382D] lg:col-span-2 xl:col-span-1"><p className="font-semibold">Conseil</p><p className="mt-1 text-[#626A64]">Utilisez la voix pour ajouter rapidement plusieurs prestations sans quitter le devis.</p></div> : null}
           </aside>
 
           <section className="min-w-0 space-y-5 lg:col-start-1 xl:col-start-2">
@@ -232,15 +236,15 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
               <div className="flex items-center justify-between gap-3"><h2 className="font-semibold">Statut du devis</h2><span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClassName}`}>{statusLabel}</span></div>
               <p className="mt-3 text-sm text-muted-foreground">{!finalized ? "Ce devis peut encore être modifié avant sa finalisation." : acceptance ? "L’acceptation commerciale de ce devis a été enregistrée." : "Le devis est finalisé et attend éventuellement l’acceptation du client."}</p>
               <div className="mt-5 space-y-3 border-l border-border pl-4 text-sm">
-                <div className="relative"><span className="absolute -left-[21px] top-1 size-2.5 rounded-full bg-emerald-500" /><p className="font-medium">Brouillon</p><p className="text-muted-foreground">Préparation du devis</p></div>
-                <div className="relative"><span className={`absolute -left-[21px] top-1 size-2.5 rounded-full ${finalized ? "bg-blue-500" : "bg-muted-foreground/30"}`} /><p className={finalized ? "font-medium" : "text-muted-foreground"}>Finalisé</p><p className="text-muted-foreground">Numéro officiel attribué</p></div>
-                <div className="relative"><span className={`absolute -left-[21px] top-1 size-2.5 rounded-full ${acceptance ? "bg-emerald-500" : "bg-muted-foreground/30"}`} /><p className={acceptance ? "font-medium" : "text-muted-foreground"}>Accepté</p><p className="text-muted-foreground">Accord du client enregistré</p></div>
+                <div className="relative"><span className="absolute -left-[21px] top-1 size-2.5 rounded-full bg-[#E8672E]" /><p className="font-medium">Brouillon</p><p className="text-muted-foreground">Préparation du devis</p></div>
+                <div className="relative"><span className={`absolute -left-[21px] top-1 size-2.5 rounded-full ${finalized ? "bg-[#17382D]" : "bg-muted-foreground/30"}`} /><p className={finalized ? "font-medium" : "text-muted-foreground"}>Finalisé</p><p className="text-muted-foreground">Numéro officiel attribué</p></div>
+                <div className="relative"><span className={`absolute -left-[21px] top-1 size-2.5 rounded-full ${acceptance ? "bg-[#397255]" : "bg-muted-foreground/30"}`} /><p className={acceptance ? "font-medium" : "text-muted-foreground"}>Accepté</p><p className="text-muted-foreground">Accord du client enregistré</p></div>
               </div>
             </section>
             <TotalsCard totals={editor.totals} />
             {!finalized && compliance ? <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:p-5"><h2 className="font-semibold">Finalisation</h2><p className="mb-4 mt-1 text-sm text-muted-foreground">Vérifiez la conformité puis attribuez le numéro définitif du devis.</p><FinalizeQuoteForm action={finalizeQuote} compliance={compliance} quoteId={editor.quote.id} /></section> : null}
             {!finalized ? <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:p-5"><h2 className="font-semibold">Actions</h2><p className="mb-3 mt-1 text-sm text-muted-foreground">La suppression est définitive et réservée aux brouillons.</p><DeleteDraftQuoteForm action={deleteDraftQuote} customerName={customer?.display_name ?? "ce client"} quoteId={editor.quote.id} /></section> : null}
-            {finalized && acceptance ? <section className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 sm:p-5"><div className="flex items-center gap-2 text-emerald-800"><CheckCircle2 className="size-5" /><p className="font-semibold">Devis accepté</p></div><p className="mt-2 text-sm text-emerald-900/80">L’accord du client est enregistré et conservé dans l’historique du devis.</p></section> : null}
+            {finalized && acceptance ? <section className="rounded-2xl border border-[#B8CDBE] bg-[#E7EFE8] p-4 sm:p-5"><div className="flex items-center gap-2 text-[#28563D]"><CheckCircle2 className="size-5" /><p className="font-semibold">Devis accepté</p></div><p className="mt-2 text-sm text-[#397255]">L’accord du client est enregistré et conservé dans l’historique du devis.</p></section> : null}
           </aside>
         </div>
       </section>
