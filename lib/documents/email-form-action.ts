@@ -9,8 +9,7 @@ import { createRequestId } from "@/lib/observability/logger";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import { createClient } from "@/lib/supabase/server";
 
-export type QuoteEmailFormState = { message?: string; status: "idle" | "error" | "success" };
-export const initialQuoteEmailFormState: QuoteEmailFormState = { status: "idle" };
+type QuoteEmailFormState = { message?: string; status: "idle" | "error" | "success" };
 
 const schema = z.object({ contactId: z.string().uuid(), quoteId: z.string().uuid() });
 
