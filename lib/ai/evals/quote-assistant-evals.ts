@@ -2,12 +2,21 @@ import {
   addQuoteLineArgumentsSchema,
   setDepositArgumentsSchema,
   setDiscountArgumentsSchema,
+  updateQuoteLineArgumentsSchema,
 } from "@/lib/validation/ai";
 
 export type QuoteAssistantEvalCall = { arguments: unknown; name: string };
 
 export type QuoteAssistantEvalScenario = {
   catalogItems: Array<{ id: string; name: string; unit: string; unitPriceHtCents: number | null }>;
+  contextLines?: Array<{
+    id: string;
+    label: string;
+    lineKind: "labor" | "material" | "travel" | "service" | "other";
+    quantityMilliunits: number;
+    unit: string;
+    vatRateBasisPoints: number | null;
+  }>;
   id: string;
   userMessage: string;
 };
@@ -16,6 +25,12 @@ const multiActionCatalogIds = {
   outlet: "13000000-0000-4000-8000-000000000005",
   switch: "13000000-0000-4000-8000-000000000006",
   panel: "13000000-0000-4000-8000-000000000007",
+} as const;
+
+const existingLineIds = {
+  outlet: "41000000-0000-4000-8000-000000000005",
+  switch: "41000000-0000-4000-8000-000000000006",
+  spot: "41000000-0000-4000-8000-000000000008",
 } as const;
 
 export const quoteAssistantEvalScenarios: QuoteAssistantEvalScenario[] = [
@@ -55,6 +70,16 @@ export const quoteAssistantEvalScenarios: QuoteAssistantEvalScenario[] = [
     ],
     id: "multi-action-targeted-vat-and-deposit",
     userMessage: "Ajoute 8 prises de courant, 3 interrupteurs simples et 1 tableau électrique 3 rangées. Mets uniquement les prises à 10 % de TVA et mets 30 % d’acompte.",
+  },
+  {
+    catalogItems: [],
+    contextLines: [
+      { id: existingLineIds.outlet, label: "Prise de courant", lineKind: "material", quantityMilliunits: 8_000, unit: "unité", vatRateBasisPoints: 1_000 },
+      { id: existingLineIds.switch, label: "Interrupteur simple", lineKind: "material", quantityMilliunits: 3_000, unit: "unité", vatRateBasisPoints: 1_000 },
+      { id: existingLineIds.spot, label: "Spot LED encastré", lineKind: "material", quantityMilliunits: 6_000, unit: "unité", vatRateBasisPoints: 2_000 },
+    ],
+    id: "multi-change-existing-lines",
+    userMessage: "Finalement mets 10 prises, retire 2 spots et repasse les interrupteurs à 20 % de TVA.",
   },
 ];
 
@@ -123,6 +148,42 @@ export function gradeQuoteAssistantEval(scenarioId: string, calls: QuoteAssistan
     } else {
       const parsed = setDepositArgumentsSchema.safeParse(depositCalls[0].arguments);
       if (!parsed.success || parsed.data.depositRate !== 3_000) issues.push("L’acompte transmis doit être exactement 30 %.");
+    }
+  } else if (scenarioId === "multi-change-existing-lines") {
+    if (names.includes("add_quote_line")) issues.push("Une modification de lignes existantes ne doit pas ajouter de nouvelle prestation.");
+    if (names.includes("delete_quote_line")) issues.push("Retirer seulement deux spots ne doit pas supprimer toute la ligne.");
+
+    const updateCalls = calls.filter((call) => call.name === "update_quote_line");
+    if (updateCalls.length !== 3) {
+      issues.push("Les trois modifications demandées doivent être traitées exactement une fois.");
+    } else {
+      const expected = new Map([
+        [existingLineIds.outlet, { quantity: "10", vatRateBasisPoints: null }],
+        [existingLineIds.spot, { quantity: "4", vatRateBasisPoints: null }],
+        [existingLineIds.switch, { quantity: null, vatRateBasisPoints: 2_000 }],
+      ]);
+
+      for (const call of updateCalls) {
+        const parsed = updateQuoteLineArgumentsSchema.safeParse(call.arguments);
+        if (!parsed.success) {
+          issues.push("Chaque modification doit respecter le contrat strict update_quote_line.");
+          continue;
+        }
+        const expectation = expected.get(parsed.data.quoteLineId);
+        if (!expectation) {
+          issues.push("Une ligne non demandée a été modifiée.");
+          continue;
+        }
+        if (parsed.data.quantity !== expectation.quantity) {
+          issues.push(`La quantité de ${parsed.data.quoteLineId} est incorrecte.`);
+        }
+        if (parsed.data.vatRate !== expectation.vatRateBasisPoints) {
+          issues.push(`La TVA de ${parsed.data.quoteLineId} est incorrecte.`);
+        }
+        if (parsed.data.lineKind !== null) issues.push("La nature des lignes ne doit pas être modifiée.");
+        expected.delete(parsed.data.quoteLineId);
+      }
+      if (expected.size > 0) issues.push("Une ou plusieurs modifications demandées n’ont pas été appliquées.");
     }
   } else if (!quoteAssistantEvalScenarios.some((scenario) => scenario.id === scenarioId)) {
     issues.push("Scénario d’évaluation inconnu.");
