@@ -204,7 +204,7 @@ export async function saveQuoteLine(
     section_id: parsed.data.sectionId ?? null,
     unit: parsed.data.unit ?? "",
     unit_price_ht_cents: parsed.data.unitPriceHtCents ?? null,
-    vat_rate_basis_points: parsed.data.vatRateBasisPoints ?? null,
+    vat_rate_basis_points: parsed.data.vatRateBasisPoints ?? 2_000,
   };
 
   if (parsed.data.catalogItemId && !parsed.data.lineId) {
