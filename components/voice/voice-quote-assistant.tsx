@@ -18,6 +18,29 @@ function pickSupportedMimeType(): string {
   return AUDIO_MIME_CANDIDATES.find((type) => MediaRecorder.isTypeSupported(type)) ?? "";
 }
 
+function microphoneErrorMessage(error: unknown): string {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    return "Le microphone n’est pas disponible dans ce navigateur. Vérifiez que vous utilisez le site en HTTPS avec un navigateur récent.";
+  }
+
+  if (error instanceof DOMException) {
+    if (error.name === "NotAllowedError" || error.name === "SecurityError") {
+      return "L’accès au microphone est bloqué. Autorisez le micro pour ce site dans les paramètres du navigateur puis réessayez.";
+    }
+    if (error.name === "NotFoundError") {
+      return "Aucun microphone n’a été détecté sur cet appareil.";
+    }
+    if (error.name === "NotReadableError" || error.name === "AbortError") {
+      return "Le microphone est détecté mais ne peut pas être utilisé. Fermez les applications qui utilisent le micro puis réessayez.";
+    }
+    if (error.name === "OverconstrainedError") {
+      return "Le microphone sélectionné n’est pas compatible avec les réglages demandés.";
+    }
+  }
+
+  return "Impossible d’accéder au microphone. Vérifiez l’autorisation du site et le microphone sélectionné dans le navigateur.";
+}
+
 function readbackForProposal(proposal: AiQuoteActionProposal): string {
   if (proposal.actionType === "add_quote_line") {
     return `${proposal.label}, ${proposal.quantityMilliunits / 1_000} ${proposal.unit}. Dites oui et le taux de TVA, par exemple : oui, dix pour cent. Ou dites non.`;
@@ -155,8 +178,6 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
       messagesRef.current = [...nextMessages, { content: data.message, role: "assistant" as const }].slice(-10);
       logLine(`Assistant : ${data.message}`);
 
-      // Les actions comprises par l’assistant sont maintenant appliquées directement côté serveur.
-      // On relit immédiatement le Server Component afin que l’aperçu reflète le devis sans rechargement manuel.
       router.refresh();
 
       if (data.pendingAction) {
@@ -177,9 +198,17 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
     if (state !== "idle") return;
     setError("");
     try {
-      if (!streamRef.current) {
+      if (typeof MediaRecorder === "undefined") {
+        throw new Error("MediaRecorder unavailable");
+      }
+
+      const currentStream = streamRef.current;
+      const currentTrack = currentStream?.getAudioTracks()[0];
+      if (!currentStream || !currentTrack || currentTrack.readyState !== "live") {
+        streamRef.current?.getTracks().forEach((track) => track.stop());
         streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
       }
+
       const mimeType = pickSupportedMimeType();
       const recorder = new MediaRecorder(streamRef.current, mimeType ? { mimeType } : undefined);
       chunksRef.current = [];
@@ -189,8 +218,10 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
       recorder.start();
       recorderRef.current = recorder;
       setState("recording");
-    } catch {
-      setError("Impossible d’accéder au microphone.");
+    } catch (caught) {
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      setError(microphoneErrorMessage(caught));
     }
   }
 
