@@ -42,3 +42,15 @@ La décision d’exécuter une proposition à la voix ne passe jamais par le LLM
 Pour l’ajout d’une ligne catalogue, le taux de TVA doit être énoncé explicitement dans le même tour de parole (`extractVoiceVatRate`) : l’assistant ne le complète, ni ne le déduit jamais. Sans taux clairement reconnu, aucune confirmation n’est possible.
 
 Deux outils supplémentaires suivent le même contrat proposition/confirmation que le reste de l’assistant : `request_finalize_quote` (aucun argument, le serveur revérifie seul la conformité) et `request_send_quote_email` (un identifiant de contact exact fourni dans le contexte, jamais une adresse dictée ou recomposée par le modèle). L’envoi relit l’adresse en base au moment de la confirmation, jamais celle proposée par le modèle.
+
+## AI-006 — exécution immédiate et multi-actions
+
+À compter du 14 août 2026, la décision produit change : les confirmations séparées décrites dans AI-002, AI-003 et AI-005 ne sont plus requises pour les commandes adressées à l’assistant. La demande explicite de l’artisan constitue l’ordre d’exécution.
+
+Le modèle peut demander plusieurs outils dans un même tour. Le serveur exécute les appels séquentiellement et chaque opération reste soumise aux mêmes contrôles d’authentification, d’organisation, de RLS et de statut brouillon. Les prix des nouvelles lignes sont toujours relus depuis le catalogue au moment de l’écriture et aucun total n’est accepté depuis le modèle.
+
+Une nouvelle ligne catalogue peut être enregistrée avec une TVA `null` lorsque le taux n’est pas connu. Cette absence reste explicite : le moteur financier ne produit pas de TTC officiel et la conformité bloque la finalisation tant que le taux n’est pas complété. L’assistant n’invente donc toujours jamais la TVA.
+
+Pour une demande comportant plusieurs prestations, l’assistant peut effectuer plusieurs recherches catalogue puis plusieurs ajouts au cours du même échange. Les éléments ambigus, absents du catalogue ou sans prix ne sont pas inventés : ils sont ignorés ou signalés dans le résumé final.
+
+La finalisation reste contrôlée par le moteur de conformité côté serveur et l’envoi par e-mail relit toujours le contact exact en base. L’immuabilité des devis finalisés, les calculs déterministes et les limites d’accès multi-entreprises restent inchangés.
