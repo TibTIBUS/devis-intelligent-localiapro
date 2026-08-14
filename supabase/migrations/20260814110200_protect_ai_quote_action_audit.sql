@@ -58,6 +58,28 @@ revoke insert, update on table public.quote_ai_actions from authenticated;
 grant select, insert, update on table public.quote_ai_actions to quote_ai_action_executor;
 grant create on schema public to quote_ai_action_executor;
 
+-- Set SECURITY DEFINER while the migration role still owns the functions.
+alter function public.add_catalog_quote_line(uuid, uuid, uuid, bigint, text, integer)
+security definer;
+alter function public.update_ai_quote_line(uuid, uuid, uuid, bigint, text)
+security definer;
+alter function public.delete_ai_quote_line(uuid, uuid, uuid)
+security definer;
+alter function public.set_ai_quote_payment_terms(uuid, uuid, text)
+security definer;
+alter function public.set_ai_quote_validity(uuid, uuid, date)
+security definer;
+alter function public.set_ai_quote_worksite_address(uuid, uuid, uuid)
+security definer;
+alter function public.update_ai_quote_note(uuid, uuid, text)
+security definer;
+alter function public.set_ai_quote_discount(uuid, uuid, integer, integer)
+security definer;
+alter function public.set_ai_quote_deposit(uuid, uuid, integer, integer)
+security definer;
+alter function public.undo_last_ai_quote_action(uuid, uuid)
+security definer;
+
 alter function public.add_catalog_quote_line(uuid, uuid, uuid, bigint, text, integer)
 owner to quote_ai_action_executor;
 alter function public.update_ai_quote_line(uuid, uuid, uuid, bigint, text)
@@ -82,27 +104,6 @@ owner to quote_ai_action_executor;
 revoke quote_ai_action_executor from postgres;
 
 revoke create on schema public from quote_ai_action_executor;
-
-alter function public.add_catalog_quote_line(uuid, uuid, uuid, bigint, text, integer)
-security definer;
-alter function public.update_ai_quote_line(uuid, uuid, uuid, bigint, text)
-security definer;
-alter function public.delete_ai_quote_line(uuid, uuid, uuid)
-security definer;
-alter function public.set_ai_quote_payment_terms(uuid, uuid, text)
-security definer;
-alter function public.set_ai_quote_validity(uuid, uuid, date)
-security definer;
-alter function public.set_ai_quote_worksite_address(uuid, uuid, uuid)
-security definer;
-alter function public.update_ai_quote_note(uuid, uuid, text)
-security definer;
-alter function public.set_ai_quote_discount(uuid, uuid, integer, integer)
-security definer;
-alter function public.set_ai_quote_deposit(uuid, uuid, integer, integer)
-security definer;
-alter function public.undo_last_ai_quote_action(uuid, uuid)
-security definer;
 
 revoke all on function public.add_catalog_quote_line(uuid, uuid, uuid, bigint, text, integer) from public, anon;
 revoke all on function public.update_ai_quote_line(uuid, uuid, uuid, bigint, text) from public, anon;
