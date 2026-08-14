@@ -78,22 +78,22 @@ export default async function DashboardPage() {
   const companyName = company?.legal_name ?? organization?.name ?? "Mon entreprise";
 
   return (
-    <main className="min-h-svh bg-muted/20 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+    <main className="min-h-svh bg-[#F5F1E8] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <div className="mx-auto w-full max-w-7xl space-y-6">
         <header className="space-y-1">
-          <p className="text-sm font-medium text-primary">Localiapro.fr</p>
-          <h1 className="text-3xl font-semibold tracking-tight">Tableau de bord</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#E8672E]">NALTO</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-[#17382D]">Tableau de bord</h1>
           <p className="text-sm text-muted-foreground">
             Vue d’ensemble de votre activité et accès rapides à vos outils.
           </p>
         </header>
 
-        <section className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
+        <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
           <div className="border-b border-border px-5 py-4">
             <p className="text-sm font-semibold text-primary">Entreprise</p>
           </div>
           <div className="grid gap-6 p-5 md:grid-cols-[220px_1fr] lg:grid-cols-[240px_1fr_auto] lg:items-center">
-            <div className="flex min-h-36 items-center justify-center rounded-xl border border-border bg-muted/20 p-4">
+            <div className="flex min-h-36 items-center justify-center rounded-xl border border-border bg-muted/30 p-4">
               {logoDataUrl ? (
                 <div
                   aria-label={`Logo de ${companyName}`}
@@ -134,7 +134,7 @@ export default async function DashboardPage() {
             </div>
 
             <Link
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-medium transition-colors hover:bg-muted"
               href="/entreprise/informations-legales"
             >
               <Pencil className="h-4 w-4" />
@@ -144,9 +144,9 @@ export default async function DashboardPage() {
         </section>
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Link className="group rounded-2xl border border-border bg-background p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md" href="/devis">
+          <Link className="group rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md" href="/devis">
             <div className="flex items-center gap-4">
-              <span className="rounded-full bg-blue-50 p-3 text-blue-600"><FileText className="h-5 w-5" /></span>
+              <span className="rounded-full bg-[#ECE7DD] p-3 text-[#17382D]"><FileText className="h-5 w-5" /></span>
               <div>
                 <p className="text-3xl font-semibold">{dashboard.draftCount}</p>
                 <p className="text-sm text-muted-foreground">Devis en brouillon</p>
@@ -155,9 +155,9 @@ export default async function DashboardPage() {
             <p className="mt-4 flex items-center gap-1 text-sm font-medium text-primary">Voir les devis <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></p>
           </Link>
 
-          <Link className="group rounded-2xl border border-border bg-background p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md" href="/devis">
+          <Link className="group rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md" href="/devis">
             <div className="flex items-center gap-4">
-              <span className="rounded-full bg-emerald-50 p-3 text-emerald-600"><CheckCircle2 className="h-5 w-5" /></span>
+              <span className="rounded-full bg-[#E7EFE8] p-3 text-[#397255]"><CheckCircle2 className="h-5 w-5" /></span>
               <div>
                 <p className="text-3xl font-semibold">{finalizedCount}</p>
                 <p className="text-sm text-muted-foreground">Devis finalisés</p>
@@ -166,9 +166,9 @@ export default async function DashboardPage() {
             <p className="mt-4 flex items-center gap-1 text-sm font-medium text-primary">Voir les devis <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></p>
           </Link>
 
-          <Link className="group rounded-2xl border border-border bg-background p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md" href="/clients">
+          <Link className="group rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md" href="/clients">
             <div className="flex items-center gap-4">
-              <span className="rounded-full bg-violet-50 p-3 text-violet-600"><Users className="h-5 w-5" /></span>
+              <span className="rounded-full bg-[#E8E0D3] p-3 text-[#17382D]"><Users className="h-5 w-5" /></span>
               <div>
                 <p className="text-3xl font-semibold">{customers.length}</p>
                 <p className="text-sm text-muted-foreground">Clients</p>
@@ -177,9 +177,9 @@ export default async function DashboardPage() {
             <p className="mt-4 flex items-center gap-1 text-sm font-medium text-primary">Voir les clients <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></p>
           </Link>
 
-          <Link className="group rounded-2xl border border-border bg-background p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md" href="/catalogue">
+          <Link className="group rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md" href="/catalogue">
             <div className="flex items-center gap-4">
-              <span className="rounded-full bg-orange-50 p-3 text-orange-600"><BookOpen className="h-5 w-5" /></span>
+              <span className="rounded-full bg-[#F3E4D9] p-3 text-[#E8672E]"><BookOpen className="h-5 w-5" /></span>
               <div>
                 <p className="text-3xl font-semibold">{catalogItems.length}</p>
                 <p className="text-sm text-muted-foreground">Prestations au catalogue</p>
@@ -190,7 +190,7 @@ export default async function DashboardPage() {
         </section>
 
         <section className="grid gap-5 lg:grid-cols-[1.35fr_0.8fr_0.8fr]">
-          <article className="rounded-2xl border border-border bg-background p-5 shadow-sm">
+          <article className="rounded-2xl border border-border bg-card p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold">Reprendre un devis</h2>
@@ -229,29 +229,29 @@ export default async function DashboardPage() {
             )}
           </article>
 
-          <article className="rounded-2xl border border-border bg-background p-5 shadow-sm">
+          <article className="rounded-2xl border border-border bg-card p-5 shadow-sm">
             <h2 className="text-xl font-semibold">Actions rapides</h2>
             <div className="mt-4 space-y-3">
               <Link className="flex items-center gap-3 rounded-xl border border-border p-3 transition hover:bg-muted/60" href="/devis/nouveau">
-                <span className="rounded-full bg-blue-600 p-2 text-white"><Plus className="h-4 w-4" /></span>
+                <span className="rounded-full bg-[#E8672E] p-2 text-white"><Plus className="h-4 w-4" /></span>
                 <div><p className="font-medium">Nouveau devis</p><p className="text-xs text-muted-foreground">Créer un devis</p></div>
               </Link>
-              <Link className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 p-3 text-white shadow-sm transition hover:opacity-95" href={voiceHref}>
-                <span className="rounded-full bg-white/15 p-2"><Mic2 className="h-4 w-4" /></span>
-                <div><p className="font-medium">Continuer à la voix</p><p className="text-xs text-white/80">{latestDraft ? "Reprendre un brouillon" : "Créer puis dicter un devis"}</p></div>
+              <Link className="flex items-center gap-3 rounded-xl bg-[#17382D] p-3 text-[#F5F1E8] shadow-sm transition hover:bg-[#21463A]" href={voiceHref}>
+                <span className="rounded-full bg-white/10 p-2 text-[#E8672E]"><Mic2 className="h-4 w-4" /></span>
+                <div><p className="font-medium">Continuer à la voix</p><p className="text-xs text-[#F5F1E8]/70">{latestDraft ? "Reprendre un brouillon" : "Créer puis dicter un devis"}</p></div>
               </Link>
               <Link className="flex items-center gap-3 rounded-xl border border-border p-3 transition hover:bg-muted/60" href="/clients?nouveau=1">
-                <span className="rounded-full bg-emerald-50 p-2 text-emerald-600"><Users className="h-4 w-4" /></span>
+                <span className="rounded-full bg-[#E7EFE8] p-2 text-[#397255]"><Users className="h-4 w-4" /></span>
                 <div><p className="font-medium">Ajouter un client</p><p className="text-xs text-muted-foreground">Créer une fiche client</p></div>
               </Link>
               <Link className="flex items-center gap-3 rounded-xl border border-border p-3 transition hover:bg-muted/60" href="/catalogue">
-                <span className="rounded-full bg-orange-50 p-2 text-orange-600"><BookOpen className="h-4 w-4" /></span>
+                <span className="rounded-full bg-[#F3E4D9] p-2 text-[#E8672E]"><BookOpen className="h-4 w-4" /></span>
                 <div><p className="font-medium">Gérer le catalogue</p><p className="text-xs text-muted-foreground">Prestations et catégories</p></div>
               </Link>
             </div>
           </article>
 
-          <article className="rounded-2xl border border-border bg-background p-5 shadow-sm">
+          <article className="rounded-2xl border border-border bg-card p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-xl font-semibold">Clients enregistrés</h2>
               <Link className="text-sm font-medium text-primary hover:underline" href="/clients">Voir tous</Link>
@@ -274,17 +274,17 @@ export default async function DashboardPage() {
         </section>
 
         <section className="grid gap-4 sm:grid-cols-3">
-          <article className="rounded-2xl border border-border bg-background p-5 shadow-sm">
+          <article className="rounded-2xl border border-border bg-card p-5 shadow-sm">
             <p className="text-sm text-muted-foreground">À accepter</p>
             <p className="mt-2 text-2xl font-semibold">{dashboard.pendingAcceptanceCount}</p>
             <p className="mt-1 text-sm font-medium text-primary">{formatCents(dashboard.pendingAcceptanceTtcCents)} TTC</p>
           </article>
-          <article className="rounded-2xl border border-border bg-background p-5 shadow-sm">
+          <article className="rounded-2xl border border-border bg-card p-5 shadow-sm">
             <p className="text-sm text-muted-foreground">Acceptés</p>
             <p className="mt-2 text-2xl font-semibold">{dashboard.acceptedCount}</p>
             <p className="mt-1 text-sm font-medium text-primary">{formatCents(dashboard.acceptedTtcCents)} TTC</p>
           </article>
-          <article className="rounded-2xl border border-border bg-background p-5 shadow-sm">
+          <article className="rounded-2xl border border-border bg-card p-5 shadow-sm">
             <p className="text-sm text-muted-foreground">Expirés</p>
             <p className="mt-2 text-2xl font-semibold">{dashboard.expiredCount}</p>
             <p className="mt-1 text-sm text-muted-foreground">Devis arrivés à échéance</p>
