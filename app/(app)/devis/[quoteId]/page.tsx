@@ -121,9 +121,7 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
     <main className="flex min-h-svh justify-center px-4 py-8 sm:px-6 sm:py-12">
       <section className="w-full max-w-4xl space-y-8">
         <div className="space-y-2">
-          <Link className="text-sm font-medium underline" href="/devis">Voir les devis enregistrés</Link>
-          <Link className="ml-4 text-sm font-medium underline" href="/devis/nouveau">Nouveau devis</Link>
-          <Link className="ml-4 text-sm font-medium underline" href={`/devis/${editor.quote.id}/voix`}>Continuer à la voix</Link>
+          <Link className="text-sm font-medium underline" href={`/devis/${editor.quote.id}/voix`}>Continuer à la voix</Link>
           <p className="text-sm font-medium text-muted-foreground">Localiapro.fr</p>
           <h1 className="text-3xl font-semibold tracking-tight">
             {editor.quote.quote_number ? `${editor.quote.quote_number} — ` : ""}Devis de {customer?.display_name ?? "client"}

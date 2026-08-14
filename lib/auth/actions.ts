@@ -166,3 +166,9 @@ export async function updatePassword(
 
   redirect("/tableau-de-bord");
 }
+
+export async function signOut(): Promise<never> {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/connexion");
+}

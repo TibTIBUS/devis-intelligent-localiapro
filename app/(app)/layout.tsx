@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { AppNav } from "@/components/layout/app-nav";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
@@ -11,5 +12,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     redirect("/connexion");
   }
 
-  return children;
+  return (
+    <>
+      <AppNav />
+      {children}
+    </>
+  );
 }
