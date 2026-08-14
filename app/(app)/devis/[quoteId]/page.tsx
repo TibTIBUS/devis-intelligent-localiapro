@@ -17,6 +17,7 @@ import { QuoteAssistant } from "@/components/quotes/quote-assistant";
 import { QuoteWorkflowPanel } from "@/components/quotes/quote-workflow-panel";
 import { VoiceActionLink } from "@/components/voice/voice-action-link";
 import { getCatalogItems } from "@/lib/catalog/queries";
+import { getCompanyLegalInformation } from "@/lib/company/queries";
 import { validateQuoteCompliance, type QuoteComplianceResult } from "@/lib/compliance/quote-compliance";
 import { getCustomers } from "@/lib/customers/queries";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
@@ -41,6 +42,30 @@ function formatCents(amount: bigint) {
 function formatDate(value: string | null) {
   if (!value) return "À définir";
   return new Intl.DateTimeFormat("fr-FR").format(new Date(`${value}T12:00:00`));
+}
+
+function unavailableCompliance(): QuoteComplianceResult {
+  return {
+    errors: [{
+      code: "COMPLIANCE_UNAVAILABLE",
+      field: "quote",
+      message: "Le contrôle de conformité est momentanément indisponible. Vos modifications restent enregistrées.",
+    }],
+    rulesVersion: "unavailable",
+    valid: false,
+    warnings: [],
+  };
+}
+
+async function getComplianceSafely(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  quoteId: string,
+): Promise<QuoteComplianceResult> {
+  try {
+    return await validateQuoteCompliance(supabase, quoteId);
+  } catch {
+    return unavailableCompliance();
+  }
 }
 
 function DraftContent({ catalogItems, lines, quoteId, sections }: {
@@ -133,15 +158,18 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
   const organizationId = await getCurrentOrganizationId(supabase);
   if (!organizationId) redirect("/onboarding");
 
-  const [editor, customers, catalogItems, acceptance] = await Promise.all([
+  const [editor, customers, catalogItems, acceptance, company] = await Promise.all([
     getQuoteEditorData(supabase, organizationId, quoteId),
     getCustomers(supabase, organizationId),
     getCatalogItems(supabase, organizationId),
     getQuoteAcceptance(supabase, organizationId, quoteId),
+    getCompanyLegalInformation(supabase, organizationId),
   ]);
   if (!editor) notFound();
 
-  const compliance: QuoteComplianceResult | null = editor.quote.status === "draft" ? await validateQuoteCompliance(supabase, editor.quote.id) : null;
+  const compliance: QuoteComplianceResult | null = editor.quote.status === "draft"
+    ? await getComplianceSafely(supabase, editor.quote.id)
+    : null;
   const customer = customers.find((item) => item.id === editor.quote.customer_id);
   const finalized = editor.quote.status === "finalized";
   const primaryContact = customer?.contacts.find((contact) => contact.is_primary) ?? customer?.contacts[0];
@@ -193,7 +221,7 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
           </aside>
 
           <section className="min-w-0 space-y-5 lg:col-start-1 xl:col-start-2">
-            <QuoteWorkflowPanel quoteId={editor.quote.id} />
+            <QuoteWorkflowPanel company={company} compliance={compliance} customer={customer} editor={editor} />
             {!finalized ? <section className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm"><div className="border-b border-border px-4 py-4 sm:px-5"><h2 className="font-semibold">Paramètres du devis</h2><p className="text-sm text-muted-foreground">Conditions financières, adresse du chantier et notes visibles.</p></div><div className="p-4 sm:p-5"><QuoteFinancialSettingsForm action={saveQuoteFinancialSettings} addresses={customer?.addresses ?? []} depositRateBasisPoints={editor.quote.deposit_rate_basis_points} discountRateBasisPoints={editor.quote.discount_rate_basis_points} isQuoteFree={editor.quote.is_quote_free} note={editor.quote.note} paymentTerms={editor.quote.payment_terms} preparationFeeHtCents={editor.quote.preparation_fee_ht_cents} preparationFeeVatRateBasisPoints={editor.quote.preparation_fee_vat_rate_basis_points} quoteId={editor.quote.id} travelFeeApplicable={editor.quote.travel_fee_applicable} validUntil={editor.quote.valid_until} workAddressId={editor.quote.work_address_id} /></div></section> : null}
             {finalized ? <><FinalizedContent lines={editor.lines} /><section id="acceptation">{editor.quote.quote_version_id ? <QuoteAcceptancePanel acceptance={acceptance} action={recordQuoteAcceptance} quoteId={editor.quote.id} versionId={editor.quote.quote_version_id} /> : null}</section></> : <DraftContent catalogItems={catalogItems} lines={editor.lines} quoteId={editor.quote.id} sections={editor.sections} />}
             {!finalized ? <section className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm"><div className="border-b border-border px-4 py-4 sm:px-5"><h2 className="font-semibold">Assistant texte</h2><p className="text-sm text-muted-foreground">Vous pouvez également modifier le devis par conversation.</p></div><div className="p-4 sm:p-5"><QuoteAssistant quoteId={editor.quote.id} /></div></section> : null}
