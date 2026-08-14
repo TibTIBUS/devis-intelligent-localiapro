@@ -5,7 +5,18 @@ import { useFormStatus } from "react-dom";
 import { Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { initialQuoteEmailFormState, sendQuoteEmail } from "@/lib/documents/email-form-action";
+
+type QuoteEmailFormState = {
+  message?: string;
+  status: "idle" | "error" | "success";
+};
+
+type QuoteEmailAction = (
+  previousState: QuoteEmailFormState,
+  formData: FormData,
+) => Promise<QuoteEmailFormState>;
+
+const initialState: QuoteEmailFormState = { status: "idle" };
 
 function SendButton() {
   const { pending } = useFormStatus();
@@ -13,13 +24,15 @@ function SendButton() {
 }
 
 export function QuoteEmailForm({
+  action,
   contacts,
   quoteId,
 }: {
+  action: QuoteEmailAction;
   contacts: Array<{ email: string | null; id: string; is_primary: boolean; name: string | null }>;
   quoteId: string;
 }) {
-  const [state, action] = useActionState(sendQuoteEmail, initialQuoteEmailFormState);
+  const [state, formAction] = useActionState(action, initialState);
   const emailContacts = contacts.filter((contact) => contact.email);
 
   if (!emailContacts.length) {
@@ -28,7 +41,7 @@ export function QuoteEmailForm({
 
   const primary = emailContacts.find((contact) => contact.is_primary) ?? emailContacts[0];
   return (
-    <form action={action} className="space-y-3">
+    <form action={formAction} className="space-y-3">
       <input name="quoteId" type="hidden" value={quoteId} />
       <div className="space-y-2">
         <label className="text-sm font-medium" htmlFor="quote-email-contact">Destinataire</label>
