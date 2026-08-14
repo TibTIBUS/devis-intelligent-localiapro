@@ -4,8 +4,12 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
-import { saveQuoteExecution } from "@/lib/quotes/execution-actions";
-import { initialQuoteFormState } from "@/lib/validation/quote";
+import { initialQuoteFormState, type QuoteFormState } from "@/lib/validation/quote";
+
+type QuoteExecutionAction = (
+  previousState: QuoteFormState,
+  formData: FormData,
+) => Promise<QuoteFormState>;
 
 function SaveButton() {
   const { pending } = useFormStatus();
@@ -13,17 +17,19 @@ function SaveButton() {
 }
 
 export function QuoteExecutionForm({
+  action,
   executionDuration,
   executionStartDate,
   quoteId,
 }: {
+  action: QuoteExecutionAction;
   executionDuration: string | null;
   executionStartDate: string | null;
   quoteId: string;
 }) {
-  const [state, action] = useActionState(saveQuoteExecution, initialQuoteFormState);
+  const [state, formAction] = useActionState(action, initialQuoteFormState);
   return (
-    <form action={action} className="grid gap-4 sm:grid-cols-2" noValidate>
+    <form action={formAction} className="grid gap-4 sm:grid-cols-2" noValidate>
       <input name="quoteId" type="hidden" value={quoteId} />
       <div className="space-y-2">
         <label className="text-sm font-medium" htmlFor="quote-execution-start">Début prévu des travaux</label>
