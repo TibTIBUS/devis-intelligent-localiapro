@@ -4,10 +4,17 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { PencilLine } from "lucide-react";
 
-import {
-  createQuoteRevision,
-  initialQuoteRevisionState,
-} from "@/lib/quotes/revision-actions";
+type QuoteRevisionState = {
+  message?: string;
+  status: "error" | "idle";
+};
+
+type QuoteRevisionAction = (
+  previousState: QuoteRevisionState,
+  formData: FormData,
+) => Promise<QuoteRevisionState>;
+
+const initialState: QuoteRevisionState = { status: "idle" };
 
 function RevisionButton() {
   const { pending } = useFormStatus();
@@ -23,11 +30,17 @@ function RevisionButton() {
   );
 }
 
-export function QuoteRevisionForm({ quoteId }: { quoteId: string }) {
-  const [state, action] = useActionState(createQuoteRevision, initialQuoteRevisionState);
+export function QuoteRevisionForm({
+  action,
+  quoteId,
+}: {
+  action: QuoteRevisionAction;
+  quoteId: string;
+}) {
+  const [state, formAction] = useActionState(action, initialState);
 
   return (
-    <form action={action} className="space-y-2">
+    <form action={formAction} className="space-y-2">
       <input name="quoteId" type="hidden" value={quoteId} />
       <RevisionButton />
       {state.message ? (
