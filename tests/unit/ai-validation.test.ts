@@ -55,7 +55,14 @@ describe("quote assistant validation", () => {
       catalogItemId: quoteId,
       lineKind: "labor",
       quantity: "quatre",
+      vatRate: null,
     }).success).toBe(false);
+    expect(addQuoteLineArgumentsSchema.parse({
+      catalogItemId: quoteId,
+      lineKind: "labor",
+      quantity: "4",
+      vatRate: "10,00",
+    }).vatRate).toBe(1_000);
     expect(confirmAiQuoteLineSchema.parse({
       actionType: "add_quote_line",
       proposal: {
@@ -68,12 +75,19 @@ describe("quote assistant validation", () => {
     })).toMatchObject({ vatRate: 1_000 });
   });
 
-  it("validates controlled update and deletion confirmations", () => {
+  it("validates controlled update and deletion payloads", () => {
     expect(updateQuoteLineArgumentsSchema.parse({
       lineKind: "service",
       quantity: "2,5",
       quoteLineId: quoteId,
+      vatRate: null,
     }).quoteLineId).toBe(quoteId);
+    expect(updateQuoteLineArgumentsSchema.parse({
+      lineKind: null,
+      quantity: null,
+      quoteLineId: quoteId,
+      vatRate: "10",
+    }).vatRate).toBe(1_000);
     expect(deleteQuoteLineArgumentsSchema.safeParse({ quoteLineId: quoteId }).success).toBe(true);
     expect(confirmAiQuoteActionSchema.safeParse({
       actionType: "update_quote_line",
