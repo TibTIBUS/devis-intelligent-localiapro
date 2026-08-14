@@ -45,6 +45,8 @@ function invalidQuoteForm(error: Parameters<typeof getQuoteFieldErrors>[0]): Quo
 
 function revalidateQuote(quoteId: string) {
   revalidatePath(`/devis/${quoteId}`);
+  revalidatePath(`/devis/${quoteId}/voix`);
+  revalidatePath("/devis");
   revalidatePath("/devis/nouveau");
 }
 
@@ -95,6 +97,7 @@ export async function saveQuoteFinancialSettings(
     })
     .eq("id", parsed.data.quoteId)
     .eq("organization_id", organizationId)
+    .eq("status", "draft")
     .select("id")
     .maybeSingle();
 
@@ -115,7 +118,16 @@ export async function finalizeQuote(
   if (!quoteId.success) return { message: "Impossible d’identifier ce devis.", status: "error" };
 
   const { organizationId, supabase, userId } = await getAuthenticatedOrganizationId();
-  const compliance = await validateQuoteCompliance(supabase, quoteId.data);
+  let compliance;
+  try {
+    compliance = await validateQuoteCompliance(supabase, quoteId.data);
+  } catch {
+    return {
+      message: "Le contrôle de conformité est momentanément indisponible. Réessayez dans quelques instants.",
+      status: "error",
+    };
+  }
+
   if (!compliance.valid) {
     logTechnicalWarning("quote.compliance_blocked_finalization", {
       organizationId,
@@ -139,7 +151,6 @@ export async function finalizeQuote(
   }
 
   revalidateQuote(quoteId.data);
-  revalidatePath("/devis");
   return { message: `Devis finalisé sous le numéro ${result.quoteNumber}.`, status: "success" };
 }
 
