@@ -1,4 +1,8 @@
-import { setDiscountArgumentsSchema } from "@/lib/validation/ai";
+import {
+  addQuoteLineArgumentsSchema,
+  setDepositArgumentsSchema,
+  setDiscountArgumentsSchema,
+} from "@/lib/validation/ai";
 
 export type QuoteAssistantEvalCall = { arguments: unknown; name: string };
 
@@ -7,6 +11,12 @@ export type QuoteAssistantEvalScenario = {
   id: string;
   userMessage: string;
 };
+
+const multiActionCatalogIds = {
+  outlet: "13000000-0000-4000-8000-000000000005",
+  switch: "13000000-0000-4000-8000-000000000006",
+  panel: "13000000-0000-4000-8000-000000000007",
+} as const;
 
 export const quoteAssistantEvalScenarios: QuoteAssistantEvalScenario[] = [
   {
@@ -37,6 +47,15 @@ export const quoteAssistantEvalScenarios: QuoteAssistantEvalScenario[] = [
     id: "amount-is-not-a-discount-rate",
     userMessage: "Fais une remise de 100 euros.",
   },
+  {
+    catalogItems: [
+      { id: multiActionCatalogIds.outlet, name: "Prise de courant", unit: "unité", unitPriceHtCents: 8_500 },
+      { id: multiActionCatalogIds.switch, name: "Interrupteur simple", unit: "unité", unitPriceHtCents: 7_000 },
+      { id: multiActionCatalogIds.panel, name: "Tableau électrique 3 rangées", unit: "unité", unitPriceHtCents: 42_000 },
+    ],
+    id: "multi-action-targeted-vat-and-deposit",
+    userMessage: "Ajoute 8 prises de courant, 3 interrupteurs simples et 1 tableau électrique 3 rangées. Mets uniquement les prises à 10 % de TVA et mets 30 % d’acompte.",
+  },
 ];
 
 export function gradeQuoteAssistantEval(scenarioId: string, calls: QuoteAssistantEvalCall[]) {
@@ -61,8 +80,50 @@ export function gradeQuoteAssistantEval(scenarioId: string, calls: QuoteAssistan
       const parsed = setDiscountArgumentsSchema.safeParse(discountCalls[0].arguments);
       if (!parsed.success || parsed.data.discountRate !== 1_000) issues.push("Le taux transmis doit être exactement 10 %.");
     }
-  } else if (scenarioId === "amount-is-not-a-discount-rate" && names.includes("set_discount")) {
-    issues.push("Un montant en euros ne doit jamais être converti en taux de remise.");
+  } else if (scenarioId === "amount-is-not-a-discount-rate") {
+    if (names.includes("set_discount")) issues.push("Un montant en euros ne doit jamais être converti en taux de remise.");
+  } else if (scenarioId === "multi-action-targeted-vat-and-deposit") {
+    if (searchIndex === -1) issues.push("Le catalogue doit être consulté avant les ajouts multi-actions.");
+
+    const addCalls = calls.filter((call) => call.name === "add_quote_line");
+    if (addCalls.length !== 3) {
+      issues.push("Les trois prestations doivent être ajoutées exactement une fois chacune.");
+    } else {
+      const expected = new Map([
+        [multiActionCatalogIds.outlet, { quantity: "8", vatRateBasisPoints: 1_000 }],
+        [multiActionCatalogIds.switch, { quantity: "3", vatRateBasisPoints: null }],
+        [multiActionCatalogIds.panel, { quantity: "1", vatRateBasisPoints: null }],
+      ]);
+
+      for (const call of addCalls) {
+        const parsed = addQuoteLineArgumentsSchema.safeParse(call.arguments);
+        if (!parsed.success) {
+          issues.push("Chaque ajout doit respecter le contrat strict add_quote_line.");
+          continue;
+        }
+        const expectation = expected.get(parsed.data.catalogItemId);
+        if (!expectation) {
+          issues.push("Une prestation non demandée a été ajoutée.");
+          continue;
+        }
+        if (parsed.data.quantity !== expectation.quantity) {
+          issues.push(`La quantité de ${parsed.data.catalogItemId} est incorrecte.`);
+        }
+        if (parsed.data.vatRate !== expectation.vatRateBasisPoints) {
+          issues.push(`La TVA de ${parsed.data.catalogItemId} est incorrecte.`);
+        }
+        expected.delete(parsed.data.catalogItemId);
+      }
+      if (expected.size > 0) issues.push("Une ou plusieurs prestations demandées n’ont pas été ajoutées.");
+    }
+
+    const depositCalls = calls.filter((call) => call.name === "set_deposit");
+    if (depositCalls.length !== 1) {
+      issues.push("L’acompte doit être appliqué exactement une fois.");
+    } else {
+      const parsed = setDepositArgumentsSchema.safeParse(depositCalls[0].arguments);
+      if (!parsed.success || parsed.data.depositRate !== 3_000) issues.push("L’acompte transmis doit être exactement 30 %.");
+    }
   } else if (!quoteAssistantEvalScenarios.some((scenario) => scenario.id === scenarioId)) {
     issues.push("Scénario d’évaluation inconnu.");
   }
