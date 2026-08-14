@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { AuthShell } from "@/components/auth/auth-shell";
 import { EmailPasswordForm } from "@/components/auth/email-password-form";
 import { GoogleOAuthForm } from "@/components/auth/google-oauth-form";
 import { signIn, signInWithGoogle } from "@/lib/auth/actions";
@@ -15,39 +16,20 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
 
-  if (claimsData) {
-    redirect("/tableau-de-bord");
-  }
+  if (claimsData) redirect("/tableau-de-bord");
 
   return (
-    <main className="flex min-h-svh items-center justify-center px-6 py-12">
-      <section className="w-full max-w-sm space-y-6">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">Localiapro.fr</p>
-          <h1 className="text-3xl font-semibold tracking-tight">Connexion</h1>
-        </div>
-        {erreur ? (
-          <p aria-live="polite" className="text-sm text-destructive">
-            La connexion n’a pas pu être finalisée. Veuillez réessayer.
-          </p>
-        ) : null}
+    <AuthShell description="Connectez-vous pour retrouver vos clients, votre catalogue et vos devis." title="Bienvenue !">
+      <div className="space-y-5">
+        {erreur ? <p aria-live="polite" className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">La connexion n’a pas pu être finalisée. Veuillez réessayer.</p> : null}
         <GoogleOAuthForm action={signInWithGoogle} />
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="h-px flex-1 bg-border" />
-          <span>ou avec votre adresse email</span>
-          <span className="h-px flex-1 bg-border" />
-        </div>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" /><span>ou avec votre adresse email</span><span className="h-px flex-1 bg-border" /></div>
         <EmailPasswordForm action={signIn} mode="sign-in" />
-        <Link className="text-sm font-medium underline" href="/mot-de-passe-oublie">
-          Mot de passe oublié ?
-        </Link>
-        <p className="text-sm text-muted-foreground">
-          Pas encore de compte ?{" "}
-          <Link className="font-medium text-foreground underline" href="/inscription">
-            Créer un compte
-          </Link>
-        </p>
-      </section>
-    </main>
+        <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <Link className="font-medium text-primary hover:underline" href="/mot-de-passe-oublie">Mot de passe oublié ?</Link>
+          <p className="text-muted-foreground">Pas encore de compte ? <Link className="font-medium text-foreground hover:underline" href="/inscription">Créer un compte</Link></p>
+        </div>
+      </div>
+    </AuthShell>
   );
 }
