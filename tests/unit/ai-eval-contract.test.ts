@@ -11,6 +11,7 @@ describe("quote assistant evaluation contract", () => {
       "explicit-discount-tool",
       "amount-is-not-a-discount-rate",
       "multi-action-targeted-vat-and-deposit",
+      "multi-change-existing-lines",
     ]);
   });
 
@@ -64,5 +65,20 @@ describe("quote assistant evaluation contract", () => {
         ? { ...call, arguments: { ...(call.arguments as object), vatRate: "10" } }
         : call,
     ))).toContain("La TVA de 13000000-0000-4000-8000-000000000006 est incorrecte.");
+  });
+
+  it("treats partial removal as a quantity update and preserves untouched fields", () => {
+    const calls = [
+      { arguments: { quoteLineId: "41000000-0000-4000-8000-000000000005", quantity: "10", lineKind: null, vatRate: null }, name: "update_quote_line" },
+      { arguments: { quoteLineId: "41000000-0000-4000-8000-000000000008", quantity: "4", lineKind: null, vatRate: null }, name: "update_quote_line" },
+      { arguments: { quoteLineId: "41000000-0000-4000-8000-000000000006", quantity: null, lineKind: null, vatRate: "20" }, name: "update_quote_line" },
+    ];
+
+    expect(gradeQuoteAssistantEval("multi-change-existing-lines", calls)).toEqual([]);
+    expect(gradeQuoteAssistantEval("multi-change-existing-lines", [
+      ...calls.slice(0, 1),
+      { arguments: { quoteLineId: "41000000-0000-4000-8000-000000000008" }, name: "delete_quote_line" },
+      calls[2],
+    ])).toContain("Retirer seulement deux spots ne doit pas supprimer toute la ligne.");
   });
 });
