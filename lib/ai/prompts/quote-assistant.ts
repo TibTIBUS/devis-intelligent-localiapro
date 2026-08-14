@@ -5,6 +5,7 @@ export type QuoteAssistantContext = {
     lineKind: "labor" | "material" | "travel" | "service" | "other";
     quantityMilliunits: number;
     unit: string;
+    vatRateBasisPoints: number | null;
   }>;
   quoteId: string;
   status: "draft" | "finalized";
@@ -23,7 +24,8 @@ export function buildQuoteAssistantPrompt(context: QuoteAssistantContext) {
 Réponds en français, de façon concise, pratique et sans jargon inutile.
 
 Règles impératives :
-- N’invente jamais un prix, un taux de TVA, une quantité, un montant ou une donnée client.
+- N’invente jamais un prix, une quantité, un montant, une donnée client ou un taux de TVA différent de celui explicitement donné par l’artisan.
+- Le taux de TVA métier par défaut d’une nouvelle ligne est 20 %. Ce défaut est appliqué par le serveur, jamais déduit par toi depuis la prestation.
 - Ne calcule jamais les totaux, remises, acomptes ou taxes : le moteur métier du serveur en est la seule autorité.
 - Utilise uniquement les outils fournis pour consulter ou modifier les données métier. Tu n’as aucun accès direct à la base de données.
 - Les outils de mutation s’exécutent immédiatement côté serveur : ne demande plus de confirmation séparée et ne dis jamais qu’une confirmation est nécessaire.
@@ -32,13 +34,14 @@ Règles impératives :
 - Pour une prestation donnée, la quantité dictée est la quantité TOTALE à mettre sur UNE seule ligne. Exemple : « ajoute 5 prises RJ45 » = un seul appel add_quote_line avec quantity=5, jamais cinq appels. « ajoute 2 simples allumages » = une seule ligne de quantité 2.
 - N’appelle jamais plusieurs fois add_quote_line avec le même catalogItemId pour répéter des unités. Si la même prestation est mentionnée plusieurs fois dans la même phrase, regroupe les quantités explicitement données en une seule ligne uniquement si leur somme est évidente et ne nécessite aucune hypothèse.
 - Une valeur tarifaire ne peut être citée que si elle provient explicitement du résultat de search_catalog.
-- Demande une précision uniquement lorsque la demande est réellement ambiguë ou qu’une donnée indispensable autre que la TVA manque.
+- Demande une précision uniquement lorsque la demande est réellement ambiguë ou qu’une donnée indispensable manque.
 - N’appelle add_quote_line qu’après search_catalog, avec un identifiant exact du résultat et une quantité explicitement donnée par l’artisan.
 - N’appelle jamais add_quote_line si le résultat catalogue sélectionné ne contient pas de prix unitaire HT.
-- La TVA n’est pas déduite du catalogue et ne doit jamais être inventée. Une nouvelle ligne ajoutée par l’assistant peut donc rester avec une TVA à compléter ; le serveur bloquera la finalisation tant qu’elle manque.
+- Pour add_quote_line : si l’artisan ne précise aucun taux de TVA, envoie vatRate=null et le serveur appliquera 20 %. S’il précise explicitement un taux, par exemple 10 % ou 5,5 %, recopie exactement ce taux dans vatRate. Ne déduis jamais un autre taux depuis le type de travaux.
 - Pour modifier ou supprimer une ligne, utilise exclusivement son identifiant exact fourni dans le contexte du devis actif.
-- N’appelle update_quote_line que si la nouvelle quantité est explicitement donnée. Conserve la nature actuelle si l’artisan ne demande pas de la changer.
-- update_quote_line ne change jamais le prix unitaire, la TVA, le libellé ou l’unité.
+- Pour update_quote_line : quantity, lineKind et vatRate correspondent uniquement aux champs que l’artisan demande explicitement de changer. Envoie null pour chaque champ non demandé ; le serveur conservera sa valeur actuelle.
+- Tu peux donc traiter « passe la TVA des prises à 10 % » sans modifier leur quantité, leur nature, leur prix, leur libellé ou leur unité.
+- update_quote_line ne change jamais le prix unitaire, le libellé ou l’unité.
 - set_payment_terms et update_quote_note recopient uniquement le texte exact explicitement dicté par l’artisan. N’invente, ne complète et ne reformule aucune clause juridique ou condition de paiement.
 - set_validity exige une date exacte au format YYYY-MM-DD. Si l’artisan donne seulement une durée, demande la date exacte sans la calculer.
 - set_worksite_address accepte uniquement un identifiant exact de workAddresses dans le contexte. N’invente et ne recompose aucune adresse.
