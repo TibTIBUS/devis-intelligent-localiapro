@@ -11,11 +11,10 @@ import { setPaymentTermsTool, setValidityTool, setWorksiteAddressTool, updateQuo
 import { searchCatalogTool } from "@/lib/ai/tools/search-catalog";
 import { parseOpenAIEnv } from "@/lib/validation/env";
 
-const context = {
+const baseContext = {
   contacts: [],
   depositRateBasisPoints: 3_000,
   discountRateBasisPoints: 0,
-  lines: [],
   note: null,
   paymentTerms: null,
   quoteId: "31000000-0000-4000-8000-000000000006",
@@ -30,6 +29,7 @@ async function runScenario(scenario: (typeof quoteAssistantEvalScenarios)[number
   const client = new OpenAI({ apiKey: env.OPENAI_API_KEY });
   const input: ResponseInputItem[] = [{ content: scenario.userMessage, role: "user" }];
   const calls: QuoteAssistantEvalCall[] = [];
+  const context = { ...baseContext, lines: scenario.contextLines ?? [] };
 
   for (let round = 0; round < 5; round += 1) {
     const response = await client.responses.create({
