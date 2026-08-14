@@ -28,6 +28,7 @@ const line = {
   line_kind: "labor",
   quantity_milliunits: 2_000,
   unit: "heure",
+  vat_rate_basis_points: 2_000,
 };
 
 describe("controlled quote line AI tools", () => {
@@ -47,21 +48,40 @@ describe("controlled quote line AI tools", () => {
       client,
       "organization-1",
       quoteId,
-      JSON.stringify({ lineKind: "service", quantity: "3,5", quoteLineId }),
+      JSON.stringify({ lineKind: "service", quantity: "3,5", quoteLineId, vatRate: null }),
     );
 
     expect(eq).toHaveBeenCalledWith("organization_id", "organization-1");
     expect(eq).toHaveBeenCalledWith("quote_id", quoteId);
+    expect(result.output.status).toBe("ready_to_apply");
     expect(result.proposal).toMatchObject({
       actionType: "update_quote_line",
       currentQuantityMilliunits: 2_000,
       lineKind: "service",
       quantityMilliunits: 3_500,
       quoteLineId,
+      vatRateBasisPoints: 2_000,
     });
   });
 
-  it("prepares deletion without deleting the line", async () => {
+  it("changes only VAT when that is the only requested field", async () => {
+    const { client } = quoteLineClient(line);
+    const result = await prepareUpdateQuoteLineTool(
+      client,
+      "organization-1",
+      quoteId,
+      JSON.stringify({ lineKind: null, quantity: null, quoteLineId, vatRate: "10" }),
+    );
+
+    expect(result.proposal).toMatchObject({
+      lineKind: "labor",
+      quantityMilliunits: 2_000,
+      quoteLineId,
+      vatRateBasisPoints: 1_000,
+    });
+  });
+
+  it("prepares deletion for immediate application", async () => {
     const { client } = quoteLineClient(line);
     const result = await prepareDeleteQuoteLineTool(
       client,
@@ -70,7 +90,7 @@ describe("controlled quote line AI tools", () => {
       JSON.stringify({ quoteLineId }),
     );
 
-    expect(result.output.status).toBe("confirmation_required");
+    expect(result.output.status).toBe("ready_to_apply");
     expect(result.proposal).toMatchObject({ actionType: "delete_quote_line", quoteLineId });
   });
 
