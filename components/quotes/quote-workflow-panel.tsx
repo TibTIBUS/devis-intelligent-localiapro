@@ -8,7 +8,10 @@ import { QuoteRevisionForm } from "@/components/quotes/quote-revision-form";
 import type { CompanyLegalInformation } from "@/lib/company/queries";
 import type { QuoteComplianceResult } from "@/lib/compliance/quote-compliance";
 import type { Customer } from "@/lib/customers/queries";
+import { sendQuoteEmail } from "@/lib/documents/email-form-action";
+import { saveQuoteExecution } from "@/lib/quotes/execution-actions";
 import type { getQuoteEditorData } from "@/lib/quotes/queries";
+import { createQuoteRevision } from "@/lib/quotes/revision-actions";
 
 type QuoteEditorData = NonNullable<Awaited<ReturnType<typeof getQuoteEditorData>>>;
 
@@ -69,6 +72,7 @@ export function QuoteWorkflowPanel({
           </div>
           <div className="p-4 sm:p-5">
             <QuoteExecutionForm
+              action={saveQuoteExecution}
               executionDuration={editor.quote.execution_duration}
               executionStartDate={editor.quote.execution_start_date}
               quoteId={editor.quote.id}
@@ -86,9 +90,9 @@ export function QuoteWorkflowPanel({
               {editor.quote.quote_version_id ? (
                 <QuotePdfForm quoteId={editor.quote.id} versionId={editor.quote.quote_version_id} />
               ) : null}
-              <QuoteRevisionForm quoteId={editor.quote.id} />
+              <QuoteRevisionForm action={createQuoteRevision} quoteId={editor.quote.id} />
             </div>
-            {customer ? <QuoteEmailForm contacts={customer.contacts} quoteId={editor.quote.id} /> : null}
+            {customer ? <QuoteEmailForm action={sendQuoteEmail} contacts={customer.contacts} quoteId={editor.quote.id} /> : null}
             {editor.quote.revision_of_quote_id ? (
               <p className="text-sm text-muted-foreground">
                 Ce devis est la révision n° {editor.quote.revision_number}.{" "}
