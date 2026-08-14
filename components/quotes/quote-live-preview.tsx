@@ -46,35 +46,35 @@ export function QuoteLivePreview({
     ?? customer?.addresses[0];
 
   return (
-    <section className="rounded-2xl border border-border bg-background p-3 shadow-sm sm:p-5" aria-labelledby="quote-preview-title">
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <section className="rounded-2xl border border-border bg-background p-2.5 shadow-sm sm:p-5" aria-labelledby="quote-preview-title">
+      <div className="mb-3 flex items-start justify-between gap-3 sm:mb-4 sm:items-center">
         <div>
           <h2 className="text-base font-semibold sm:text-lg" id="quote-preview-title">Aperçu du devis</h2>
-          <p className="text-xs text-muted-foreground">Mis à jour après chaque action confirmée.</p>
+          <p className="text-[11px] text-muted-foreground sm:text-xs">Mis à jour après chaque action confirmée.</p>
         </div>
-        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800">
+        <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-medium text-emerald-800 sm:px-3 sm:text-xs">
           {quote.status === "draft" ? "Brouillon" : "Finalisé"}
         </span>
       </div>
 
-      <div className="overflow-auto rounded-xl bg-neutral-900 p-3 sm:p-4">
-        <article className="mx-auto min-h-[760px] w-full min-w-[520px] max-w-[760px] bg-white px-8 py-10 text-neutral-950 shadow-2xl sm:px-10">
-          <header className="flex items-start justify-between gap-8 border-b border-neutral-200 pb-7">
-            <div>
-              <p className="text-xl font-bold tracking-tight">{company?.legal_name ?? "Mon entreprise"}</p>
-              <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.16em] text-neutral-500">Devis Intelligent · Localiapro.fr</p>
+      <div className="rounded-xl bg-neutral-900 p-1.5 sm:p-4">
+        <article className="mx-auto w-full max-w-[760px] bg-white px-3 py-4 text-neutral-950 shadow-2xl sm:min-h-[760px] sm:px-10 sm:py-10">
+          <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-neutral-200 pb-4 sm:gap-8 sm:pb-7">
+            <div className="min-w-0">
+              <p className="break-words text-sm font-bold tracking-tight sm:text-xl">{company?.legal_name ?? "Mon entreprise"}</p>
+              <p className="mt-1 break-words text-[8px] font-medium uppercase tracking-[0.1em] text-neutral-500 sm:text-[11px] sm:tracking-[0.16em]">Devis Intelligent · Localiapro.fr</p>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold">DEVIS</p>
-              <p className="mt-1 text-sm font-semibold">{quote.quote_number ?? "Brouillon"}</p>
-              <p className="mt-2 text-xs text-neutral-600">Date : {formatDate(quote.issued_on)}</p>
-              <p className="text-xs text-neutral-600">Validité : {formatDate(quote.valid_until)}</p>
+              <p className="text-lg font-bold sm:text-2xl">DEVIS</p>
+              <p className="mt-0.5 text-[11px] font-semibold sm:mt-1 sm:text-sm">{quote.quote_number ?? "Brouillon"}</p>
+              <p className="mt-1 text-[9px] text-neutral-600 sm:mt-2 sm:text-xs">Date : {formatDate(quote.issued_on)}</p>
+              <p className="text-[9px] text-neutral-600 sm:text-xs">Validité : {formatDate(quote.valid_until)}</p>
             </div>
           </header>
 
-          <div className="grid grid-cols-2 gap-8 py-7 text-xs leading-5">
-            <div>
-              <p className="mb-2 font-semibold">Émetteur</p>
+          <div className="grid grid-cols-2 gap-3 py-4 text-[9px] leading-4 sm:gap-8 sm:py-7 sm:text-xs sm:leading-5">
+            <div className="min-w-0 break-words">
+              <p className="mb-1 font-semibold sm:mb-2">Émetteur</p>
               <p className="font-medium">{company?.legal_name ?? "Informations entreprise à compléter"}</p>
               {company ? (
                 <>
@@ -85,8 +85,8 @@ export function QuoteLivePreview({
                 </>
               ) : null}
             </div>
-            <div>
-              <p className="mb-2 font-semibold">Client</p>
+            <div className="min-w-0 break-words">
+              <p className="mb-1 font-semibold sm:mb-2">Client</p>
               <p className="font-medium">{customer?.display_name ?? "Client"}</p>
               {workAddress ? (
                 <>
@@ -96,11 +96,31 @@ export function QuoteLivePreview({
                 </>
               ) : <p className="text-neutral-500">Adresse à compléter</p>}
               {primaryContact?.phone ? <p>Tél. : {primaryContact.phone}</p> : null}
-              {primaryContact?.email ? <p>Email : {primaryContact.email}</p> : null}
+              {primaryContact?.email ? <p className="break-all">Email : {primaryContact.email}</p> : null}
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-md border border-neutral-300">
+          <div className="space-y-2 sm:hidden">
+            {lines.length > 0 ? lines.map((line) => {
+              const lineTotal = calculateLine(BigInt(line.quantity_milliunits), line.unit_price_ht_cents === null ? null : BigInt(line.unit_price_ht_cents));
+              return (
+                <article className="rounded-md border border-neutral-300 p-2.5 text-[9px]" key={line.id}>
+                  <p className="font-semibold">{line.label}</p>
+                  {line.description ? <p className="mt-0.5 text-[8px] text-neutral-500">{line.description}</p> : null}
+                  <div className="mt-2 grid grid-cols-4 gap-1.5 border-t border-neutral-200 pt-2 text-center">
+                    <div><p className="text-[7px] uppercase text-neutral-500">Qté</p><p className="font-medium">{formatQuantity(line.quantity_milliunits)}</p></div>
+                    <div><p className="text-[7px] uppercase text-neutral-500">Unité</p><p className="font-medium">{line.unit}</p></div>
+                    <div><p className="text-[7px] uppercase text-neutral-500">PU HT</p><p className="font-medium">{line.unit_price_ht_cents === null ? "—" : formatCents(BigInt(line.unit_price_ht_cents))}</p></div>
+                    <div><p className="text-[7px] uppercase text-neutral-500">Total HT</p><p className="font-semibold">{lineTotal === null ? "—" : formatCents(lineTotal)}</p></div>
+                  </div>
+                </article>
+              );
+            }) : (
+              <div className="rounded-md border border-neutral-300 px-3 py-5 text-center text-[9px] text-neutral-500">Les lignes confirmées apparaîtront ici en direct.</div>
+            )}
+          </div>
+
+          <div className="hidden overflow-hidden rounded-md border border-neutral-300 sm:block">
             <table className="w-full border-collapse text-[11px]">
               <thead className="bg-neutral-100 text-left">
                 <tr>
@@ -135,7 +155,7 @@ export function QuoteLivePreview({
             </table>
           </div>
 
-          <div className="ml-auto mt-7 w-[48%] min-w-[270px] space-y-2 text-xs">
+          <div className="ml-auto mt-4 w-full space-y-1.5 text-[9px] sm:mt-7 sm:w-[48%] sm:min-w-[270px] sm:space-y-2 sm:text-xs">
             {totals?.isComplete ? (
               <>
                 <div className="flex justify-between gap-4"><span>Sous-total HT</span><span>{formatCents(totals.subtotalHtCents)}</span></div>
@@ -144,7 +164,7 @@ export function QuoteLivePreview({
                 {totals.vatBreakdown.map((vat) => (
                   <div className="flex justify-between gap-4" key={vat.vatRateBasisPoints}><span>TVA {vat.vatRateBasisPoints / 100} %</span><span>{formatCents(vat.vatCents)}</span></div>
                 ))}
-                <div className="flex justify-between gap-4 rounded bg-neutral-100 px-3 py-2 text-sm font-bold"><span>Total TTC</span><span>{formatCents(totals.totalTtcCents)}</span></div>
+                <div className="flex justify-between gap-4 rounded bg-neutral-100 px-2.5 py-2 text-xs font-bold sm:px-3 sm:text-sm"><span>Total TTC</span><span>{formatCents(totals.totalTtcCents)}</span></div>
                 {totals.depositCents > 0n ? <div className="flex justify-between gap-4"><span>Acompte demandé</span><span>{formatCents(totals.depositCents)}</span></div> : null}
               </>
             ) : (
@@ -153,13 +173,13 @@ export function QuoteLivePreview({
           </div>
 
           {quote.payment_terms ? (
-            <div className="mt-8 border-t border-neutral-200 pt-5 text-xs">
+            <div className="mt-5 border-t border-neutral-200 pt-3 text-[9px] sm:mt-8 sm:pt-5 sm:text-xs">
               <p className="font-semibold">Conditions de paiement</p>
               <p className="mt-1 whitespace-pre-wrap text-neutral-700">{quote.payment_terms}</p>
             </div>
           ) : null}
 
-          <footer className="mt-10 text-center text-[10px] text-neutral-400">Aperçu du brouillon · Les données définitives sont figées lors de la finalisation.</footer>
+          <footer className="mt-6 text-center text-[8px] text-neutral-400 sm:mt-10 sm:text-[10px]">Aperçu du brouillon · Les données définitives sont figées lors de la finalisation.</footer>
         </article>
       </div>
     </section>
