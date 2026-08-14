@@ -63,6 +63,7 @@ export async function runQuoteAssistant({
     content: message.content,
     role: message.role,
   }));
+  const appliedMutationKeys = new Set<string>();
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
     let response;
@@ -112,22 +113,37 @@ export async function runQuoteAssistant({
           if (!prepared.proposal) {
             output = prepared.output;
           } else {
-            const applied = await addCatalogQuoteLineFromAi(
-              supabase,
-              organizationId,
-              context.quoteId,
-              {
-                catalogItemId: prepared.proposal.catalogItemId,
-                lineKind: prepared.proposal.lineKind,
-                quantityMilliunits: prepared.proposal.quantityMilliunits,
-                vatRateBasisPoints: null,
-              },
-            );
-            output = {
-              label: applied.label,
-              message: `${applied.label} a été ajouté au devis. Le taux de TVA reste à compléter avant finalisation.`,
-              status: "applied",
-            };
+            const mutationKey = [
+              "add_quote_line",
+              prepared.proposal.catalogItemId,
+              prepared.proposal.lineKind,
+              prepared.proposal.quantityMilliunits,
+            ].join(":");
+
+            if (appliedMutationKeys.has(mutationKey)) {
+              output = {
+                message: `${prepared.proposal.label} était déjà ajouté pour cette demande. L’appel répété a été ignoré.`,
+                status: "duplicate_ignored",
+              };
+            } else {
+              appliedMutationKeys.add(mutationKey);
+              const applied = await addCatalogQuoteLineFromAi(
+                supabase,
+                organizationId,
+                context.quoteId,
+                {
+                  catalogItemId: prepared.proposal.catalogItemId,
+                  lineKind: prepared.proposal.lineKind,
+                  quantityMilliunits: prepared.proposal.quantityMilliunits,
+                  vatRateBasisPoints: null,
+                },
+              );
+              output = {
+                label: applied.label,
+                message: `${applied.label} a été ajouté au devis. Le taux de TVA reste à compléter avant finalisation.`,
+                status: "applied",
+              };
+            }
           }
         } else if (call.name === updateQuoteLineTool.name) {
           const prepared = await prepareUpdateQuoteLineTool(
@@ -136,12 +152,23 @@ export async function runQuoteAssistant({
             context.quoteId,
             call.arguments,
           );
-          await updateQuoteLineFromAi(supabase, organizationId, context.quoteId, {
-            lineKind: prepared.proposal.lineKind,
-            quantityMilliunits: prepared.proposal.quantityMilliunits,
-            quoteLineId: prepared.proposal.quoteLineId,
-          });
-          output = { message: `${prepared.proposal.label} a été modifié.`, status: "applied" };
+          const mutationKey = [
+            "update_quote_line",
+            prepared.proposal.quoteLineId,
+            prepared.proposal.lineKind,
+            prepared.proposal.quantityMilliunits,
+          ].join(":");
+          if (appliedMutationKeys.has(mutationKey)) {
+            output = { message: "Cette modification était déjà appliquée pour cette demande.", status: "duplicate_ignored" };
+          } else {
+            appliedMutationKeys.add(mutationKey);
+            await updateQuoteLineFromAi(supabase, organizationId, context.quoteId, {
+              lineKind: prepared.proposal.lineKind,
+              quantityMilliunits: prepared.proposal.quantityMilliunits,
+              quoteLineId: prepared.proposal.quoteLineId,
+            });
+            output = { message: `${prepared.proposal.label} a été modifié.`, status: "applied" };
+          }
         } else if (call.name === deleteQuoteLineTool.name) {
           const prepared = await prepareDeleteQuoteLineTool(
             supabase,
@@ -149,63 +176,93 @@ export async function runQuoteAssistant({
             context.quoteId,
             call.arguments,
           );
-          await deleteQuoteLineFromAi(
-            supabase,
-            organizationId,
-            context.quoteId,
-            prepared.proposal.quoteLineId,
-          );
-          output = { message: `${prepared.proposal.label} a été supprimé du devis.`, status: "applied" };
+          const mutationKey = `delete_quote_line:${prepared.proposal.quoteLineId}`;
+          if (appliedMutationKeys.has(mutationKey)) {
+            output = { message: "Cette suppression était déjà appliquée pour cette demande.", status: "duplicate_ignored" };
+          } else {
+            appliedMutationKeys.add(mutationKey);
+            await deleteQuoteLineFromAi(
+              supabase,
+              organizationId,
+              context.quoteId,
+              prepared.proposal.quoteLineId,
+            );
+            output = { message: `${prepared.proposal.label} a été supprimé du devis.`, status: "applied" };
+          }
         } else if ([setPaymentTermsTool.name, setValidityTool.name, setWorksiteAddressTool.name, updateQuoteNoteTool.name].includes(call.name)) {
           const proposal = prepareQuoteMetadataTool(call.name, call.arguments, context.workAddresses);
-          if (proposal.actionType === "set_payment_terms") {
-            await updateQuoteMetadataFromAi(supabase, organizationId, context.quoteId, proposal);
-          } else if (proposal.actionType === "set_validity") {
-            await updateQuoteMetadataFromAi(supabase, organizationId, context.quoteId, proposal);
-          } else if (proposal.actionType === "set_worksite_address") {
-            await updateQuoteMetadataFromAi(supabase, organizationId, context.quoteId, proposal);
-          } else if (proposal.actionType === "update_quote_note") {
-            await updateQuoteMetadataFromAi(supabase, organizationId, context.quoteId, proposal);
+          const mutationKey = `${proposal.actionType}:${JSON.stringify(proposal)}`;
+          if (appliedMutationKeys.has(mutationKey)) {
+            output = { message: "Ce paramètre était déjà appliqué pour cette demande.", status: "duplicate_ignored" };
           } else {
-            throw new Error("Action de devis non prise en charge.");
+            appliedMutationKeys.add(mutationKey);
+            if (proposal.actionType === "set_payment_terms") {
+              await updateQuoteMetadataFromAi(supabase, organizationId, context.quoteId, proposal);
+            } else if (proposal.actionType === "set_validity") {
+              await updateQuoteMetadataFromAi(supabase, organizationId, context.quoteId, proposal);
+            } else if (proposal.actionType === "set_worksite_address") {
+              await updateQuoteMetadataFromAi(supabase, organizationId, context.quoteId, proposal);
+            } else if (proposal.actionType === "update_quote_note") {
+              await updateQuoteMetadataFromAi(supabase, organizationId, context.quoteId, proposal);
+            } else {
+              throw new Error("Action de devis non prise en charge.");
+            }
+            output = { message: "Le paramètre du devis a été mis à jour.", status: "applied" };
           }
-          output = { message: "Le paramètre du devis a été mis à jour.", status: "applied" };
         } else if ([setDiscountTool.name, setDepositTool.name].includes(call.name)) {
           const proposal = prepareQuoteFinancialSettingTool(call.name, call.arguments, context);
           if (proposal.actionType !== "set_discount" && proposal.actionType !== "set_deposit") {
             throw new Error("Action financière non prise en charge.");
           }
-          await setQuoteFinancialRateFromAi(supabase, organizationId, context.quoteId, proposal);
-          output = {
-            message: proposal.actionType === "set_discount" ? "La remise a été mise à jour." : "L’acompte a été mis à jour.",
-            status: "applied",
-          };
-        } else if (call.name === requestFinalizeQuoteTool.name) {
-          const compliance = await validateQuoteCompliance(supabase, context.quoteId);
-          if (!compliance.valid) {
-            output = {
-              issues: compliance.errors.map((issue) => issue.message),
-              message: "Le devis n’a pas été finalisé car des informations obligatoires manquent.",
-              status: "blocked",
-            };
+          const mutationKey = `${proposal.actionType}:${proposal.rateBasisPoints}`;
+          if (appliedMutationKeys.has(mutationKey)) {
+            output = { message: "Ce taux était déjà appliqué pour cette demande.", status: "duplicate_ignored" };
           } else {
-            const result = await finalizeQuoteForOrganization(organizationId, context.quoteId, actorUserId);
-            if (!result.success) throw new Error("La finalisation du devis a échoué.");
-            output = { message: `Le devis a été finalisé sous le numéro ${result.quoteNumber}.`, status: "applied" };
+            appliedMutationKeys.add(mutationKey);
+            await setQuoteFinancialRateFromAi(supabase, organizationId, context.quoteId, proposal);
+            output = {
+              message: proposal.actionType === "set_discount" ? "La remise a été mise à jour." : "L’acompte a été mis à jour.",
+              status: "applied",
+            };
+          }
+        } else if (call.name === requestFinalizeQuoteTool.name) {
+          const mutationKey = "finalize_quote";
+          if (appliedMutationKeys.has(mutationKey)) {
+            output = { message: "La finalisation a déjà été traitée pour cette demande.", status: "duplicate_ignored" };
+          } else {
+            appliedMutationKeys.add(mutationKey);
+            const compliance = await validateQuoteCompliance(supabase, context.quoteId);
+            if (!compliance.valid) {
+              output = {
+                issues: compliance.errors.map((issue) => issue.message),
+                message: "Le devis n’a pas été finalisé car des informations obligatoires manquent.",
+                status: "blocked",
+              };
+            } else {
+              const result = await finalizeQuoteForOrganization(organizationId, context.quoteId, actorUserId);
+              if (!result.success) throw new Error("La finalisation du devis a échoué.");
+              output = { message: `Le devis a été finalisé sous le numéro ${result.quoteNumber}.`, status: "applied" };
+            }
           }
         } else if (call.name === requestSendQuoteEmailTool.name) {
           const proposal = prepareRequestSendQuoteEmailTool(call.arguments, context.contacts);
           if (proposal.actionType !== "send_quote_email") {
             throw new Error("Action d’envoi non prise en charge.");
           }
-          const result = await sendQuoteDocumentByEmail(
-            supabase,
-            organizationId,
-            context.quoteId,
-            proposal.contactId,
-            observability,
-          );
-          output = { message: `Le devis a été envoyé à ${result.recipientEmail}.`, status: "applied" };
+          const mutationKey = `send_quote_email:${proposal.contactId}`;
+          if (appliedMutationKeys.has(mutationKey)) {
+            output = { message: "Cet envoi a déjà été traité pour cette demande.", status: "duplicate_ignored" };
+          } else {
+            appliedMutationKeys.add(mutationKey);
+            const result = await sendQuoteDocumentByEmail(
+              supabase,
+              organizationId,
+              context.quoteId,
+              proposal.contactId,
+              observability,
+            );
+            output = { message: `Le devis a été envoyé à ${result.recipientEmail}.`, status: "applied" };
+          }
         } else {
           throw new Error("L’assistant a demandé un outil non autorisé.");
         }
