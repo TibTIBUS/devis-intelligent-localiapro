@@ -40,7 +40,11 @@ Définir ces valeurs dans Netlify, par contexte, sans les inscrire dans
 | `SUPABASE_SERVICE_ROLE_KEY` | Secret de production |
 | `OPENAI_API_KEY` | Secret de production |
 | `OPENAI_TEXT_MODEL` | Modèle autorisé |
-| `OPENAI_REALTIME_MODEL` | Modèle autorisé |
+| `OPENAI_TRANSCRIPTION_MODEL` | Modèle de transcription vocale |
+| `OPENAI_TTS_MODEL` | Modèle de synthèse vocale |
+| `OPENAI_TTS_VOICE` | Voix de synthèse |
+| `RESEND_API_KEY` | Secret de production |
+| `RESEND_FROM_EMAIL` | Adresse d'expédition des devis |
 
 Les secrets (`SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`) doivent être
 marqués comme secrets dans Netlify. Les variables préfixées `NEXT_PUBLIC_`

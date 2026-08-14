@@ -28,3 +28,17 @@ L’annulation vise uniquement le dernier ajout IA du même utilisateur. La lign
 Après confirmation explicite, une fonction PostgreSQL `security invoker` verrouille la ligne, vérifie le devis brouillon par RLS, applique l’action et enregistre l’état antérieur dans la même transaction. Une suppression conserve ainsi un instantané complet permettant de restaurer la ligne.
 
 L’annulation cible la dernière action IA non annulée du même utilisateur. Une modification n’est restaurée que si la ligne possède encore exactement l’état écrit par l’assistant, afin de ne jamais écraser une correction manuelle ultérieure.
+
+## AI-004 — la voix est une entrée/sortie, jamais un nouveau système
+
+L’assistant vocal ne duplique pas la logique métier : il enveloppe la même route de conversation (`/api/ai/quote-assistant`), les mêmes outils et le même contrat proposition/confirmation. La transcription (`/api/ai/voice/transcribe`, `OPENAI_TRANSCRIPTION_MODEL`) et la synthèse (`/api/ai/voice/speak`, `OPENAI_TTS_MODEL`) sont de simples adaptateurs texte ⇄ audio autour de cette conversation existante.
+
+L’échange se fait tour par tour (appui, parole, relâchement), et non en flux continu façon appel téléphonique : plus fiable dans un environnement bruyant, et chaque tour repasse par les mêmes validations Zod que le canal texte.
+
+## AI-005 — confirmation vocale déterministe, jamais par le modèle
+
+La décision d’exécuter une proposition à la voix ne passe jamais par le LLM. `matchVoiceConfirmation` (`lib/ai/voice-confirmation.ts`) est une correspondance stricte sur un petit ensemble de formulations non ambiguës (« je confirme », « j’annule ») ; toute formulation ambiguë renvoie « unclear » et redemande plutôt que d’agir.
+
+Pour l’ajout d’une ligne catalogue, le taux de TVA doit être énoncé explicitement dans le même tour de parole (`extractVoiceVatRate`) : l’assistant ne le complète, ni ne le déduit jamais. Sans taux clairement reconnu, aucune confirmation n’est possible.
+
+Deux outils supplémentaires suivent le même contrat proposition/confirmation que le reste de l’assistant : `request_finalize_quote` (aucun argument, le serveur revérifie seul la conformité) et `request_send_quote_email` (un identifiant de contact exact fourni dans le contexte, jamais une adresse dictée ou recomposée par le modèle). L’envoi relit l’adresse en base au moment de la confirmation, jamais celle proposée par le modèle.

@@ -12,6 +12,7 @@ import { searchCatalogTool } from "@/lib/ai/tools/search-catalog";
 import { parseOpenAIEnv } from "@/lib/validation/env";
 
 const context = {
+  contacts: [],
   depositRateBasisPoints: 3_000,
   discountRateBasisPoints: 0,
   lines: [],

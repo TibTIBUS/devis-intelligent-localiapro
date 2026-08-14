@@ -19,6 +19,10 @@ export const searchCatalogArgumentsSchema = z.object({
   query: z.string().trim().min(2).max(100),
 }).strict();
 
+export const voiceSpeakRequestSchema = z.object({
+  text: z.string().trim().min(1).max(2_000),
+}).strict();
+
 export const aiQuoteLineKindSchema = z.enum([
   "labor",
   "material",
@@ -141,6 +145,16 @@ export const aiSetDepositProposalSchema = z.object({
   rateBasisPoints: z.number().int().min(0).max(10_000),
 }).strict();
 
+export const aiFinalizeQuoteProposalSchema = z.object({
+  actionType: z.literal("finalize_quote"),
+}).strict();
+
+export const aiSendQuoteEmailProposalSchema = z.object({
+  actionType: z.literal("send_quote_email"),
+  contactId: z.uuid(),
+  contactLabel: z.string().trim().min(1).max(300),
+}).strict();
+
 export const aiQuoteActionProposalSchema = z.discriminatedUnion("actionType", [
   aiQuoteLineProposalSchema,
   aiUpdateQuoteLineProposalSchema,
@@ -151,6 +165,8 @@ export const aiQuoteActionProposalSchema = z.discriminatedUnion("actionType", [
   aiUpdateQuoteNoteProposalSchema,
   aiSetDiscountProposalSchema,
   aiSetDepositProposalSchema,
+  aiFinalizeQuoteProposalSchema,
+  aiSendQuoteEmailProposalSchema,
 ]);
 
 const vatRateSchema = z
@@ -214,6 +230,16 @@ export const confirmAiQuoteActionSchema = z.discriminatedUnion("actionType", [
   z.object({
     actionType: z.literal("set_deposit"),
     proposal: aiSetDepositProposalSchema.pick({ currentRateBasisPoints: true, rateBasisPoints: true }),
+    quoteId: z.uuid(),
+  }).strict(),
+  z.object({
+    actionType: z.literal("finalize_quote"),
+    proposal: aiFinalizeQuoteProposalSchema.omit({ actionType: true }),
+    quoteId: z.uuid(),
+  }).strict(),
+  z.object({
+    actionType: z.literal("send_quote_email"),
+    proposal: aiSendQuoteEmailProposalSchema.pick({ contactId: true }),
     quoteId: z.uuid(),
   }).strict(),
 ]);

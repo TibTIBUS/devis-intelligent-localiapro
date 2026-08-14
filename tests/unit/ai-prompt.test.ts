@@ -21,6 +21,7 @@ describe("quote assistant prompt", () => {
       validUntil: null,
       workAddressId: null,
       workAddresses: [{ id: "8ba9c847-da8c-4dfa-b01a-1d88da690b9d", label: "Chantier — 2 rue du Test, 75001 Paris" }],
+      contacts: [{ id: "9c0f4b9a-2b28-4a4a-9e0a-9a6f5b0b6a0e", label: "Mme Dupont — client@example.com" }],
     });
 
     expect(prompt).toContain("N’invente jamais un prix");

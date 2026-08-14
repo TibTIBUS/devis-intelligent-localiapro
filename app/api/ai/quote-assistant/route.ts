@@ -51,18 +51,28 @@ export async function POST(request: Request) {
   if (!editor) {
     return NextResponse.json({ error: "Devis introuvable." }, { status: 404 });
   }
-  if (editor.quote.status !== "draft") {
-    return NextResponse.json({ error: "Ce devis finalisé ne peut plus être modifié." }, { status: 409 });
-  }
 
-  const { data: addresses, error: addressesError } = await supabase
-    .from("customer_addresses")
-    .select("address_line_1, city, id, label, postal_code")
-    .eq("organization_id", organizationId)
-    .eq("customer_id", editor.quote.customer_id);
-  if (addressesError) {
+  const [addressesResult, contactsResult] = await Promise.all([
+    supabase
+      .from("customer_addresses")
+      .select("address_line_1, city, id, label, postal_code")
+      .eq("organization_id", organizationId)
+      .eq("customer_id", editor.quote.customer_id),
+    supabase
+      .from("customer_contacts")
+      .select("email, id, name")
+      .eq("organization_id", organizationId)
+      .eq("customer_id", editor.quote.customer_id)
+      .not("email", "is", null),
+  ]);
+  if (addressesResult.error) {
     return NextResponse.json({ error: "Impossible de charger les adresses du client." }, { status: 503 });
   }
+  if (contactsResult.error) {
+    return NextResponse.json({ error: "Impossible de charger les contacts du client." }, { status: 503 });
+  }
+  const addresses = addressesResult.data;
+  const contacts = contactsResult.data;
 
   try {
     const result = await runQuoteAssistant({
@@ -85,6 +95,10 @@ export async function POST(request: Request) {
         workAddresses: (addresses ?? []).map((address) => ({
           id: address.id,
           label: `${address.label ? `${address.label} — ` : ""}${address.address_line_1}, ${address.postal_code} ${address.city}`,
+        })),
+        contacts: (contacts ?? []).map((contact) => ({
+          id: contact.id,
+          label: `${contact.name ? `${contact.name} — ` : ""}${contact.email}`,
         })),
       },
       messages: parsed.data.messages,

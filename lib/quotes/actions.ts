@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import { createRequestId, logTechnicalWarning } from "@/lib/observability/logger";
 import { validateQuoteCompliance } from "@/lib/compliance/quote-compliance";
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { finalizeQuoteForOrganization } from "@/lib/quotes/finalize";
+import { createClient } from "@/lib/supabase/server";
 import {
   getQuoteCreateValues,
   getQuoteFieldErrors,
@@ -111,7 +112,7 @@ export async function finalizeQuote(
 ): Promise<QuoteFormState> {
   void previousState;
   const quoteId = quoteIdSchema.safeParse(formData.get("quoteId"));
-  if (!quoteId.success) return { message: "Impossible dâ€™identifier ce devis.", status: "error" };
+  if (!quoteId.success) return { message: "Impossible d’identifier ce devis.", status: "error" };
 
   const { organizationId, supabase, userId } = await getAuthenticatedOrganizationId();
   const compliance = await validateQuoteCompliance(supabase, quoteId.data);
@@ -129,13 +130,8 @@ export async function finalizeQuote(
     };
   }
 
-  const admin = createAdminClient();
-  const { data, error } = await admin.rpc("finalize_quote", {
-    p_actor_user_id: userId,
-    p_organization_id: organizationId,
-    p_quote_id: quoteId.data,
-  });
-  if (error || !data?.[0]) {
+  const result = await finalizeQuoteForOrganization(organizationId, quoteId.data, userId);
+  if (!result.success) {
     return {
       message: "Impossible de finaliser ce devis pour le moment. Relancez le contrôle de conformité.",
       status: "error",
@@ -144,7 +140,7 @@ export async function finalizeQuote(
 
   revalidateQuote(quoteId.data);
   revalidatePath("/devis");
-  return { message: `Devis finalisÃ© sous le numÃ©ro ${data[0].quote_number}.`, status: "success" };
+  return { message: `Devis finalisé sous le numéro ${result.quoteNumber}.`, status: "success" };
 }
 
 export async function saveQuoteSection(

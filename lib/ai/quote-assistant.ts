@@ -23,6 +23,12 @@ import {
   setWorksiteAddressTool,
   updateQuoteNoteTool,
 } from "@/lib/ai/tools/quote-metadata";
+import {
+  prepareRequestFinalizeQuoteTool,
+  prepareRequestSendQuoteEmailTool,
+  requestFinalizeQuoteTool,
+  requestSendQuoteEmailTool,
+} from "@/lib/ai/tools/quote-lifecycle";
 import type { AiConversationMessage, AiQuoteActionProposal } from "@/lib/validation/ai";
 
 const MAX_TOOL_ROUNDS = 3;
@@ -58,7 +64,7 @@ export async function runQuoteAssistant({
         model,
         parallel_tool_calls: false,
         store: false,
-        tools: [searchCatalogTool, addQuoteLineTool, updateQuoteLineTool, deleteQuoteLineTool, setDiscountTool, setDepositTool, setPaymentTermsTool, setValidityTool, setWorksiteAddressTool, updateQuoteNoteTool],
+        tools: [searchCatalogTool, addQuoteLineTool, updateQuoteLineTool, deleteQuoteLineTool, setDiscountTool, setDepositTool, setPaymentTermsTool, setValidityTool, setWorksiteAddressTool, updateQuoteNoteTool, requestFinalizeQuoteTool, requestSendQuoteEmailTool],
       });
     } catch (error) {
       logTechnicalError("ai.response_failed", observability, error);
@@ -122,6 +128,14 @@ export async function runQuoteAssistant({
         } else if ([setDiscountTool.name, setDepositTool.name].includes(call.name)) {
           if (pendingAction) throw new Error("Une seule proposition peut être préparée à la fois.");
           pendingAction = prepareQuoteFinancialSettingTool(call.name, call.arguments, context);
+          output = confirmationOutput;
+        } else if (call.name === requestFinalizeQuoteTool.name) {
+          if (pendingAction) throw new Error("Une seule proposition peut être préparée à la fois.");
+          pendingAction = prepareRequestFinalizeQuoteTool();
+          output = confirmationOutput;
+        } else if (call.name === requestSendQuoteEmailTool.name) {
+          if (pendingAction) throw new Error("Une seule proposition peut être préparée à la fois.");
+          pendingAction = prepareRequestSendQuoteEmailTool(call.arguments, context.contacts);
           output = confirmationOutput;
         } else {
           throw new Error("L’assistant a demandé un outil non autorisé.");

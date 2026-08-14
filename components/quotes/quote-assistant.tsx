@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { buildConfirmActionPayload } from "@/lib/ai/build-confirm-payload";
 import type { AiConversationMessage, AiQuoteActionProposal } from "@/lib/validation/ai";
 
 function formatPrice(cents: number) {
@@ -30,6 +31,8 @@ function proposalTitle(proposal: AiQuoteActionProposal) {
   if (proposal.actionType === "add_quote_line") return "Ajout à confirmer";
   if (proposal.actionType === "update_quote_line") return "Modification à confirmer";
   if (proposal.actionType === "delete_quote_line") return "Suppression à confirmer";
+  if (proposal.actionType === "finalize_quote") return "Finalisation à confirmer";
+  if (proposal.actionType === "send_quote_email") return "Envoi par e-mail à confirmer";
   return "Paramètre du devis à confirmer";
 }
 
@@ -40,6 +43,8 @@ function proposalDescription(proposal: AiQuoteActionProposal) {
   if (proposal.actionType === "set_worksite_address") return proposal.addressLabel;
   if (proposal.actionType === "set_discount") return `Remise : ${formatRate(proposal.currentRateBasisPoints)} % → ${formatRate(proposal.rateBasisPoints)} %`;
   if (proposal.actionType === "set_deposit") return `Acompte : ${formatRate(proposal.currentRateBasisPoints)} % → ${formatRate(proposal.rateBasisPoints)} %`;
+  if (proposal.actionType === "finalize_quote") return "Le devis sera figé et numéroté. Cette action est irréversible.";
+  if (proposal.actionType === "send_quote_email") return `Destinataire : ${proposal.contactLabel}`;
   return proposal.note;
 }
 
@@ -99,42 +104,10 @@ export function QuoteAssistant({ quoteId }: { quoteId: string }) {
     setError("");
 
     try {
-      const payload = proposal.actionType === "add_quote_line"
-        ? {
-            actionType: proposal.actionType,
-            proposal: {
-              catalogItemId: proposal.catalogItemId,
-              lineKind: formData.get("lineKind"),
-              quantityMilliunits: proposal.quantityMilliunits,
-            },
-            quoteId,
-            vatRate: formData.get("vatRate"),
-          }
-        : proposal.actionType === "update_quote_line"
-          ? {
-              actionType: proposal.actionType,
-              proposal: {
-                lineKind: proposal.lineKind,
-                quantityMilliunits: proposal.quantityMilliunits,
-                quoteLineId: proposal.quoteLineId,
-              },
-              quoteId,
-            }
-          : proposal.actionType === "delete_quote_line"
-            ? {
-              actionType: proposal.actionType,
-              proposal: { quoteLineId: proposal.quoteLineId },
-              quoteId,
-            }
-            : proposal.actionType === "set_payment_terms"
-              ? { actionType: proposal.actionType, proposal: { paymentTerms: proposal.paymentTerms }, quoteId }
-              : proposal.actionType === "set_validity"
-                ? { actionType: proposal.actionType, proposal: { validUntil: proposal.validUntil }, quoteId }
-                : proposal.actionType === "set_worksite_address"
-                  ? { actionType: proposal.actionType, proposal: { workAddressId: proposal.workAddressId }, quoteId }
-                  : proposal.actionType === "update_quote_note"
-                    ? { actionType: proposal.actionType, proposal: { note: proposal.note }, quoteId }
-                    : { actionType: proposal.actionType, proposal: { currentRateBasisPoints: proposal.currentRateBasisPoints, rateBasisPoints: proposal.rateBasisPoints }, quoteId };
+      const payload = buildConfirmActionPayload(proposal, quoteId, {
+        lineKind: formData.get("lineKind")?.toString(),
+        vatRate: formData.get("vatRate")?.toString(),
+      });
       const response = await fetch("/api/ai/quote-actions/confirm", {
         body: JSON.stringify(payload),
         headers: { "Content-Type": "application/json" },
