@@ -180,3 +180,9 @@ Une limite atteinte retourne `429` avec une indication de nouvelle tentative ; u
 Les routes de conversation, de confirmation et d’annulation acceptent exclusivement `application/json`. Leur corps est lu en flux et limité à 16 Kio avant validation Zod, appel au quota ou exécution d’un outil métier. Les contenus non JSON, invalides ou trop volumineux reçoivent respectivement `415`, `400` ou `413`.
 
 Cette limite couvre les messages et propositions du MVP tout en empêchant qu’une requête sans en-tête `Content-Length` force le serveur à charger un corps non borné en mémoire.
+
+## SEC-004 — en-têtes HTTP cohérents sur les réponses Next.js
+
+Les en-têtes de sécurité sont déclarés dans `next.config.ts` et non dans `netlify.toml`, car les règles de CDN Netlify ne couvrent pas les réponses SSR et les handlers. Toutes les routes reçoivent donc les protections MIME, référent, transport HTTPS, permissions navigateur et anti-encapsulation.
+
+La CSP MVP bloque les ancêtres de frame, les objets, les formulaires externes et l’injection de base URL. Une CSP plus restrictive avec nonce est différée : elle nécessiterait de rendre dynamiques les pages Next.js et de valider tous les scripts et styles, ce qui dépasse ce durcissement sans changer le comportement de l’application.
