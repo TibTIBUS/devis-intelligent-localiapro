@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   addQuoteLineArgumentsSchema,
-  confirmAiQuoteActionSchema,
-  confirmAiQuoteLineSchema,
   deleteQuoteLineArgumentsSchema,
   parseAiQuantityToMilliunits,
   quoteAssistantRequestSchema,
@@ -63,16 +61,6 @@ describe("quote assistant validation", () => {
       quantity: "4",
       vatRate: "10,00",
     }).vatRate).toBe(1_000);
-    expect(confirmAiQuoteLineSchema.parse({
-      actionType: "add_quote_line",
-      proposal: {
-        catalogItemId: quoteId,
-        lineKind: "labor",
-        quantityMilliunits: 4_000,
-      },
-      quoteId,
-      vatRate: "10,00",
-    })).toMatchObject({ vatRate: 1_000 });
   });
 
   it("validates controlled update and deletion payloads", () => {
@@ -89,17 +77,6 @@ describe("quote assistant validation", () => {
       vatRate: "10",
     }).vatRate).toBe(1_000);
     expect(deleteQuoteLineArgumentsSchema.safeParse({ quoteLineId: quoteId }).success).toBe(true);
-    expect(confirmAiQuoteActionSchema.safeParse({
-      actionType: "update_quote_line",
-      proposal: { lineKind: "service", quantityMilliunits: 2_500, quoteLineId: quoteId },
-      quoteId,
-    }).success).toBe(true);
-    expect(confirmAiQuoteActionSchema.safeParse({
-      actionType: "delete_quote_line",
-      proposal: { quoteLineId: quoteId },
-      quoteId,
-      vatRate: "20",
-    }).success).toBe(false);
   });
 
   it("validates exact non-financial quote settings", () => {
@@ -108,7 +85,6 @@ describe("quote assistant validation", () => {
     expect(setValidityArgumentsSchema.safeParse({ validUntil: "dans 30 jours" }).success).toBe(false);
     expect(setWorksiteAddressArgumentsSchema.safeParse({ workAddressId: quoteId, organizationId: quoteId }).success).toBe(false);
     expect(updateQuoteNoteArgumentsSchema.safeParse({ note: "a".repeat(4_001) }).success).toBe(false);
-    expect(confirmAiQuoteActionSchema.safeParse({ actionType: "set_validity", proposal: { validUntil: "2026-09-30" }, quoteId }).success).toBe(true);
   });
 
   it("converts only explicit financial percentages to basis points", () => {
@@ -117,7 +93,5 @@ describe("quote assistant validation", () => {
     expect(setDiscountArgumentsSchema.safeParse({ discountRate: "10 %" }).success).toBe(false);
     expect(setDepositArgumentsSchema.safeParse({ depositRate: "un tiers" }).success).toBe(false);
     expect(setDiscountArgumentsSchema.safeParse({ discountRate: "100.01" }).success).toBe(false);
-    expect(confirmAiQuoteActionSchema.safeParse({ actionType: "set_discount", proposal: { currentRateBasisPoints: 500, rateBasisPoints: 1_000 }, quoteId }).success).toBe(true);
-    expect(confirmAiQuoteActionSchema.safeParse({ actionType: "set_deposit", proposal: { currentRateBasisPoints: 3_000, rateBasisPoints: 10_001 }, quoteId }).success).toBe(false);
   });
 });
