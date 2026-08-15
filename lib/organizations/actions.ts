@@ -43,8 +43,9 @@ export async function createInitialOrganization(
   }
 
   const { error } = await supabase.rpc("create_initial_organization", {
+    organization_acquisition_source: parsed.data.acquisitionSource ?? "",
     organization_name: parsed.data.name,
-    organization_trade: parsed.data.trade ?? "",
+    organization_trade: parsed.data.trade,
   });
 
   if (error) {
