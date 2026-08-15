@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { CheckCircle2, Mic } from "lucide-react";
+import { CheckCircle2, Mic, Volume2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,15 @@ const AUDIO_MIME_CANDIDATES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp
 function pickSupportedMimeType(): string {
   if (typeof MediaRecorder === "undefined") return "";
   return AUDIO_MIME_CANDIDATES.find((type) => MediaRecorder.isTypeSupported(type)) ?? "";
+}
+
+function createSilentAudioUrl(): string {
+  const bytes = new Uint8Array([
+    82, 73, 70, 70, 37, 0, 0, 0, 87, 65, 86, 69, 102, 109, 116, 32,
+    16, 0, 0, 0, 1, 0, 1, 0, 64, 31, 0, 0, 64, 31, 0, 0,
+    1, 0, 8, 0, 100, 97, 116, 97, 1, 0, 0, 0, 128,
+  ]);
+  return URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
 }
 
 function microphoneErrorMessage(error: unknown): string {
@@ -42,13 +51,71 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
   const [state, setState] = useState<VoiceState>("idle");
   const [transcriptLog, setTranscriptLog] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const [manualPlaybackAvailable, setManualPlaybackAvailable] = useState(false);
   const messagesRef = useRef<AiConversationMessage[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioUnlockedRef = useRef(false);
+  const currentAudioUrlRef = useRef<string | null>(null);
 
   function logLine(line: string) {
     setTranscriptLog((current) => [...current, line].slice(-8));
+  }
+
+  function getAudioPlayer() {
+    if (!audioRef.current) {
+      const audio = new Audio();
+      audio.preload = "auto";
+      audioRef.current = audio;
+    }
+    return audioRef.current;
+  }
+
+  function unlockAudioPlayback() {
+    if (audioUnlockedRef.current) return;
+    const audio = getAudioPlayer();
+    const silentUrl = createSilentAudioUrl();
+    audio.muted = true;
+    audio.src = silentUrl;
+    const playback = audio.play();
+    if (!playback) {
+      audioUnlockedRef.current = true;
+      audio.pause();
+      audio.muted = false;
+      URL.revokeObjectURL(silentUrl);
+      return;
+    }
+    void playback
+      .then(() => {
+        audioUnlockedRef.current = true;
+        audio.pause();
+        audio.currentTime = 0;
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        audio.muted = false;
+        URL.revokeObjectURL(silentUrl);
+      });
+  }
+
+  async function playCurrentAudio() {
+    const audio = getAudioPlayer();
+    if (!currentAudioUrlRef.current) return false;
+    audio.pause();
+    audio.src = currentAudioUrlRef.current;
+    audio.currentTime = 0;
+    audio.muted = false;
+    try {
+      await audio.play();
+      audioUnlockedRef.current = true;
+      setManualPlaybackAvailable(false);
+      return true;
+    } catch {
+      setManualPlaybackAvailable(true);
+      return false;
+    }
   }
 
   async function speak(text: string) {
@@ -59,16 +126,26 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
-      if (!response.ok) return;
+      if (!response.ok) {
+        setError("La réponse a bien été générée, mais le son n’a pas pu être chargé.");
+        return;
+      }
+
       const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      await new Promise<void>((resolve) => {
-        audio.onended = () => resolve();
-        audio.onerror = () => resolve();
-        void audio.play().catch(() => resolve());
-      });
-      URL.revokeObjectURL(audioUrl);
+      if (currentAudioUrlRef.current) URL.revokeObjectURL(currentAudioUrlRef.current);
+      currentAudioUrlRef.current = URL.createObjectURL(audioBlob);
+
+      const audio = getAudioPlayer();
+      audio.onended = () => setState("idle");
+      audio.onerror = () => {
+        setManualPlaybackAvailable(true);
+        setState("idle");
+      };
+
+      const played = await playCurrentAudio();
+      if (!played) {
+        setError("Votre téléphone a bloqué la lecture automatique. Touchez « Écouter la réponse ».");
+      }
     } finally {
       setState("idle");
     }
@@ -97,6 +174,7 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
     logLine(`Vous : ${transcript}`);
     setState("processing");
     setError("");
+    setManualPlaybackAvailable(false);
 
     try {
       const response = await fetch("/api/ai/quote-assistant", {
@@ -121,6 +199,7 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
   async function startRecording() {
     if (state !== "idle") return;
     setError("");
+    unlockAudioPlayback();
     try {
       if (typeof MediaRecorder === "undefined") throw new Error("MediaRecorder unavailable");
 
@@ -191,6 +270,7 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
             onPointerCancel={stopRecording}
             onPointerDown={(event) => {
               event.preventDefault();
+              unlockAudioPlayback();
               void startRecording();
             }}
             onPointerLeave={stopRecording}
@@ -207,6 +287,19 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
         <p className="mx-auto -mt-1 inline-flex rounded-lg border border-border bg-background px-3 py-2 text-xs font-medium shadow-sm sm:text-sm">
           {state === "recording" ? "Relâchez pour envoyer" : "Maintenez pour parler"}
         </p>
+        {manualPlaybackAvailable ? (
+          <Button
+            className="mx-auto mt-3 flex min-h-11 items-center gap-2"
+            onClick={() => {
+              setError("");
+              void playCurrentAudio();
+            }}
+            type="button"
+            variant="outline"
+          >
+            <Volume2 className="size-4" /> Écouter la réponse
+          </Button>
+        ) : null}
         {error ? <p aria-live="assertive" className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive sm:mt-4" role="alert">{error}</p> : null}
       </div>
 
