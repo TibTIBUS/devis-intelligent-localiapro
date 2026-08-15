@@ -32,6 +32,26 @@ export const customerSchema = z.object({
   displayName: requiredText(200, "Le nom du client est trop long."),
 });
 
+export const simpleCustomerSchema = z
+  .object({
+    addressId: optionalId,
+    addressLine1: optionalText(200, "L’adresse est trop longue."),
+    city: optionalText(120, "La ville est trop longue."),
+    contactId: optionalId,
+    customerId: optionalId,
+    displayName: requiredText(200, "Le nom du client est trop long."),
+    email: optionalEmail,
+    phone: optionalText(50, "Le numéro de téléphone est trop long."),
+    postalCode: optionalText(20, "Le code postal est trop long."),
+  })
+  .superRefine((value, context) => {
+    const hasAddress = Boolean(value.addressLine1 || value.postalCode || value.city);
+    if (!hasAddress) return;
+    if (!value.addressLine1) context.addIssue({ code: "custom", message: "Renseignez l’adresse.", path: ["addressLine1"] });
+    if (!value.postalCode) context.addIssue({ code: "custom", message: "Renseignez le code postal.", path: ["postalCode"] });
+    if (!value.city) context.addIssue({ code: "custom", message: "Renseignez la ville.", path: ["city"] });
+  });
+
 export const customerContactSchema = z
   .object({
     contactId: optionalId,
@@ -73,6 +93,12 @@ export type CustomerFormState = {
   status: "error" | "idle";
 };
 
+export type SimpleCustomerFormState = {
+  fieldErrors?: Partial<Record<"addressLine1" | "city" | "displayName" | "email" | "phone" | "postalCode", string>>;
+  message?: string;
+  status: "error" | "idle";
+};
+
 export type CustomerContactFormState = {
   fieldErrors?: Partial<Record<"email" | "name" | "phone", string>>;
   message?: string;
@@ -93,6 +119,7 @@ export type CustomerDeleteFormState = {
 };
 
 export const initialCustomerFormState: CustomerFormState = { status: "idle" };
+export const initialSimpleCustomerFormState: SimpleCustomerFormState = { status: "idle" };
 export const initialCustomerContactFormState: CustomerContactFormState = { status: "idle" };
 export const initialCustomerAddressFormState: CustomerAddressFormState = { status: "idle" };
 export const initialCustomerDeleteFormState: CustomerDeleteFormState = { status: "idle" };
@@ -101,6 +128,20 @@ export function getCustomerValues(formData: FormData) {
   return {
     customerId: formData.get("customerId") ?? "",
     displayName: formData.get("displayName"),
+  };
+}
+
+export function getSimpleCustomerValues(formData: FormData) {
+  return {
+    addressId: formData.get("addressId") ?? "",
+    addressLine1: formData.get("addressLine1"),
+    city: formData.get("city"),
+    contactId: formData.get("contactId") ?? "",
+    customerId: formData.get("customerId") ?? "",
+    displayName: formData.get("displayName"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+    postalCode: formData.get("postalCode"),
   };
 }
 
@@ -140,6 +181,10 @@ function getFieldErrors<T extends string>(error: z.ZodError, fields: readonly T[
 
 export function getCustomerFieldErrors(error: z.ZodError) {
   return getFieldErrors(error, ["displayName"] as const);
+}
+
+export function getSimpleCustomerFieldErrors(error: z.ZodError) {
+  return getFieldErrors(error, ["addressLine1", "city", "displayName", "email", "phone", "postalCode"] as const);
 }
 
 export function getCustomerContactFieldErrors(error: z.ZodError) {
