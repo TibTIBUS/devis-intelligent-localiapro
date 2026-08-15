@@ -272,10 +272,10 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
             onPointerCancel={stopRecording}
             onPointerDown={(event) => {
               event.preventDefault();
+              event.currentTarget.setPointerCapture(event.pointerId);
               unlockAudioPlayback();
               void startRecording();
             }}
-            onPointerLeave={stopRecording}
             onPointerUp={stopRecording}
             type="button"
           >
