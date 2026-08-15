@@ -26,10 +26,10 @@ const allowedStatuses = new Set<CommercialQuoteStatus | "all">([
 ]);
 
 const statusStyles: Record<CommercialQuoteStatus, string> = {
-  accepted: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-  draft: "bg-blue-50 text-blue-700 ring-blue-100",
-  expired: "bg-rose-50 text-rose-700 ring-rose-100",
-  pending_acceptance: "bg-amber-50 text-amber-700 ring-amber-100",
+  accepted: "bg-[#E7EFE8] text-[#397255] ring-[#BFD5C8]",
+  draft: "bg-[#ECE7DD] text-[#17382D] ring-[#D8CDBD]",
+  expired: "bg-[#F6E6E3] text-[#B83C32] ring-[#E7C2BC]",
+  pending_acceptance: "bg-[#F3E4D9] text-[#9A4E23] ring-[#E8C7B2]",
 };
 
 function formatCents(amount: bigint) {
@@ -109,22 +109,22 @@ export default async function QuotesPage({
 
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <article className="rounded-2xl border border-border bg-background p-4 shadow-sm">
-            <div className="mb-3 inline-flex rounded-xl bg-emerald-50 p-2 text-emerald-700"><FileText className="size-5" /></div>
+            <div className="mb-3 inline-flex rounded-xl bg-[#ECE7DD] p-2 text-[#17382D]"><FileText className="size-5" /></div>
             <p className="text-2xl font-semibold">{allQuotes.length}</p>
             <p className="text-sm text-muted-foreground">Tous les devis</p>
           </article>
           <article className="rounded-2xl border border-border bg-background p-4 shadow-sm">
-            <div className="mb-3 inline-flex rounded-xl bg-blue-50 p-2 text-blue-700"><FilePenLine className="size-5" /></div>
+            <div className="mb-3 inline-flex rounded-xl bg-[#ECE7DD] p-2 text-[#17382D]"><FilePenLine className="size-5" /></div>
             <p className="text-2xl font-semibold">{counts.draft}</p>
             <p className="text-sm text-muted-foreground">Brouillons</p>
           </article>
           <article className="rounded-2xl border border-border bg-background p-4 shadow-sm">
-            <div className="mb-3 inline-flex rounded-xl bg-amber-50 p-2 text-amber-700"><Clock3 className="size-5" /></div>
+            <div className="mb-3 inline-flex rounded-xl bg-[#F3E4D9] p-2 text-[#E8672E]"><Clock3 className="size-5" /></div>
             <p className="text-2xl font-semibold">{counts.pending_acceptance}</p>
             <p className="text-sm text-muted-foreground">À accepter</p>
           </article>
           <article className="rounded-2xl border border-border bg-background p-4 shadow-sm">
-            <div className="mb-3 inline-flex rounded-xl bg-emerald-50 p-2 text-emerald-700"><CheckCircle2 className="size-5" /></div>
+            <div className="mb-3 inline-flex rounded-xl bg-[#E7EFE8] p-2 text-[#397255]"><CheckCircle2 className="size-5" /></div>
             <p className="text-2xl font-semibold">{counts.accepted}</p>
             <p className="text-sm text-muted-foreground">Acceptés</p>
           </article>
@@ -224,7 +224,7 @@ export default async function QuotesPage({
 
                       {quote.commercialStatus === "pending_acceptance" ? (
                         <Link
-                          className="inline-flex h-8 items-center rounded-lg bg-emerald-600 px-3 text-xs font-medium text-white transition-opacity hover:opacity-90"
+                          className="inline-flex h-8 items-center rounded-lg bg-[#397255] px-3 text-xs font-medium text-white transition-opacity hover:opacity-90"
                           href={`/devis/${quote.id}#acceptation`}
                         >
                           Enregistrer l’acceptation
