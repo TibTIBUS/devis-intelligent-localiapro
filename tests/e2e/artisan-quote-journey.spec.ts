@@ -31,8 +31,8 @@ test("un artisan parcourt client → devis → finalisation → PDF", async ({ p
   await page.getByLabel("Ville").fill("Saint-Lô");
   await page.getByRole("button", { name: "Créer le client" }).click();
   await expect(page).toHaveURL(/\/clients\/[0-9a-f-]+\?enregistre=1$/);
-  await expect(page.getByDisplayValue(customerName)).toBeVisible();
-  await expect(page.getByDisplayValue(customerEmail)).toBeVisible();
+  await expect(page.getByLabel("Nom du client")).toHaveValue(customerName);
+  await expect(page.getByLabel("E-mail")).toHaveValue(customerEmail);
 
   await page.goto("/devis/nouveau");
   await page.getByLabel("Client").selectOption({ label: customerName });
