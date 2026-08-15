@@ -70,5 +70,17 @@ export async function saveCompanyLegalInformation(
     };
   }
 
+  const { error: organizationError } = await supabase
+    .from("organizations")
+    .update({ name: parsed.data.legalName })
+    .eq("id", organizationId);
+
+  if (organizationError) {
+    return {
+      message: "Les informations légales sont enregistrées, mais le nom affiché de l’entreprise n’a pas pu être synchronisé.",
+      status: "error",
+    };
+  }
+
   redirect("/tableau-de-bord?informations-legales=enregistrees");
 }
