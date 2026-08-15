@@ -124,8 +124,6 @@ export async function createStripeCheckoutSession({
       client_reference_id: organizationId,
       "line_items[0][price]": priceId,
       "line_items[0][quantity]": 1,
-      "automatic_tax[enabled]": true,
-      "tax_id_collection[enabled]": true,
       billing_address_collection: "required",
       "customer_update[address]": "auto",
       "customer_update[name]": "auto",
