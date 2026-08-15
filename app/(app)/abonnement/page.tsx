@@ -110,16 +110,16 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
             <article className="rounded-3xl border border-[#17382D]/15 bg-white p-6 shadow-sm sm:p-7">
               <p className="text-sm font-semibold text-[#E8672E]">Mensuel</p>
               <div className="mt-3 flex items-end gap-2"><span className="text-4xl font-semibold tracking-tight text-[#17382D]">{monthlyLabel ?? "—"}</span><span className="pb-1 text-sm text-muted-foreground">/ mois</span></div>
-              <p className="mt-2 text-sm text-muted-foreground">Sans engagement annuel. 14 jours gratuits pour une première souscription.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Sans engagement annuel. Aucune facturation avant la fin de votre essai gratuit, s’il est encore en cours.</p>
               <ul className="mt-6 space-y-3">{features.map((feature) => <li className="flex items-center gap-3 text-sm" key={feature}><span className="flex size-6 items-center justify-center rounded-full bg-[#E7F1EB] text-[#397255]"><Check className="size-4" /></span>{feature}</li>)}</ul>
-              <form action={startSubscription} className="mt-7"><input name="period" type="hidden" value="monthly" /><button className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#E8672E] px-5 text-sm font-semibold text-white transition hover:bg-[#D95E27] disabled:cursor-not-allowed disabled:opacity-50" disabled={!configured} type="submit"><CreditCard className="size-4" /> Commencer mon essai</button></form>
+              <form action={startSubscription} className="mt-7"><input name="period" type="hidden" value="monthly" /><button className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#E8672E] px-5 text-sm font-semibold text-white transition hover:bg-[#D95E27] disabled:cursor-not-allowed disabled:opacity-50" disabled={!configured} type="submit"><CreditCard className="size-4" /> S’abonner au mensuel</button></form>
             </article>
 
             <article className="relative rounded-3xl border-2 border-[#17382D] bg-[#17382D] p-6 text-[#F5F1E8] shadow-sm sm:p-7">
               {monthsSaved > 0 ? <span className="absolute right-5 top-5 rounded-full bg-[#E8672E] px-3 py-1 text-xs font-semibold text-white">{monthsSaved} mois offert{monthsSaved > 1 ? "s" : ""}</span> : null}
               <p className="text-sm font-semibold text-[#F5F1E8]/75">Annuel</p>
               <div className="mt-3 flex items-end gap-2"><span className="text-4xl font-semibold tracking-tight">{annualLabel ?? "—"}</span><span className="pb-1 text-sm text-[#F5F1E8]/65">/ an</span></div>
-              <p className="mt-2 text-sm text-[#F5F1E8]/70">{annualPerMonthLabel ? `Soit ${annualPerMonthLabel} par mois. ` : ""}14 jours gratuits pour une première souscription.</p>
+              <p className="mt-2 text-sm text-[#F5F1E8]/70">{annualPerMonthLabel ? `Soit ${annualPerMonthLabel} par mois. ` : ""}Aucune facturation avant la fin de votre essai gratuit, s’il est encore en cours.</p>
               <ul className="mt-6 space-y-3">{features.map((feature) => <li className="flex items-center gap-3 text-sm" key={feature}><span className="flex size-6 items-center justify-center rounded-full bg-white/10 text-[#F5F1E8]"><Check className="size-4" /></span>{feature}</li>)}</ul>
               <form action={startSubscription} className="mt-7"><input name="period" type="hidden" value="annual" /><button className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#F5F1E8] px-5 text-sm font-semibold text-[#17382D] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50" disabled={!configured} type="submit"><CreditCard className="size-4" /> Choisir l’abonnement annuel</button></form>
             </article>

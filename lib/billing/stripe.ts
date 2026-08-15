@@ -133,15 +133,23 @@ export async function createStripeCheckoutSession({
   customerId,
   organizationId,
   period,
-  trialEligible,
+  trialEndsAt,
 }: {
   customerId: string;
   organizationId: string;
   period: BillingPeriod;
-  trialEligible: boolean;
+  trialEndsAt: Date | null;
 }) {
   const env = parseStripeEnv(process.env);
   const priceId = getStripePriceId(period);
+
+  // L'essai gratuit de 14 jours est géré côté application, sans carte
+  // bancaire (voir lib/billing/trial.ts). On aligne Stripe sur cette même
+  // date de fin plutôt que de lui laisser accorder un second essai de 14
+  // jours à partir d'aujourd'hui : s'abonner ne doit jamais prolonger
+  // l'essai, seulement éviter d'être facturé avant qu'il se termine.
+  const trialEndEpochSeconds =
+    trialEndsAt && trialEndsAt.getTime() > Date.now() ? Math.floor(trialEndsAt.getTime() / 1000) : undefined;
 
   return stripeRequest<StripeCheckoutSession>("/v1/checkout/sessions", {
     body: formBody({
@@ -157,7 +165,7 @@ export async function createStripeCheckoutSession({
       "metadata[app]": "nalto",
       "subscription_data[metadata][organization_id]": organizationId,
       "subscription_data[metadata][app]": "nalto",
-      "subscription_data[trial_period_days]": trialEligible ? 14 : undefined,
+      "subscription_data[trial_end]": trialEndEpochSeconds,
       success_url: `${env.NEXT_PUBLIC_APP_URL}/abonnement?succes=1`,
       cancel_url: `${env.NEXT_PUBLIC_APP_URL}/abonnement?annule=1`,
       locale: "fr",

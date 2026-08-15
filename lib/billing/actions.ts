@@ -9,6 +9,7 @@ import {
   listStripeSubscriptions,
   type BillingPeriod,
 } from "@/lib/billing/stripe";
+import { getTrialStatus } from "@/lib/billing/trial";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,13 +30,14 @@ async function getBillingIdentity() {
 
   const { data: organization, error } = await supabase
     .from("organizations")
-    .select("name")
+    .select("created_at, name")
     .eq("id", organizationId)
     .maybeSingle();
   if (error || !organization) throw new Error("Entreprise introuvable.");
 
   return {
     email: userData.user.email,
+    organizationCreatedAt: organization.created_at,
     organizationId,
     organizationName: organization.name,
   };
@@ -53,11 +55,16 @@ export async function startSubscription(formData: FormData) {
     redirect(portal.url);
   }
 
+  // Le report de la première facturation ne vaut que pour un premier
+  // abonnement : une résiliation passée ne doit pas rouvrir un délai.
+  const trial = getTrialStatus(identity.organizationCreatedAt);
+  const trialEndsAt = subscriptions.length === 0 && !trial.expired ? trial.trialEndsAt : null;
+
   const checkout = await createStripeCheckoutSession({
     customerId: customer.id,
     organizationId: identity.organizationId,
     period,
-    trialEligible: subscriptions.length === 0,
+    trialEndsAt,
   });
 
   if (!checkout.url) throw new Error("Stripe n’a pas retourné de page de paiement.");
