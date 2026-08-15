@@ -34,6 +34,15 @@ const suggestedTrades = [
   "Services aux entreprises",
 ];
 
+const acquisitionSources = [
+  "Facebook",
+  "Recommandation / bouche-à-oreille",
+  "Recherche Google",
+  "Localia",
+  "LinkedIn",
+  "Autre",
+];
+
 function SubmitButton() {
   const { pending } = useFormStatus();
 
@@ -97,6 +106,28 @@ export function InitialOrganizationForm({ action }: InitialOrganizationFormProps
         {state.fieldErrors?.trade ? (
           <p className="text-sm text-destructive" id="trade-error">
             {state.fieldErrors.trade}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium" htmlFor="acquisitionSource">
+          Comment avez-vous connu NALTO ? <span className="font-normal text-muted-foreground">(facultatif)</span>
+        </label>
+        <select
+          aria-describedby={state.fieldErrors?.acquisitionSource ? "acquisition-source-error" : undefined}
+          aria-invalid={Boolean(state.fieldErrors?.acquisitionSource)}
+          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+          defaultValue=""
+          id="acquisitionSource"
+          name="acquisitionSource"
+        >
+          <option value="">Sélectionner une réponse</option>
+          {acquisitionSources.map((source) => <option key={source} value={source}>{source}</option>)}
+        </select>
+        {state.fieldErrors?.acquisitionSource ? (
+          <p className="text-sm text-destructive" id="acquisition-source-error">
+            {state.fieldErrors.acquisitionSource}
           </p>
         ) : null}
       </div>
