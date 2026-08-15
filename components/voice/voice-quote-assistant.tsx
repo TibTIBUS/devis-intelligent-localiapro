@@ -237,13 +237,15 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
       const blob = new Blob(chunksRef.current, { type: mimeType });
       chunksRef.current = [];
       setState("processing");
-      const transcript = await transcribe(blob);
-      if (!transcript) {
+      try {
+        const transcript = await transcribe(blob);
+        if (!transcript) return;
+        await handleAssistantTurn(transcript);
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : "Impossible de traiter cet enregistrement. Réessayez.");
+      } finally {
         setState("idle");
-        return;
       }
-      await handleAssistantTurn(transcript);
-      setState("idle");
     };
     recorder.stop();
   }
