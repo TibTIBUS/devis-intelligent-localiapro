@@ -114,7 +114,7 @@ export function gradeQuoteAssistantEval(scenarioId: string, calls: QuoteAssistan
     if (addCalls.length !== 3) {
       issues.push("Les trois prestations doivent être ajoutées exactement une fois chacune.");
     } else {
-      const expected = new Map([
+      const expected = new Map<string, { quantity: string; vatRateBasisPoints: number | null }>([
         [multiActionCatalogIds.outlet, { quantity: "8", vatRateBasisPoints: 1_000 }],
         [multiActionCatalogIds.switch, { quantity: "3", vatRateBasisPoints: null }],
         [multiActionCatalogIds.panel, { quantity: "1", vatRateBasisPoints: null }],
@@ -157,7 +157,7 @@ export function gradeQuoteAssistantEval(scenarioId: string, calls: QuoteAssistan
     if (updateCalls.length !== 3) {
       issues.push("Les trois modifications demandées doivent être traitées exactement une fois.");
     } else {
-      const expected = new Map([
+      const expected = new Map<string, { quantity: string | null; vatRateBasisPoints: number | null }>([
         [existingLineIds.outlet, { quantity: "10", vatRateBasisPoints: null }],
         [existingLineIds.spot, { quantity: "4", vatRateBasisPoints: null }],
         [existingLineIds.switch, { quantity: null, vatRateBasisPoints: 2_000 }],
