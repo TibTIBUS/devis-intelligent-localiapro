@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import {
-  BarChart3,
   Folder,
   PackagePlus,
   Pencil,
@@ -35,18 +34,6 @@ type EditorMode =
 function formatPrice(cents: number | null) {
   if (cents === null) return "Prix à définir";
   return new Intl.NumberFormat("fr-FR", { currency: "EUR", style: "currency" }).format(cents / 100);
-}
-
-function formatAveragePrice(items: CatalogItem[]) {
-  const priced = items.filter((item) => item.unit_price_ht_cents !== null);
-  if (!priced.length) return "—";
-  const average = priced.reduce((sum, item) => sum + (item.unit_price_ht_cents ?? 0), 0) / priced.length;
-  return new Intl.NumberFormat("fr-FR", { currency: "EUR", style: "currency" }).format(average / 100);
-}
-
-function formatCatalogValue(items: CatalogItem[]) {
-  const total = items.reduce((sum, item) => sum + (item.unit_price_ht_cents ?? 0), 0);
-  return new Intl.NumberFormat("fr-FR", { currency: "EUR", style: "currency" }).format(total / 100);
 }
 
 function EditorContent({
@@ -121,6 +108,9 @@ export function CatalogWorkspace({
     return counts;
   }, [items]);
 
+  const missingPriceCount = items.filter((item) => item.unit_price_ht_cents === null).length;
+  const uncategorizedCount = items.filter((item) => item.category_id === null).length;
+
   return (
     <div className="space-y-5 sm:space-y-6">
       <div className="grid gap-2 min-[420px]:grid-cols-2 sm:flex sm:justify-end">
@@ -131,8 +121,8 @@ export function CatalogWorkspace({
       <section className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4" aria-label="Résumé du catalogue">
         <div className="rounded-xl border border-border bg-card p-3 shadow-sm sm:p-4"><div className="flex items-center gap-2.5 sm:gap-3"><span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#ECE7DD] text-[#17382D] sm:size-10"><Folder className="size-4 sm:size-5" /></span><div className="min-w-0"><p className="text-[11px] text-muted-foreground sm:text-xs">Catégories</p><p className="text-xl font-semibold sm:text-2xl">{categories.length}</p></div></div></div>
         <div className="rounded-xl border border-border bg-card p-3 shadow-sm sm:p-4"><div className="flex items-center gap-2.5 sm:gap-3"><span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#E7EFE8] text-[#397255] sm:size-10"><Tag className="size-4 sm:size-5" /></span><div className="min-w-0"><p className="text-[11px] text-muted-foreground sm:text-xs">Prestations</p><p className="text-xl font-semibold sm:text-2xl">{items.length}</p></div></div></div>
-        <div className="rounded-xl border border-border bg-card p-3 shadow-sm sm:p-4"><div className="flex items-center gap-2.5 sm:gap-3"><span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#F3E4D9] text-[#E8672E] sm:size-10"><Tag className="size-4 sm:size-5" /></span><div className="min-w-0"><p className="text-[11px] text-muted-foreground sm:text-xs">Prix moyen HT</p><p className="truncate text-base font-semibold sm:text-xl">{formatAveragePrice(items)}</p></div></div></div>
-        <div className="rounded-xl border border-border bg-card p-3 shadow-sm sm:p-4"><div className="flex items-center gap-2.5 sm:gap-3"><span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#ECE7DD] text-[#17382D] sm:size-10"><BarChart3 className="size-4 sm:size-5" /></span><div className="min-w-0"><p className="text-[11px] text-muted-foreground sm:text-xs">Valeur catalogue</p><p className="truncate text-base font-semibold sm:text-xl">{formatCatalogValue(items)}</p></div></div></div>
+        <div className="rounded-xl border border-border bg-card p-3 shadow-sm sm:p-4"><div className="flex items-center gap-2.5 sm:gap-3"><span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#F3E4D9] text-[#E8672E] sm:size-10"><Tag className="size-4 sm:size-5" /></span><div className="min-w-0"><p className="text-[11px] text-muted-foreground sm:text-xs">Tarifs à compléter</p><p className="text-base font-semibold sm:text-xl">{missingPriceCount === 0 ? "Tout est renseigné ✓" : missingPriceCount}</p></div></div></div>
+        <div className="rounded-xl border border-border bg-card p-3 shadow-sm sm:p-4"><div className="flex items-center gap-2.5 sm:gap-3"><span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#ECE7DD] text-[#17382D] sm:size-10"><Folder className="size-4 sm:size-5" /></span><div className="min-w-0"><p className="text-[11px] text-muted-foreground sm:text-xs">Sans catégorie</p><p className="text-base font-semibold sm:text-xl">{uncategorizedCount === 0 ? "Tout est classé ✓" : uncategorizedCount}</p></div></div></div>
       </section>
 
       <div className="rounded-xl border border-border bg-card p-3 shadow-sm xl:hidden">
