@@ -1,7 +1,7 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +25,12 @@ export function DeleteCustomerForm({
 }) {
   const [state, formAction] = useActionState(action, initialCustomerDeleteFormState);
 
+  useEffect(() => {
+    if (state.status === "success") {
+      window.location.assign("/clients?supprime=1");
+    }
+  }, [state.status]);
+
   return (
     <form
       action={formAction}
@@ -40,7 +46,7 @@ export function DeleteCustomerForm({
         <Trash2 className="size-4" />
         Supprimer le client
       </Button>
-      {state.message ? (
+      {state.message && state.status === "error" ? (
         <p className="text-sm text-destructive" role="status">{state.message}</p>
       ) : null}
     </form>
