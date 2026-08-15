@@ -50,6 +50,12 @@ function revalidateQuote(quoteId: string) {
   revalidatePath("/devis/nouveau");
 }
 
+function getDefaultQuoteValidityDate() {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + 30);
+  return date.toISOString().slice(0, 10);
+}
+
 export async function createQuote(
   previousState: QuoteFormState,
   formData: FormData,
@@ -61,7 +67,15 @@ export async function createQuote(
   const { organizationId, supabase } = await getAuthenticatedOrganizationId();
   const { data, error } = await supabase
     .from("quotes")
-    .insert({ customer_id: parsed.data.customerId, organization_id: organizationId })
+    .insert({
+      customer_id: parsed.data.customerId,
+      is_quote_free: true,
+      organization_id: organizationId,
+      preparation_fee_ht_cents: null,
+      preparation_fee_vat_rate_basis_points: null,
+      travel_fee_applicable: false,
+      valid_until: getDefaultQuoteValidityDate(),
+    })
     .select("id")
     .maybeSingle();
 
