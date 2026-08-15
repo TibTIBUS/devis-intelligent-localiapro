@@ -9,7 +9,10 @@ const contentSecurityPolicy = [
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data:",
-  `connect-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ""}`,
+  // La réponse vocale est lue depuis un Blob local ; sans media-src le
+  // default-src 'self' bloque les URL blob: et la lecture échoue.
+  "media-src 'self' blob: data:",
+  `connect-src 'self' blob:${supabaseOrigin ? ` ${supabaseOrigin}` : ""}`,
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",

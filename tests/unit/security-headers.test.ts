@@ -21,7 +21,7 @@ describe("security response headers", () => {
     );
 
     expect(headers).toMatchObject({
-      "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://example.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
+      "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob: data:; connect-src 'self' blob: https://example.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
       "Permissions-Policy": "camera=(), geolocation=(), microphone=(self), payment=(), usb=()",
       "Referrer-Policy": "strict-origin-when-cross-origin",
       "Strict-Transport-Security": "max-age=63072000; includeSubDomains",

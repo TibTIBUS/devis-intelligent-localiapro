@@ -9,11 +9,35 @@ import type { AiConversationMessage } from "@/lib/validation/ai";
 
 type VoiceState = "idle" | "recording" | "processing" | "speaking";
 
-const AUDIO_MIME_CANDIDATES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
+// Chrome/Edge produisent du webm, Safari (iOS et macOS) du mp4, Firefox de l'ogg.
+const AUDIO_MIME_CANDIDATES = [
+  "audio/webm;codecs=opus",
+  "audio/webm",
+  "audio/mp4",
+  "audio/ogg;codecs=opus",
+  "audio/ogg",
+];
+
+// Types acceptés par /api/ai/voice/transcribe.
+const SERVER_AUDIO_TYPES = ["audio/webm", "audio/ogg", "audio/mp4", "audio/mpeg"];
 
 function pickSupportedMimeType(): string {
-  if (typeof MediaRecorder === "undefined") return "";
+  if (typeof MediaRecorder === "undefined" || typeof MediaRecorder.isTypeSupported !== "function") {
+    return "";
+  }
   return AUDIO_MIME_CANDIDATES.find((type) => MediaRecorder.isTypeSupported(type)) ?? "";
+}
+
+// Certains navigateurs renvoient un type que le serveur refuse (audio/x-matroska
+// sur quelques versions de Chrome, ou une chaîne vide). On le ramène toujours
+// vers un type pris en charge plutôt que de laisser partir une requête en 415.
+function toServerAudioType(rawType: string): string {
+  const baseType = rawType.split(";", 1)[0]?.trim().toLowerCase() ?? "";
+  if (SERVER_AUDIO_TYPES.includes(baseType)) return baseType;
+  if (baseType.includes("mp4") || baseType.includes("m4a") || baseType.includes("aac")) return "audio/mp4";
+  if (baseType.includes("ogg")) return "audio/ogg";
+  if (baseType.includes("mpeg") || baseType.includes("mp3")) return "audio/mpeg";
+  return "audio/webm";
 }
 
 function createSilentAudioUrl(): string {
@@ -55,6 +79,7 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
   const messagesRef = useRef<AiConversationMessage[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
+  const holdingRef = useRef(false);
   const chunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUnlockedRef = useRef(false);
@@ -77,13 +102,15 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
     if (audioUnlockedRef.current) return;
     const audio = getAudioPlayer();
     const silentUrl = createSilentAudioUrl();
-    audio.muted = true;
+    // Le contenu est silencieux : on le joue volontairement NON muet, car les
+    // navigateurs autorisent toujours la lecture muette et n'accordent alors
+    // aucune permission durable à l'élément audio.
+    audio.muted = false;
     audio.src = silentUrl;
     const playback = audio.play();
     if (!playback) {
       audioUnlockedRef.current = true;
       audio.pause();
-      audio.muted = false;
       URL.revokeObjectURL(silentUrl);
       return;
     }
@@ -95,7 +122,6 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
       })
       .catch(() => undefined)
       .finally(() => {
-        audio.muted = false;
         URL.revokeObjectURL(silentUrl);
       });
   }
@@ -144,7 +170,7 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
 
       const played = await playCurrentAudio();
       if (!played) {
-        setError("Votre téléphone a bloqué la lecture automatique. Touchez « Écouter la réponse ».");
+        setError("Votre navigateur a bloqué la lecture automatique. Cliquez sur « Écouter la réponse ».");
       }
     } finally {
       setState("idle");
@@ -152,12 +178,17 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
   }
 
   async function transcribe(blob: Blob): Promise<string | null> {
+    if (blob.size === 0) {
+      setError("Aucun son n’a été capté. Maintenez le bouton pendant que vous parlez.");
+      return null;
+    }
+
     const response = await fetch("/api/ai/voice/transcribe", {
       body: blob,
-      headers: { "Content-Type": blob.type || "audio/webm" },
+      headers: { "Content-Type": toServerAudioType(blob.type) },
       method: "POST",
     });
-    const data = (await response.json()) as { error?: string; transcript?: string };
+    const data = (await response.json().catch(() => ({}))) as { error?: string; transcript?: string };
     if (!response.ok || !data.transcript) {
       setError(data.error ?? "Je n’ai pas compris.");
       return null;
@@ -197,7 +228,8 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
   }
 
   async function startRecording() {
-    if (state !== "idle") return;
+    if (recorderRef.current || state === "processing" || state === "speaking") return;
+    holdingRef.current = true;
     setError("");
     unlockAudioPlayback();
     try {
@@ -222,16 +254,25 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
       recorder.start();
       recorderRef.current = recorder;
       setState("recording");
+
+      // L'autorisation du micro peut prendre du temps : si le bouton a déjà été
+      // relâché entre-temps, on arrête immédiatement au lieu d'enregistrer
+      // indéfiniment.
+      if (!holdingRef.current) stopRecording();
     } catch (caught) {
+      holdingRef.current = false;
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
       setError(microphoneErrorMessage(caught));
+      setState("idle");
     }
   }
 
   function stopRecording() {
-    if (state !== "recording" || !recorderRef.current) return;
+    holdingRef.current = false;
     const recorder = recorderRef.current;
+    if (!recorder || recorder.state !== "recording") return;
+    recorderRef.current = null;
     const mimeType = recorder.mimeType;
     recorder.onstop = async () => {
       const blob = new Blob(chunksRef.current, { type: mimeType });
@@ -269,10 +310,16 @@ export function VoiceQuoteAssistant({ quoteId }: { quoteId: string }) {
             aria-label={state === "recording" ? "Relâcher pour envoyer" : "Maintenir pour parler"}
             className="relative z-10 h-28 w-28 touch-none rounded-full bg-primary text-primary-foreground shadow-xl transition-transform hover:bg-primary/90 active:scale-95 sm:h-40 sm:w-40"
             disabled={state === "processing" || state === "speaking"}
+            onLostPointerCapture={stopRecording}
             onPointerCancel={stopRecording}
             onPointerDown={(event) => {
               event.preventDefault();
-              event.currentTarget.setPointerCapture(event.pointerId);
+              try {
+                event.currentTarget.setPointerCapture(event.pointerId);
+              } catch {
+                // La capture n'est pas indispensable : le relâchement reste géré
+                // par onPointerUp sur les navigateurs qui la refusent.
+              }
               unlockAudioPlayback();
               void startRecording();
             }}
