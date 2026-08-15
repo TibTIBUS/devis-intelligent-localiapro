@@ -31,6 +31,13 @@ export type StripeSubscription = {
   trial_end: number | null;
 };
 
+export type StripePrice = {
+  currency: string;
+  id: string;
+  recurring?: { interval?: string | null } | null;
+  unit_amount: number | null;
+};
+
 type StripeCheckoutSession = { id: string; url: string | null };
 type StripePortalSession = { url: string };
 
@@ -64,6 +71,16 @@ async function stripeRequest<T>(path: string, init?: RequestInit): Promise<T> {
 export function getStripePriceId(period: BillingPeriod) {
   const env = parseStripeEnv(process.env);
   return period === "annual" ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY;
+}
+
+// Les montants affichés sont toujours relus dans Stripe : une page qui code ses
+// prix en dur finit par annoncer un tarif différent de celui réellement débité.
+export async function getStripePlanPricing() {
+  const [monthly, annual] = await Promise.all([
+    stripeRequest<StripePrice>(`/v1/prices/${encodeURIComponent(getStripePriceId("monthly"))}`),
+    stripeRequest<StripePrice>(`/v1/prices/${encodeURIComponent(getStripePriceId("annual"))}`),
+  ]);
+  return { annual, monthly };
 }
 
 export async function findStripeCustomerForOrganization(organizationId: string) {
