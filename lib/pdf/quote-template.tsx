@@ -42,18 +42,26 @@ const styles = StyleSheet.create({
     paddingTop: 32,
   },
   header: {
-    alignItems: "stretch",
+    alignItems: "flex-start",
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 18,
   },
   brandBlock: {
     alignItems: "center",
-    flex: 1,
     flexDirection: "row",
-    paddingRight: 16,
+    flexGrow: 1,
+    flexShrink: 1,
+    minWidth: 0,
+    paddingRight: 12,
+  },
+  brandText: {
+    flexGrow: 1,
+    flexShrink: 1,
+    minWidth: 0,
   },
   logo: {
+    flexShrink: 0,
     height: 46,
     marginRight: 12,
     objectFit: "contain",
@@ -61,8 +69,9 @@ const styles = StyleSheet.create({
   },
   brandName: {
     color: colors.forge,
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 700,
+    lineHeight: 1.12,
   },
   brandSubtitle: {
     color: colors.muted,
@@ -71,8 +80,10 @@ const styles = StyleSheet.create({
   },
   documentLabel: {
     alignItems: "center",
+    flexShrink: 0,
     justifyContent: "center",
-    paddingHorizontal: 18,
+    paddingHorizontal: 7,
+    width: 78,
   },
   documentLabelText: {
     color: colors.forge,
@@ -90,9 +101,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.forge,
     borderRadius: 7,
     color: colors.limestone,
-    minWidth: 166,
+    flexShrink: 0,
     paddingHorizontal: 16,
     paddingVertical: 13,
+    width: 166,
   },
   headerNumber: {
     fontSize: 14,
@@ -529,7 +541,7 @@ export function QuoteDocument({ data, logoDataUrl }: { data: QuotePdfData; logoD
         <View style={styles.header} fixed>
           <View style={styles.brandBlock}>
             {logoDataUrl ? <Image src={logoDataUrl} style={styles.logo} /> : null}
-            <View>
+            <View style={styles.brandText}>
               <Text style={styles.brandName}>{company.legalName}</Text>
               <Text style={styles.brandSubtitle}>Devis professionnel</Text>
             </View>
