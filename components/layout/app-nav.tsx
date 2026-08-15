@@ -11,6 +11,7 @@ import {
   LogOut,
   Menu,
   Plus,
+  Settings2,
   ShieldCheck,
   Users,
   X,
@@ -29,6 +30,7 @@ const NAV_LINKS = [
   { href: "/devis", icon: FileText, label: "Devis" },
   { href: "/clients", icon: Users, label: "Clients" },
   { href: "/catalogue", icon: BookOpen, label: "Catalogue" },
+  { href: "/parametres", icon: Settings2, label: "Paramètres" },
 ] as const;
 
 const COMPANY_LINKS = [
