@@ -55,5 +55,5 @@ export async function uploadOrganizationLogo(
     };
   }
 
-  redirect("/entreprise/informations-legales");
+  redirect("/entreprise/logo?enregistre=1");
 }
