@@ -2,8 +2,9 @@ import { ArrowLeft, FileText, MapPin, Plus } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { DeleteCustomerForm } from "@/components/customers/delete-customer-form";
 import { SimpleCustomerForm } from "@/components/customers/simple-customer-form";
-import { saveSimpleCustomer } from "@/lib/customers/actions";
+import { deleteCustomer, saveSimpleCustomer } from "@/lib/customers/actions";
 import { getCustomers } from "@/lib/customers/queries";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -98,6 +99,14 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
               </Link>
             )) : <p className="px-5 py-8 text-center text-sm text-muted-foreground">Aucun devis pour ce client.</p>}
           </div>
+        </section>
+
+        <section className="rounded-2xl border border-destructive/20 bg-white p-5 shadow-sm">
+          <h2 className="font-semibold text-destructive">Supprimer ce client</h2>
+          <p className="mt-1 mb-4 text-sm text-muted-foreground">
+            La suppression est définitive. Si des devis sont encore liés à ce client, NALTO empêchera la suppression.
+          </p>
+          <DeleteCustomerForm action={deleteCustomer} customerId={customer.id} customerName={customer.display_name} />
         </section>
       </section>
     </main>
