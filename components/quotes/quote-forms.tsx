@@ -32,9 +32,9 @@ function FieldError({ state, name }: { state: QuoteFormState; name: string }) {
   return state.fieldErrors?.[name] ? <p className="text-sm text-destructive">{state.fieldErrors[name]}</p> : null;
 }
 
-function SubmitButton({ children, variant = "default" }: { children: string; variant?: "default" | "outline" | "destructive" }) {
+function SubmitButton({ children, className, variant = "default" }: { children: string; className?: string; variant?: "default" | "outline" | "destructive" }) {
   const { pending } = useFormStatus();
-  return <Button disabled={pending} type="submit" variant={variant}>{pending ? "Enregistrement…" : children}</Button>;
+  return <Button className={className} disabled={pending} type="submit" variant={variant}>{pending ? "Enregistrement…" : children}</Button>;
 }
 
 export function CreateQuoteForm({ action, customers }: { action: QuoteAction; customers: { display_name: string; id: string }[] }) {
@@ -83,8 +83,24 @@ export function QuoteFinancialSettingsForm({ action, addresses, depositRateBasis
   );
 }
 
-export function FinalizeQuoteForm({ action, compliance, quoteId }: { action: QuoteAction; compliance: QuoteComplianceResult; quoteId: string }) {
+export function FinalizeQuoteForm({ action, compact = false, compliance, quoteId }: { action: QuoteAction; compact?: boolean; compliance: QuoteComplianceResult; quoteId: string }) {
   const [state, formAction] = useActionState(action, initialQuoteFormState);
+
+  if (compact) {
+    return (
+      <form action={formAction} className="space-y-1.5">
+        <input name="quoteId" type="hidden" value={quoteId} />
+        {compliance.valid ? (
+          <SubmitButton className="w-full sm:w-auto">Finaliser le devis</SubmitButton>
+        ) : (
+          <Button className="w-full sm:w-auto" disabled type="button">Finaliser le devis</Button>
+        )}
+        {!compliance.valid ? <p className="text-xs font-medium text-[#B83C32]">Finalisation à compléter</p> : null}
+        <FormMessage state={state} />
+      </form>
+    );
+  }
+
   return <form action={formAction} className="space-y-3 rounded-lg border border-border p-5"><input name="quoteId" type="hidden" value={quoteId} /><h2 className="text-lg font-semibold">Contrôle de conformité</h2>{compliance.errors.length ? <ul className="list-disc space-y-1 pl-5 text-sm text-destructive">{compliance.errors.map((issue) => <li key={issue.code}>{issue.message}</li>)}</ul> : <p className="text-sm text-muted-foreground">Les contrôles obligatoires sont satisfaits.</p>}{compliance.warnings.length ? <div><p className="text-sm font-medium">Points à confirmer</p><ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">{compliance.warnings.map((issue) => <li key={issue.code}>{issue.message}</li>)}</ul></div> : null}<p className="text-sm text-muted-foreground">La finalisation attribue le numéro commercial et crée un snapshot immuable. Le devis ne pourra plus être modifié ni supprimé.</p>{compliance.valid ? <SubmitButton>Finaliser le devis</SubmitButton> : <p className="text-sm font-medium">Corrigez les éléments ci-dessus avant de finaliser.</p>}<FormMessage state={state} /></form>;
 }
 
