@@ -84,6 +84,7 @@ export async function getOrCreateStripeCustomer({
       "metadata[organization_id]": organizationId,
       "metadata[app]": "nalto",
     }),
+    headers: { "Idempotency-Key": `nalto-customer-${organizationId}` },
     method: "POST",
   });
 }
