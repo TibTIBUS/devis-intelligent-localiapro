@@ -35,12 +35,20 @@ const resendEnvSchema = z.object({
   RESEND_FROM_EMAIL: z.email(),
 });
 
+const stripeEnvSchema = z.object({
+  NEXT_PUBLIC_APP_URL: z.url(),
+  STRIPE_SECRET_KEY: z.string().min(1),
+  STRIPE_PRICE_MONTHLY: z.string().min(1),
+  STRIPE_PRICE_ANNUAL: z.string().min(1),
+});
+
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
 export type SupabaseAdminEnv = z.infer<typeof supabaseAdminEnvSchema>;
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
 export type OpenAIEnv = z.infer<typeof openAIEnvSchema>;
 export type VoiceEnv = z.infer<typeof voiceEnvSchema>;
 export type ResendEnv = z.infer<typeof resendEnvSchema>;
+export type StripeEnv = z.infer<typeof stripeEnvSchema>;
 
 type Environment = Record<string, string | undefined>;
 
@@ -90,5 +98,14 @@ export function parseResendEnv(env: Environment): ResendEnv {
   return resendEnvSchema.parse({
     RESEND_API_KEY: env.RESEND_API_KEY,
     RESEND_FROM_EMAIL: env.RESEND_FROM_EMAIL,
+  });
+}
+
+export function parseStripeEnv(env: Environment): StripeEnv {
+  return stripeEnvSchema.parse({
+    NEXT_PUBLIC_APP_URL: env.NEXT_PUBLIC_APP_URL,
+    STRIPE_SECRET_KEY: env.STRIPE_SECRET_KEY,
+    STRIPE_PRICE_MONTHLY: env.STRIPE_PRICE_MONTHLY,
+    STRIPE_PRICE_ANNUAL: env.STRIPE_PRICE_ANNUAL,
   });
 }
