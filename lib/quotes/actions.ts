@@ -329,6 +329,6 @@ export async function deleteQuoteSection(
     };
   }
 
-  revalidateQuote(parsed.data.quoteId);
+  revalidateQuote(quoteId.data);
   return { message: "Section supprimée.", status: "success" };
 }
