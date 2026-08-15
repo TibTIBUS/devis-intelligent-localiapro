@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BarChart3,
   BookOpen,
   BriefcaseBusiness,
   ChevronDown,
@@ -15,6 +16,7 @@ import {
   ShieldCheck,
   Users,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -51,7 +53,7 @@ function NavLink({
   onNavigate,
 }: {
   href: string;
-  icon: (typeof NAV_LINKS)[number]["icon"];
+  icon: LucideIcon;
   label: string;
   onNavigate?: () => void;
 }) {
@@ -76,7 +78,7 @@ function NavLink({
   );
 }
 
-export function AppNav() {
+export function AppNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const companyActive = pathname.startsWith("/entreprise");
@@ -92,6 +94,7 @@ export function AppNav() {
           {NAV_LINKS.map((link) => (
             <NavLink href={link.href} icon={link.icon} key={link.href} label={link.label} />
           ))}
+          {isAdmin ? <NavLink href="/admin" icon={BarChart3} label="Admin" /> : null}
           <details className="group relative">
             <summary
               className={cn(
@@ -170,6 +173,7 @@ export function AppNav() {
                 onNavigate={() => setOpen(false)}
               />
             ))}
+            {isAdmin ? <NavLink href="/admin" icon={BarChart3} label="Admin NALTO" onNavigate={() => setOpen(false)} /> : null}
             <div className="pt-2">
               <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-[#F5F1E8]/45">Entreprise</p>
               {COMPANY_LINKS.map(({ href, icon: Icon, label }) => (
