@@ -65,6 +65,18 @@ export async function createQuote(
   if (!parsed.success) return invalidQuoteForm(parsed.error);
 
   const { organizationId, supabase } = await getAuthenticatedOrganizationId();
+  const { data: primaryAddress, error: primaryAddressError } = await supabase
+    .from("customer_addresses")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("customer_id", parsed.data.customerId)
+    .eq("is_primary", true)
+    .maybeSingle();
+
+  if (primaryAddressError) {
+    return { message: "Impossible de charger l’adresse principale du client.", status: "error" };
+  }
+
   const { data, error } = await supabase
     .from("quotes")
     .insert({
@@ -75,6 +87,7 @@ export async function createQuote(
       preparation_fee_vat_rate_basis_points: null,
       travel_fee_applicable: false,
       valid_until: getDefaultQuoteValidityDate(),
+      work_address_id: primaryAddress?.id ?? null,
     })
     .select("id")
     .maybeSingle();
@@ -316,6 +329,6 @@ export async function deleteQuoteSection(
     };
   }
 
-  revalidateQuote(quoteId.data);
+  revalidateQuote(parsed.data.quoteId);
   return { message: "Section supprimée.", status: "success" };
 }
