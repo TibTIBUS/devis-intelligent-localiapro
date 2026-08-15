@@ -10,11 +10,12 @@ import { uploadOrganizationLogo } from "@/lib/storage/actions";
 import { getOrganizationLogoPath, organizationAssetsBucket } from "@/lib/storage/organization-logo";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function OrganizationLogoPage() {
+export default async function OrganizationLogoPage({ searchParams }: { searchParams: Promise<{ enregistre?: string }> }) {
   const supabase = await createClient();
   const organizationId = await getCurrentOrganizationId(supabase);
   if (!organizationId) redirect("/onboarding");
 
+  const params = await searchParams;
   const { data: logoFile } = await supabase.storage
     .from(organizationAssetsBucket)
     .download(getOrganizationLogoPath(organizationId));
@@ -39,6 +40,12 @@ export default async function OrganizationLogoPage() {
             <Link className="rounded-lg border border-border bg-background px-3 py-2 font-medium hover:bg-muted" href="/entreprise/assurances">Assurances</Link>
           </div>
         </div>
+
+        {params.enregistre === "1" ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+            Logo enregistré. Les prochains documents utiliseront cette nouvelle version.
+          </div>
+        ) : null}
 
         <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
           <section className="rounded-2xl border border-border bg-background p-5 shadow-sm sm:p-6">
