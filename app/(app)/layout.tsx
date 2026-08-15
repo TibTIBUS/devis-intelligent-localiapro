@@ -12,9 +12,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     redirect("/connexion");
   }
 
+  const { data: admin } = await supabase.from("app_admins").select("user_id").limit(1).maybeSingle();
+
   return (
     <>
-      <AppNav />
+      <AppNav isAdmin={Boolean(admin)} />
       {children}
     </>
   );
