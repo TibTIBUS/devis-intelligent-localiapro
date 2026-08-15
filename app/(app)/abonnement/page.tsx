@@ -1,4 +1,4 @@
-import { Check, CreditCard, Sparkles } from "lucide-react";
+import { Check, CreditCard } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { manageSubscription, startSubscription } from "@/lib/billing/actions";
@@ -82,7 +82,7 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
         {!configured ? (
           <section className="rounded-2xl border border-[#D8CDBD] bg-[#ECE7DD] p-5">
             <p className="font-semibold text-[#17382D]">Activation du paiement en cours</p>
-            <p className="mt-2 text-sm leading-6 text-[#626A64]">La page tarifaire est prête, mais les secrets Stripe serveur ne sont pas encore configurés sur l’hébergement. Aucun paiement ne peut être déclenché tant que cette étape n’est pas terminée.</p>
+            <p className="mt-2 text-sm leading-6 text-[#626A64]">La page tarifaire est prête, mais le secret Stripe serveur n’est pas encore configuré sur l’hébergement. Aucun paiement ne peut être déclenché tant que cette étape n’est pas terminée.</p>
           </section>
         ) : null}
 
@@ -93,7 +93,7 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
               <div className="mt-3 flex items-end gap-2"><span className="text-4xl font-semibold tracking-tight text-[#17382D]">24,90 €</span><span className="pb-1 text-sm text-muted-foreground">HT / mois</span></div>
               <p className="mt-2 text-sm text-muted-foreground">Sans engagement annuel. 14 jours gratuits pour une première souscription.</p>
               <ul className="mt-6 space-y-3">{features.map((feature) => <li className="flex items-center gap-3 text-sm" key={feature}><span className="flex size-6 items-center justify-center rounded-full bg-[#E7F1EB] text-[#397255]"><Check className="size-4" /></span>{feature}</li>)}</ul>
-              <form action={startSubscription} className="mt-7"><input name="period" type="hidden" value="monthly" /><button className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#E8672E] px-5 text-sm font-semibold text-white transition hover:bg-[#D95E27] disabled:cursor-not-allowed disabled:opacity-50" disabled={!configured} type="submit"><Sparkles className="size-4" /> Commencer mon essai</button></form>
+              <form action={startSubscription} className="mt-7"><input name="period" type="hidden" value="monthly" /><button className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#E8672E] px-5 text-sm font-semibold text-white transition hover:bg-[#D95E27] disabled:cursor-not-allowed disabled:opacity-50" disabled={!configured} type="submit"><CreditCard className="size-4" /> Commencer mon essai</button></form>
             </article>
 
             <article className="relative rounded-3xl border-2 border-[#17382D] bg-[#17382D] p-6 text-[#F5F1E8] shadow-sm sm:p-7">
@@ -102,7 +102,7 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
               <div className="mt-3 flex items-end gap-2"><span className="text-4xl font-semibold tracking-tight">249 €</span><span className="pb-1 text-sm text-[#F5F1E8]/65">HT / an</span></div>
               <p className="mt-2 text-sm text-[#F5F1E8]/70">Soit 20,75 € HT par mois. 14 jours gratuits pour une première souscription.</p>
               <ul className="mt-6 space-y-3">{features.map((feature) => <li className="flex items-center gap-3 text-sm" key={feature}><span className="flex size-6 items-center justify-center rounded-full bg-white/10 text-[#F5F1E8]"><Check className="size-4" /></span>{feature}</li>)}</ul>
-              <form action={startSubscription} className="mt-7"><input name="period" type="hidden" value="annual" /><button className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#F5F1E8] px-5 text-sm font-semibold text-[#17382D] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50" disabled={!configured} type="submit"><Sparkles className="size-4" /> Choisir l’abonnement annuel</button></form>
+              <form action={startSubscription} className="mt-7"><input name="period" type="hidden" value="annual" /><button className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#F5F1E8] px-5 text-sm font-semibold text-[#17382D] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50" disabled={!configured} type="submit"><CreditCard className="size-4" /> Choisir l’abonnement annuel</button></form>
             </article>
           </section>
         ) : null}
