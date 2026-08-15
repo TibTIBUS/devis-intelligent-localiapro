@@ -1,10 +1,12 @@
 import "server-only";
 
+import { getOrganizationAccessStatus } from "@/lib/billing/access";
 import { createAdminClient } from "@/lib/supabase/server";
 
 export type FinalizeQuoteResult =
   | { quoteId: string; quoteNumber: string; quoteVersionId: string; success: true }
-  | { success: false };
+  | { reason: "access_required"; success: false }
+  | { reason: "finalization_failed"; success: false };
 
 export async function finalizeQuoteForOrganization(
   organizationId: string,
@@ -12,12 +14,16 @@ export async function finalizeQuoteForOrganization(
   userId: string,
 ): Promise<FinalizeQuoteResult> {
   const admin = createAdminClient();
+
+  const access = await getOrganizationAccessStatus(admin, organizationId);
+  if (!access.hasAccess) return { reason: "access_required", success: false };
+
   const { data, error } = await admin.rpc("finalize_quote", {
     p_actor_user_id: userId,
     p_organization_id: organizationId,
     p_quote_id: quoteId,
   });
-  if (error || !data?.[0]) return { success: false };
+  if (error || !data?.[0]) return { reason: "finalization_failed", success: false };
 
   return {
     quoteId: data[0].quote_id,

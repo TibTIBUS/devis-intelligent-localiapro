@@ -1,5 +1,21 @@
 import type { NextConfig } from "next";
 
+const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
+  : "";
+
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  `connect-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ""}`,
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+].join("; ");
+
 const nextConfig: NextConfig = {
   // Les consignes du projet sont synchronisées et ne doivent pas être réécrites.
   agentRules: false,
@@ -10,7 +26,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Content-Security-Policy",
-            value: "base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
+            value: contentSecurityPolicy,
           },
           {
             key: "Permissions-Policy",

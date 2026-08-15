@@ -247,8 +247,18 @@ export async function runQuoteAssistant({
               };
             } else {
               const result = await finalizeQuoteForOrganization(organizationId, context.quoteId, actorUserId);
-              if (!result.success) throw new Error("La finalisation du devis a échoué.");
-              output = { message: `Le devis a été finalisé sous le numéro ${result.quoteNumber}.`, status: "applied" };
+              if (!result.success) {
+                if (result.reason === "access_required") {
+                  output = {
+                    message: "Votre période d’essai est terminée. Choisissez un abonnement dans Paramètres pour finaliser vos devis.",
+                    status: "blocked",
+                  };
+                } else {
+                  throw new Error("La finalisation du devis a échoué.");
+                }
+              } else {
+                output = { message: `Le devis a été finalisé sous le numéro ${result.quoteNumber}.`, status: "applied" };
+              }
             }
           }
         } else if (call.name === requestSendQuoteEmailTool.name) {

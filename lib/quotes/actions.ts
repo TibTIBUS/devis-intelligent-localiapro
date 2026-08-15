@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { getOrganizationAccessStatus } from "@/lib/billing/access";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import { createRequestId, logTechnicalWarning } from "@/lib/observability/logger";
 import { validateQuoteCompliance } from "@/lib/compliance/quote-compliance";
@@ -65,6 +66,14 @@ export async function createQuote(
   if (!parsed.success) return invalidQuoteForm(parsed.error);
 
   const { organizationId, supabase } = await getAuthenticatedOrganizationId();
+  const access = await getOrganizationAccessStatus(supabase, organizationId);
+  if (!access.hasAccess) {
+    return {
+      message: "Votre période d’essai est terminée. Choisissez un abonnement pour créer un nouveau devis.",
+      status: "error",
+    };
+  }
+
   const { data: primaryAddress, error: primaryAddressError } = await supabase
     .from("customer_addresses")
     .select("id")
@@ -172,7 +181,9 @@ export async function finalizeQuote(
   const result = await finalizeQuoteForOrganization(organizationId, quoteId.data, userId);
   if (!result.success) {
     return {
-      message: "Impossible de finaliser ce devis pour le moment. Relancez le contrôle de conformité.",
+      message: result.reason === "access_required"
+        ? "Votre période d’essai est terminée. Choisissez un abonnement pour finaliser vos devis."
+        : "Impossible de finaliser ce devis pour le moment. Relancez le contrôle de conformité.",
       status: "error",
     };
   }
