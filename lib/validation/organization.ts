@@ -1,6 +1,11 @@
 import { z } from "zod";
 
 export const initialOrganizationSchema = z.object({
+  acquisitionSource: z
+    .string()
+    .trim()
+    .max(80, "La source d’acquisition est trop longue.")
+    .transform((value) => value || undefined),
   name: z
     .string()
     .trim()
@@ -14,7 +19,7 @@ export const initialOrganizationSchema = z.object({
 });
 
 export type OrganizationFormState = {
-  fieldErrors?: Partial<Record<"name" | "trade", string>>;
+  fieldErrors?: Partial<Record<"acquisitionSource" | "name" | "trade", string>>;
   message?: string;
   status: "error" | "idle";
 };
@@ -25,6 +30,7 @@ export const initialOrganizationFormState: OrganizationFormState = {
 
 export function getInitialOrganizationValues(formData: FormData) {
   return {
+    acquisitionSource: formData.get("acquisitionSource"),
     name: formData.get("name"),
     trade: formData.get("trade"),
   };
@@ -33,10 +39,11 @@ export function getInitialOrganizationValues(formData: FormData) {
 export function getOrganizationFieldErrors(
   error: z.ZodError,
 ): OrganizationFormState["fieldErrors"] {
-  const getMessage = (field: "name" | "trade") =>
+  const getMessage = (field: "acquisitionSource" | "name" | "trade") =>
     error.issues.find((issue) => issue.path[0] === field)?.message;
 
   return {
+    acquisitionSource: getMessage("acquisitionSource"),
     name: getMessage("name"),
     trade: getMessage("trade"),
   };
