@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Devis introuvable." }, { status: 404 });
   }
 
-  const [addressesResult, contactsResult] = await Promise.all([
+  const [addressesResult, contactsResult, organizationResult] = await Promise.all([
     supabase
       .from("customer_addresses")
       .select("address_line_1, city, id, label, postal_code")
@@ -64,6 +64,11 @@ export async function POST(request: Request) {
       .eq("organization_id", organizationId)
       .eq("customer_id", editor.quote.customer_id)
       .not("email", "is", null),
+    supabase
+      .from("organizations")
+      .select("trade")
+      .eq("id", organizationId)
+      .maybeSingle(),
   ]);
   if (addressesResult.error) {
     return NextResponse.json({ error: "Impossible de charger les adresses du client." }, { status: 503 });
@@ -73,11 +78,13 @@ export async function POST(request: Request) {
   }
   const addresses = addressesResult.data;
   const contacts = contactsResult.data;
+  const businessTrade = organizationResult.data?.trade?.trim() || null;
 
   try {
     const result = await runQuoteAssistant({
       actorUserId: claimsData.claims.sub,
       context: {
+        businessTrade,
         lines: editor.lines.map((line) => ({
           id: line.id,
           label: line.label,
