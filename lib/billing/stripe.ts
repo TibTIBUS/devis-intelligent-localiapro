@@ -6,10 +6,11 @@ export type BillingPeriod = "annual" | "monthly";
 
 type StripeList<T> = { data: T[] };
 
-type StripeCustomer = {
+export type StripeCustomer = {
   id: string;
   email: string | null;
   metadata: Record<string, string>;
+  name?: string | null;
 };
 
 export type StripeSubscription = {
@@ -17,7 +18,15 @@ export type StripeSubscription = {
   created: number;
   current_period_end?: number;
   id: string;
-  items: { data: Array<{ price: { id: string } }> };
+  items: {
+    data: Array<{
+      price: {
+        id: string;
+        recurring?: { interval?: string | null } | null;
+        unit_amount?: number | null;
+      };
+    }>;
+  };
   status: string;
   trial_end: number | null;
 };
