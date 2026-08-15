@@ -14,17 +14,17 @@ describe("AI catalog tool", () => {
   it("scopes and limits catalog searches on the server", async () => {
     const limit = vi.fn().mockResolvedValue({ data: [], error: null });
     const order = vi.fn(() => ({ limit }));
-    const ilike = vi.fn(() => ({ order }));
-    const eq = vi.fn(() => ({ ilike }));
+    const or = vi.fn(() => ({ order }));
+    const eq = vi.fn(() => ({ or }));
     const select = vi.fn(() => ({ eq }));
     const from = vi.fn(() => ({ select }));
     const client = { from } as unknown as SupabaseClient;
 
-    await searchCatalogForAssistant(client, "organization-1", "50%_plomberie");
+    await searchCatalogForAssistant(client, "organization-1", "plomberie évier");
 
     expect(from).toHaveBeenCalledWith("catalog_items");
     expect(eq).toHaveBeenCalledWith("organization_id", "organization-1");
-    expect(ilike).toHaveBeenCalledWith("name", "%50\\%\\_plomberie%");
-    expect(limit).toHaveBeenCalledWith(8);
+    expect(or).toHaveBeenCalledWith("name.ilike.%plomberie%,description.ilike.%plomberie%");
+    expect(limit).toHaveBeenCalledWith(24);
   });
 });

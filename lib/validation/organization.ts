@@ -1,11 +1,14 @@
 import { z } from "zod";
 
 export const initialOrganizationSchema = z.object({
-  acquisitionSource: z
-    .string()
-    .trim()
-    .max(80, "La source d’acquisition est trop longue.")
-    .transform((value) => value || undefined),
+  acquisitionSource: z.preprocess(
+    (value) => value ?? "",
+    z
+      .string()
+      .trim()
+      .max(80, "La source d’acquisition est trop longue.")
+      .transform((value) => value || undefined),
+  ),
   name: z
     .string()
     .trim()

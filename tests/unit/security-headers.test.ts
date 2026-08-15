@@ -14,7 +14,7 @@ describe("security response headers", () => {
 
     expect(headers).toMatchObject({
       "Content-Security-Policy": "base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
-      "Permissions-Policy": "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+      "Permissions-Policy": "camera=(), geolocation=(), microphone=(self), payment=(), usb=()",
       "Referrer-Policy": "strict-origin-when-cross-origin",
       "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
       "X-Content-Type-Options": "nosniff",

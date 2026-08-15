@@ -9,13 +9,13 @@ describe("home page", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Des devis clairs, créés en quelques minutes.",
+        name: "Vos devis se font sur le chantier.",
       }),
     ).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Créer mon compte" }).getAttribute("href")).toBe(
-      "/inscription",
-    );
-    expect(screen.getByRole("link", { name: "J'ai déjà un compte" }).getAttribute("href")).toBe(
+    expect(
+      screen.getByRole("link", { name: /Créer mon premier devis/ }).getAttribute("href"),
+    ).toBe("/inscription");
+    expect(screen.getByRole("link", { name: "J’ai déjà un compte" }).getAttribute("href")).toBe(
       "/connexion",
     );
   });
