@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, CheckCircle2, FileText, Mail, MapPin, Phone, ReceiptText, UserRound } from "lucide-react";
 
 import { DeleteDraftQuoteForm } from "@/components/quotes/delete-draft-quote-form";
+import { isCurrentUserAppAdmin } from "@/lib/admin/queries";
 import {
   DeleteQuoteLineForm,
   DeleteQuoteSectionForm,
@@ -172,6 +173,7 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
     : null;
   const customer = customers.find((item) => item.id === editor.quote.customer_id);
   const finalized = editor.quote.status === "finalized";
+  const isAdmin = finalized ? await isCurrentUserAppAdmin() : false;
   const primaryContact = customer?.contacts.find((contact) => contact.is_primary) ?? customer?.contacts[0];
   const primaryAddress = customer?.addresses.find((address) => address.is_primary) ?? customer?.addresses[0];
   const statusLabel = !finalized ? "Brouillon" : acceptance ? "Accepté" : "Finalisé";
@@ -243,7 +245,7 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
               </div>
             </section>
             <TotalsCard totals={editor.totals} />
-            {!finalized ? <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:p-5"><h2 className="font-semibold">Actions</h2><p className="mb-3 mt-1 text-sm text-muted-foreground">La suppression est définitive et réservée aux brouillons.</p><DeleteDraftQuoteForm action={deleteDraftQuote} customerName={customer?.display_name ?? "ce client"} quoteId={editor.quote.id} /></section> : null}
+            {!finalized || isAdmin ? <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:p-5"><h2 className="font-semibold">Actions</h2><p className="mb-3 mt-1 text-sm text-muted-foreground">{finalized ? "Suppression définitive réservée à l’administrateur : le devis, son PDF et l’acceptation sont effacés." : "La suppression est définitive et réservée aux brouillons."}</p><DeleteDraftQuoteForm action={deleteDraftQuote} customerName={customer?.display_name ?? "ce client"} finalized={finalized} quoteId={editor.quote.id} /></section> : null}
             {finalized && acceptance ? <section className="rounded-2xl border border-[#B8CDBE] bg-[#E7EFE8] p-4 sm:p-5"><div className="flex items-center gap-2 text-[#28563D]"><CheckCircle2 className="size-5" /><p className="font-semibold">Devis accepté</p></div><p className="mt-2 text-sm text-[#397255]">L’accord du client est enregistré et conservé dans l’historique du devis.</p></section> : null}
           </aside>
         </div>

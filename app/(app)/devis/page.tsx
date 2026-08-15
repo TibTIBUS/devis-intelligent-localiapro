@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { DeleteDraftQuoteForm } from "@/components/quotes/delete-draft-quote-form";
+import { isCurrentUserAppAdmin } from "@/lib/admin/queries";
 import { commercialStatusLabel, type CommercialQuoteStatus } from "@/lib/quotes/commercial-status";
 import { deleteDraftQuote } from "@/lib/quotes/list-actions";
 import { filterQuotesByCustomerName, getQuoteListData } from "@/lib/quotes/queries";
@@ -64,6 +65,7 @@ export default async function QuotesPage({
   const organizationId = await getCurrentOrganizationId(supabase);
   if (!organizationId) redirect("/onboarding");
 
+  const isAdmin = await isCurrentUserAppAdmin();
   const allQuotes = await getQuoteListData(supabase, organizationId, "");
   const searchedQuotes = filterQuotesByCustomerName(allQuotes, search);
   const quotes = selectedStatus === "all"
@@ -231,8 +233,13 @@ export default async function QuotesPage({
                         </Link>
                       ) : null}
 
-                      {quote.commercialStatus === "draft" ? (
-                        <DeleteDraftQuoteForm action={deleteDraftQuote} customerName={quote.customerName} quoteId={quote.id} />
+                      {quote.commercialStatus === "draft" || isAdmin ? (
+                        <DeleteDraftQuoteForm
+                          action={deleteDraftQuote}
+                          customerName={quote.customerName}
+                          finalized={quote.commercialStatus !== "draft"}
+                          quoteId={quote.id}
+                        />
                       ) : null}
                     </div>
                   </article>

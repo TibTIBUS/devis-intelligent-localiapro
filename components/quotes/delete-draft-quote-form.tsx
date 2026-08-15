@@ -5,17 +5,22 @@ import { Trash2 } from "lucide-react";
 export function DeleteDraftQuoteForm({
   action,
   customerName,
+  finalized = false,
   quoteId,
 }: {
   action: (formData: FormData) => Promise<void>;
   customerName: string;
+  finalized?: boolean;
   quoteId: string;
 }) {
   return (
     <form
       action={action}
       onSubmit={(event) => {
-        if (!window.confirm(`Supprimer définitivement le brouillon de ${customerName} ?`)) {
+        const message = finalized
+          ? `Supprimer définitivement le devis finalisé de ${customerName} ? Le devis, son PDF et l’acceptation éventuelle seront effacés. Cette action est irréversible.`
+          : `Supprimer définitivement le brouillon de ${customerName} ?`;
+        if (!window.confirm(message)) {
           event.preventDefault();
         }
       }}

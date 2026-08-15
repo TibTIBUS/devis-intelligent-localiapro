@@ -199,3 +199,20 @@ La publication passe uniquement par `main`, après les contrôles locaux. Les
 tests E2E qui créent des données ne s'exécutent pas contre le site public ; les
 vérifications en ligne utilisent un compte de démonstration dédié. Cette
 dérogation sera levée dès qu'un environnement Supabase isolé sera disponible.
+
+## QUOTE-006 — purge d'un devis finalisé réservée aux administrateurs
+
+Un devis finalisé, a fortiori accepté, vaut contrat : il reste immuable pour les
+artisans, et les déclencheurs qui protègent le devis, ses versions figées, son
+acceptation et ses documents ne sont pas assouplis.
+
+Une seule exception existe, pour permettre de nettoyer les devis créés pendant
+les tests : `public.purge_quote` supprime un devis de bout en bout, et refuse
+tout appelant absent de `app_admins`. L'exception est portée par un verrou
+`app.purge_quote` local à la transaction, que seule cette fonction pose ; les
+déclencheurs ne l'honorent que pour un `DELETE`. Une mise à jour d'un devis
+finalisé reste donc impossible, y compris pour un administrateur.
+
+La fonction renvoie les chemins des PDF stockés, car les clés étrangères ne
+nettoient pas le bucket : l'action serveur vide le stockage avec le client
+admin après la purge.
