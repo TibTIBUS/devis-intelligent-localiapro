@@ -1,4 +1,4 @@
-import { Building2, FileBadge2, Image, Mail, Settings2, ShieldCheck } from "lucide-react";
+import { Building2, CreditCard, FileBadge2, Image, Mail, Settings2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -81,11 +81,17 @@ export default async function SettingsPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-[#D8CDBD] bg-[#ECE7DD] p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#626A64]">Abonnement</p>
-          <p className="mt-2 font-semibold text-[#17382D]">Version bêta — paiement non activé</p>
-          <p className="mt-1 text-sm leading-6 text-[#626A64]">Aucun prélèvement ni abonnement payant n’est activé dans cette version. La facturation sera branchée séparément avant la commercialisation.</p>
-        </section>
+        <Link className="block rounded-2xl border border-[#17382D]/15 bg-[#17382D] p-5 text-[#F5F1E8] shadow-sm transition hover:bg-[#21483B]" href="/abonnement">
+          <div className="flex items-start gap-4">
+            <span className="rounded-xl bg-white/10 p-2.5"><CreditCard className="size-5" /></span>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#F5F1E8]/60">Abonnement</p>
+              <p className="mt-1 font-semibold">NALTO Pro</p>
+              <p className="mt-1 text-sm leading-6 text-[#F5F1E8]/70">Consultez les tarifs, commencez votre essai ou gérez votre abonnement et votre moyen de paiement.</p>
+            </div>
+            <span aria-hidden="true" className="text-xl text-[#E8672E]">›</span>
+          </div>
+        </Link>
       </section>
     </main>
   );
