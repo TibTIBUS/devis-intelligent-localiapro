@@ -191,7 +191,8 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
               <div className="flex flex-wrap items-center gap-3"><h1 className="break-words text-2xl font-semibold tracking-tight text-[#17382D] sm:text-3xl">{editor.quote.quote_number ?? `Devis de ${customer?.display_name ?? "client"}`}</h1><span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClassName}`}>{statusLabel}</span></div>
               <p className="mt-2 text-sm text-muted-foreground">{finalized ? "Devis finalisé et immuable." : `Devis en cours de préparation pour ${customer?.display_name ?? "ce client"}.`}</p>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+              {!finalized && compliance ? <FinalizeQuoteForm action={finalizeQuote} compact compliance={compliance} quoteId={editor.quote.id} /> : null}
               {finalized && editor.quote.quote_version_id ? <div className="rounded-lg border border-border bg-background px-1 py-1 shadow-sm"><QuotePdfForm quoteId={editor.quote.id} versionId={editor.quote.quote_version_id} /></div> : null}
               {!finalized ? <VoiceActionLink className="w-full justify-center sm:w-auto" description="Ajouter ou modifier des prestations par dictée" href={`/devis/${editor.quote.id}/voix`} /> : null}
             </div>
@@ -242,7 +243,6 @@ export default async function QuoteEditorPage({ params }: { params: Promise<{ qu
               </div>
             </section>
             <TotalsCard totals={editor.totals} />
-            {!finalized && compliance ? <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:p-5"><h2 className="font-semibold">Finalisation</h2><p className="mb-4 mt-1 text-sm text-muted-foreground">Vérifiez la conformité puis attribuez le numéro définitif du devis.</p><FinalizeQuoteForm action={finalizeQuote} compliance={compliance} quoteId={editor.quote.id} /></section> : null}
             {!finalized ? <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:p-5"><h2 className="font-semibold">Actions</h2><p className="mb-3 mt-1 text-sm text-muted-foreground">La suppression est définitive et réservée aux brouillons.</p><DeleteDraftQuoteForm action={deleteDraftQuote} customerName={customer?.display_name ?? "ce client"} quoteId={editor.quote.id} /></section> : null}
             {finalized && acceptance ? <section className="rounded-2xl border border-[#B8CDBE] bg-[#E7EFE8] p-4 sm:p-5"><div className="flex items-center gap-2 text-[#28563D]"><CheckCircle2 className="size-5" /><p className="font-semibold">Devis accepté</p></div><p className="mt-2 text-sm text-[#397255]">L’accord du client est enregistré et conservé dans l’historique du devis.</p></section> : null}
           </aside>
