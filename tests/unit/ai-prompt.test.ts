@@ -5,6 +5,7 @@ import { buildQuoteAssistantPrompt } from "@/lib/ai/prompts/quote-assistant";
 describe("quote assistant prompt", () => {
   it("contains the immutable AI safety rules and only the active quote context", () => {
     const prompt = buildQuoteAssistantPrompt({
+      businessTrade: "Plomberie",
       lines: [{
         id: "4a02d6aa-6882-4e56-9f27-d74a83f90ca8",
         label: "Main-d’œuvre plomberie",
@@ -39,5 +40,6 @@ describe("quote assistant prompt", () => {
     expect(prompt).toContain("N’invente, ne complète et ne reformule aucune clause juridique");
     expect(prompt).toContain("Chantier — 2 rue du Test");
     expect(prompt).toContain("Ne déduis jamais un taux depuis un montant");
+    expect(prompt).toContain("Plomberie");
   });
 });
