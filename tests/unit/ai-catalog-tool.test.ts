@@ -24,7 +24,9 @@ describe("AI catalog tool", () => {
 
     expect(from).toHaveBeenCalledWith("catalog_items");
     expect(eq).toHaveBeenCalledWith("organization_id", "organization-1");
-    expect(or).toHaveBeenCalledWith("name.ilike.%plomberie%,description.ilike.%plomberie%");
+    expect(or).toHaveBeenCalledWith(
+      "name.ilike.%plomberie%,description.ilike.%plomberie%,name.ilike.%evier%,description.ilike.%evier%",
+    );
     expect(limit).toHaveBeenCalledWith(24);
   });
 });

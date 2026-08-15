@@ -60,12 +60,15 @@ export async function searchCatalogForAssistant(
   const tokens = buildCatalogSearchTokens(query);
   if (tokens.length === 0) return [];
 
-  const escapedPrimaryToken = tokens[0].replaceAll("%", "\\%").replaceAll("_", "\\_");
+  const searchFilter = tokens
+    .map((token) => token.replaceAll("%", "\\%").replaceAll("_", "\\_"))
+    .flatMap((escapedToken) => [`name.ilike.%${escapedToken}%`, `description.ilike.%${escapedToken}%`])
+    .join(",");
   const { data, error } = await client
     .from("catalog_items")
     .select("category_id, description, id, name, unit, unit_price_ht_cents")
     .eq("organization_id", organizationId)
-    .or(`name.ilike.%${escapedPrimaryToken}%,description.ilike.%${escapedPrimaryToken}%`)
+    .or(searchFilter)
     .order("name", { ascending: true })
     .limit(24);
 
