@@ -298,8 +298,12 @@ export async function deleteCustomer(
 
   if (error || !data) return { message: "Impossible de supprimer ce client pour le moment.", status: "error" };
 
+  // Une redirection serveur, pas un simple retour de succès : la page
+  // /clients/[clientId] restée affichée chercherait aussitôt ce client
+  // supprimé et déclencherait elle-même un 404 avant que le navigateur
+  // n'ait pu naviguer ailleurs.
   revalidatePath("/clients");
-  return { message: "Client supprime, avec ses contacts et adresses.", status: "success" };
+  redirect("/clients?supprime=1");
 }
 
 export async function deleteCustomerContact(

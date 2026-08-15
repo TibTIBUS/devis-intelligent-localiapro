@@ -1,7 +1,7 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
-import { useActionState, useEffect } from "react";
+import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,13 +23,9 @@ export function DeleteCustomerForm({
   customerId: string;
   customerName: string;
 }) {
+  // En cas de succès, l'action serveur redirige elle-même vers /clients : il
+  // n'y a alors plus d'état "success" à observer côté client.
   const [state, formAction] = useActionState(action, initialCustomerDeleteFormState);
-
-  useEffect(() => {
-    if (state.status === "success") {
-      window.location.assign("/clients?supprime=1");
-    }
-  }, [state.status]);
 
   return (
     <form
