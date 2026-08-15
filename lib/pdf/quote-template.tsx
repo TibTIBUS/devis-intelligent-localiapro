@@ -453,7 +453,9 @@ function Totals({ data }: { data: QuotePdfData }) {
         <Text style={styles.totalsTitle}>RÉCAPITULATIF</Text>
         <View style={styles.totalsBody}>
           <View style={styles.totalLine}><Text>Sous-total HT</Text><Text>{formatEuroCents(totals.subtotalHtCents)}</Text></View>
-          <View style={styles.totalLine}><Text>Remise HT ({formatPercentageBasisPoints(data.snapshot.quote.discountRateBasisPoints)} %)</Text><Text>- {formatEuroCents(totals.discountHtCents)}</Text></View>
+          {totals.discountHtCents > 0n ? (
+            <View style={styles.totalLine}><Text>Remise HT ({formatPercentageBasisPoints(data.snapshot.quote.discountRateBasisPoints)} %)</Text><Text>- {formatEuroCents(totals.discountHtCents)}</Text></View>
+          ) : null}
           <View style={[styles.totalLine, styles.totalHt]}><Text>Total HT</Text><Text>{formatEuroCents(totals.totalHtCents)}</Text></View>
           {totals.vatBreakdown.map((vat) => (
             <View key={vat.vatRateBasisPoints} style={styles.totalLine}>
