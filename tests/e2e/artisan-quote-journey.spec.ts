@@ -22,26 +22,17 @@ test("un artisan parcourt client → devis → finalisation → PDF", async ({ p
   await page.getByRole("button", { name: "Se connecter" }).click();
   await expect(page).toHaveURL(/\/tableau-de-bord|\/onboarding/);
 
-  await page.goto("/clients?nouveau=1");
+  await page.goto("/clients/nouveau");
   await page.getByLabel("Nom du client").fill(customerName);
-  await page.getByRole("button", { name: "Ajouter le client" }).click();
-  await expect(page).toHaveURL(/\/clients\?client=/);
-  await expect(page.getByText(customerName, { exact: true }).first()).toBeVisible();
-
-  await page.getByLabel("Nom (facultatif)").last().fill("Contact E2E");
-  await page.getByLabel("E-mail (facultatif)").last().fill(customerEmail);
-  await page.getByLabel("Téléphone (facultatif)").last().fill("0600000000");
-  await page.getByLabel("Contact principal").last().check();
-  await page.getByRole("button", { name: "Ajouter un contact" }).click();
-  await expect(page.getByText(customerEmail, { exact: true }).first()).toBeVisible();
-
-  await page.getByLabel("Libellé (facultatif)").last().fill("Chantier E2E");
-  await page.getByLabel("Adresse", { exact: true }).last().fill("1 rue du Test");
-  await page.getByLabel("Code postal").last().fill("50000");
-  await page.getByLabel("Ville").last().fill("Saint-Lô");
-  await page.getByLabel("Adresse principale").last().check();
-  await page.getByRole("button", { name: "Ajouter une adresse" }).click();
-  await expect(page.getByText("1 rue du Test", { exact: true }).first()).toBeVisible();
+  await page.getByLabel("Téléphone").fill("0600000000");
+  await page.getByLabel("E-mail").fill(customerEmail);
+  await page.getByLabel("Adresse", { exact: true }).fill("1 rue du Test");
+  await page.getByLabel("Code postal").fill("50000");
+  await page.getByLabel("Ville").fill("Saint-Lô");
+  await page.getByRole("button", { name: "Créer le client" }).click();
+  await expect(page).toHaveURL(/\/clients\/[0-9a-f-]+\?enregistre=1$/);
+  await expect(page.getByDisplayValue(customerName)).toBeVisible();
+  await expect(page.getByDisplayValue(customerEmail)).toBeVisible();
 
   await page.goto("/devis/nouveau");
   await page.getByLabel("Client").selectOption({ label: customerName });
@@ -50,7 +41,13 @@ test("un artisan parcourt client → devis → finalisation → PDF", async ({ p
 
   await page.getByLabel("Acompte demandé (%)").fill("30");
   await page.getByLabel("Validité de l’offre jusqu’au").fill(isoDateInDays(30));
-  await page.getByLabel("Lieu d’exécution").selectOption({ label: /Chantier E2E/ });
+
+  const worksiteSelect = page.getByLabel("Lieu d’exécution");
+  const worksiteOption = worksiteSelect.locator("option").filter({ hasText: "1 rue du Test" }).first();
+  const worksiteValue = await worksiteOption.getAttribute("value");
+  expect(worksiteValue).toBeTruthy();
+  await worksiteSelect.selectOption(worksiteValue!);
+
   await page.getByLabel("Gratuit").check();
   await page.getByLabel("Aucun").check();
   await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
