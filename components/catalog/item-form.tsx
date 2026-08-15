@@ -31,15 +31,15 @@ type ItemFormProps = {
 };
 
 const inputClassName =
-  "h-10 w-full rounded-md border border-input bg-background px-3 text-sm";
+  "h-11 w-full rounded-md border border-input bg-background px-3 text-sm";
 const textAreaClassName =
-  "min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
+  "min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
 
 function SubmitButton({ isEditing }: { isEditing: boolean }) {
   const { pending } = useFormStatus();
 
   return (
-    <Button disabled={pending} type="submit">
+    <Button className="w-full sm:w-auto" disabled={pending} type="submit">
       {pending
         ? "Enregistrement en cours…"
         : isEditing
@@ -55,7 +55,7 @@ function DeleteItemForm({ action, itemId }: { action: DeleteItemAction; itemId: 
   return (
     <form action={formAction} className="space-y-2">
       <input name="itemId" type="hidden" value={itemId} />
-      <Button type="submit" variant="destructive">
+      <Button className="w-full sm:w-auto" type="submit" variant="destructive">
         Supprimer cette prestation
       </Button>
       {state.message ? (
@@ -76,7 +76,7 @@ export function ItemForm({ action, categories, deleteAction, item }: ItemFormPro
   const id = item?.id ?? "new";
 
   return (
-    <div className="space-y-3 rounded-lg border border-border p-4">
+    <div className="space-y-3 rounded-lg border border-border p-3 sm:p-4">
       <form action={formAction} className="space-y-4" noValidate>
         {item ? <input name="itemId" type="hidden" value={item.id} /> : null}
 
@@ -95,14 +95,10 @@ export function ItemForm({ action, categories, deleteAction, item }: ItemFormPro
               required
               type="text"
             />
-            {state.fieldErrors?.name ? (
-              <p className="text-sm text-destructive">{state.fieldErrors.name}</p>
-            ) : null}
+            {state.fieldErrors?.name ? <p className="text-sm text-destructive">{state.fieldErrors.name}</p> : null}
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor={`item-unit-${id}`}>
-              Unité
-            </label>
+            <label className="text-sm font-medium" htmlFor={`item-unit-${id}`}>Unité</label>
             <input
               aria-invalid={Boolean(state.fieldErrors?.unit)}
               className={inputClassName}
@@ -114,39 +110,21 @@ export function ItemForm({ action, categories, deleteAction, item }: ItemFormPro
               required
               type="text"
             />
-            {state.fieldErrors?.unit ? (
-              <p className="text-sm text-destructive">{state.fieldErrors.unit}</p>
-            ) : null}
+            {state.fieldErrors?.unit ? <p className="text-sm text-destructive">{state.fieldErrors.unit}</p> : null}
           </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor={`item-category-${id}`}>
-              Catégorie <span className="text-muted-foreground">(facultatif)</span>
-            </label>
-            <select
-              aria-invalid={Boolean(state.fieldErrors?.categoryId)}
-              className={inputClassName}
-              defaultValue={item?.category_id ?? ""}
-              id={`item-category-${id}`}
-              name="categoryId"
-            >
+            <label className="text-sm font-medium" htmlFor={`item-category-${id}`}>Catégorie <span className="text-muted-foreground">(facultatif)</span></label>
+            <select aria-invalid={Boolean(state.fieldErrors?.categoryId)} className={inputClassName} defaultValue={item?.category_id ?? ""} id={`item-category-${id}`} name="categoryId">
               <option value="">Sans catégorie</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
+              {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
             </select>
-            {state.fieldErrors?.categoryId ? (
-              <p className="text-sm text-destructive">{state.fieldErrors.categoryId}</p>
-            ) : null}
+            {state.fieldErrors?.categoryId ? <p className="text-sm text-destructive">{state.fieldErrors.categoryId}</p> : null}
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor={`item-price-${id}`}>
-              Prix unitaire HT (€) <span className="text-muted-foreground">(facultatif)</span>
-            </label>
+            <label className="text-sm font-medium" htmlFor={`item-price-${id}`}>Prix unitaire HT (€) <span className="text-muted-foreground">(facultatif)</span></label>
             <input
               aria-invalid={Boolean(state.fieldErrors?.unitPriceHtCents)}
               className={inputClassName}
@@ -157,16 +135,12 @@ export function ItemForm({ action, categories, deleteAction, item }: ItemFormPro
               placeholder="Ex. 55,90"
               type="text"
             />
-            {state.fieldErrors?.unitPriceHtCents ? (
-              <p className="text-sm text-destructive">{state.fieldErrors.unitPriceHtCents}</p>
-            ) : null}
+            {state.fieldErrors?.unitPriceHtCents ? <p className="text-sm text-destructive">{state.fieldErrors.unitPriceHtCents}</p> : null}
           </div>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor={`item-description-${id}`}>
-            Description <span className="text-muted-foreground">(facultatif)</span>
-          </label>
+          <label className="text-sm font-medium" htmlFor={`item-description-${id}`}>Description <span className="text-muted-foreground">(facultatif)</span></label>
           <textarea
             aria-invalid={Boolean(state.fieldErrors?.description)}
             className={textAreaClassName}
@@ -175,16 +149,10 @@ export function ItemForm({ action, categories, deleteAction, item }: ItemFormPro
             maxLength={1000}
             name="description"
           />
-          {state.fieldErrors?.description ? (
-            <p className="text-sm text-destructive">{state.fieldErrors.description}</p>
-          ) : null}
+          {state.fieldErrors?.description ? <p className="text-sm text-destructive">{state.fieldErrors.description}</p> : null}
         </div>
 
-        {state.message ? (
-          <p aria-live="polite" className="text-sm text-destructive">
-            {state.message}
-          </p>
-        ) : null}
+        {state.message ? <p aria-live="polite" className="text-sm text-destructive">{state.message}</p> : null}
         <SubmitButton isEditing={isEditing} />
       </form>
       {item && deleteAction ? <DeleteItemForm action={deleteAction} itemId={item.id} /> : null}
