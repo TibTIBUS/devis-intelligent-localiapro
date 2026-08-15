@@ -9,8 +9,8 @@ export const initialOrganizationSchema = z.object({
   trade: z
     .string()
     .trim()
-    .max(80, "Le métier est trop long.")
-    .optional(),
+    .min(2, "Indiquez votre activité ou votre métier.")
+    .max(80, "Le métier est trop long."),
 });
 
 export type OrganizationFormState = {
@@ -26,7 +26,7 @@ export const initialOrganizationFormState: OrganizationFormState = {
 export function getInitialOrganizationValues(formData: FormData) {
   return {
     name: formData.get("name"),
-    trade: formData.get("trade") || undefined,
+    trade: formData.get("trade"),
   };
 }
 
