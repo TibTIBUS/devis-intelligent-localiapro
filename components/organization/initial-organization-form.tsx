@@ -18,6 +18,22 @@ type InitialOrganizationFormProps = {
   action: InitialOrganizationAction;
 };
 
+const suggestedTrades = [
+  "Maçonnerie",
+  "Plomberie",
+  "Électricité",
+  "Peinture",
+  "Menuiserie",
+  "Paysagisme",
+  "Garage / carrosserie",
+  "Nettoyage professionnel",
+  "Boulangerie",
+  "Boucherie / charcuterie / traiteur",
+  "Fleuriste",
+  "Événementiel",
+  "Services aux entreprises",
+];
+
 function SubmitButton() {
   const { pending } = useFormStatus();
 
@@ -57,18 +73,27 @@ export function InitialOrganizationForm({ action }: InitialOrganizationFormProps
 
       <div className="space-y-2">
         <label className="text-sm font-medium" htmlFor="trade">
-          Métier <span className="text-muted-foreground">(facultatif)</span>
+          Votre activité ou métier
         </label>
         <input
-          aria-describedby={state.fieldErrors?.trade ? "trade-error" : undefined}
+          aria-describedby={state.fieldErrors?.trade ? "trade-error" : "trade-help"}
           aria-invalid={Boolean(state.fieldErrors?.trade)}
           autoComplete="organization-title"
           className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
           id="trade"
+          list="trade-suggestions"
           maxLength={80}
           name="trade"
+          placeholder="Ex. boulangerie, maçonnerie, garage…"
+          required
           type="text"
         />
+        <datalist id="trade-suggestions">
+          {suggestedTrades.map((trade) => <option key={trade} value={trade} />)}
+        </datalist>
+        <p className="text-xs text-muted-foreground" id="trade-help">
+          Saisissez librement votre activité si elle n’apparaît pas dans les suggestions. Nalto adaptera son assistant à votre métier.
+        </p>
         {state.fieldErrors?.trade ? (
           <p className="text-sm text-destructive" id="trade-error">
             {state.fieldErrors.trade}
