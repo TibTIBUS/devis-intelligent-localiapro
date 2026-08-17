@@ -2,7 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { getOrganizationBillingState } from "@/lib/billing/stripe";
+import { getOrganizationBillingState, isStripeConfigured } from "@/lib/billing/stripe";
 import { getTrialStatus, TRIAL_REMINDER_THRESHOLD_DAYS } from "@/lib/billing/trial";
 
 export type OrganizationAccessStatus = {
@@ -15,12 +15,6 @@ export type OrganizationAccessStatus = {
 };
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing", "past_due"]);
-
-function isStripeConfigured() {
-  return Boolean(
-    process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_MONTHLY && process.env.STRIPE_PRICE_ANNUAL,
-  );
-}
 
 /**
  * Détermine si une entreprise peut utiliser l'application : abonnement Stripe

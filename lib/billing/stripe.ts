@@ -4,6 +4,12 @@ import { parseStripeEnv } from "@/lib/validation/env";
 
 export type BillingPeriod = "annual" | "monthly";
 
+export function isStripeConfigured() {
+  return Boolean(
+    process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_MONTHLY && process.env.STRIPE_PRICE_ANNUAL,
+  );
+}
+
 type StripeList<T> = { data: T[] };
 
 export type StripeCustomer = {

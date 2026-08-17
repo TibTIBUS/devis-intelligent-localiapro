@@ -2,23 +2,14 @@ import { Check, CreditCard } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { manageSubscription, startSubscription } from "@/lib/billing/actions";
-import { getOrganizationBillingState, getStripePlanPricing } from "@/lib/billing/stripe";
+import { formatEuroAmount } from "@/lib/billing/format";
+import { getOrganizationBillingState, getStripePlanPricing, isStripeConfigured } from "@/lib/billing/stripe";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import { createClient } from "@/lib/supabase/server";
 
 function formatDate(timestamp?: number | null) {
   if (!timestamp) return null;
   return new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(new Date(timestamp * 1000));
-}
-
-function formatAmount(cents: number | null | undefined) {
-  if (typeof cents !== "number") return null;
-  return new Intl.NumberFormat("fr-FR", {
-    currency: "EUR",
-    maximumFractionDigits: cents % 100 === 0 ? 0 : 2,
-    minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
-    style: "currency",
-  }).format(cents / 100);
 }
 
 function statusLabel(status?: string) {
@@ -43,7 +34,7 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
   const organizationId = await getCurrentOrganizationId(supabase);
   if (!organizationId) redirect("/onboarding");
 
-  const configured = Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_MONTHLY && process.env.STRIPE_PRICE_ANNUAL);
+  const configured = isStripeConfigured();
   const params = await searchParams;
   const billing = configured ? await getOrganizationBillingState(organizationId) : { customer: null, subscription: null };
   const pricing = configured ? await getStripePlanPricing().catch(() => null) : null;
@@ -51,9 +42,9 @@ export default async function SubscriptionPage({ searchParams }: { searchParams:
 
   const monthlyAmount = pricing?.monthly.unit_amount ?? null;
   const annualAmount = pricing?.annual.unit_amount ?? null;
-  const monthlyLabel = formatAmount(monthlyAmount);
-  const annualLabel = formatAmount(annualAmount);
-  const annualPerMonthLabel = formatAmount(annualAmount === null ? null : Math.round(annualAmount / 12));
+  const monthlyLabel = formatEuroAmount(monthlyAmount);
+  const annualLabel = formatEuroAmount(annualAmount);
+  const annualPerMonthLabel = formatEuroAmount(annualAmount === null ? null : Math.round(annualAmount / 12));
   const monthsSaved =
     monthlyAmount && annualAmount ? Math.round(12 - annualAmount / monthlyAmount) : 0;
   const canManage = Boolean(billing.customer && subscription);
