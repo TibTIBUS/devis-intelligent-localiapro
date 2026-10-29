@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr" className={cn("font-sans", instrumentSans.variable, inter.variable)}>
-      <body className="min-h-svh antialiased">{children}</body>
+      <body className="min-h-svh antialiased">{children}<script src="/affiliate-consent.js" data-product="nalto" defer /></body>
     </html>
   );
 }
