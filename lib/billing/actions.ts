@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 import {
   createStripeCheckoutSession,
@@ -12,6 +13,14 @@ import {
 import { getTrialStatus } from "@/lib/billing/trial";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 import { createClient } from "@/lib/supabase/server";
+
+
+async function consentedPartnerReference(): Promise<string | undefined> {
+  const jar = await cookies();
+  const ref = jar.get('localia_affiliate_nalto')?.value;
+  return jar.get('localia_affiliate_nalto_consent')?.value === 'yes' &&
+    ref && /^[a-z0-9-]{3,50}$/.test(ref) ? ref : undefined;
+}
 
 const MANAGEABLE_STATUSES = new Set(["active", "trialing", "past_due", "unpaid", "paused"]);
 
@@ -65,6 +74,7 @@ export async function startSubscription(formData: FormData) {
     organizationId: identity.organizationId,
     period,
     trialEndsAt,
+    referralCode: period === "monthly" ? await consentedPartnerReference() : undefined,
   });
 
   if (!checkout.url) throw new Error("Stripe n’a pas retourné de page de paiement.");
