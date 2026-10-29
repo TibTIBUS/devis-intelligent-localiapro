@@ -140,11 +140,13 @@ export async function createStripeCheckoutSession({
   organizationId,
   period,
   trialEndsAt,
+  referralCode,
 }: {
   customerId: string;
   organizationId: string;
   period: BillingPeriod;
   trialEndsAt: Date | null;
+  referralCode?: string;
 }) {
   const env = parseStripeEnv(process.env);
   const priceId = getStripePriceId(period);
@@ -169,6 +171,13 @@ export async function createStripeCheckoutSession({
       "customer_update[name]": "auto",
       "metadata[organization_id]": organizationId,
       "metadata[app]": "nalto",
+      ...(period === "monthly" && referralCode && /^[a-z0-9-]{3,50}$/.test(referralCode) ? {
+        "metadata[referral_code]": referralCode,
+        "metadata[product_slug]": "nalto",
+        "metadata[price_id]": priceId,
+        "subscription_data[metadata][referral_code]": referralCode,
+        "subscription_data[metadata][product_slug]": "nalto",
+      } : {}),
       "subscription_data[metadata][organization_id]": organizationId,
       "subscription_data[metadata][app]": "nalto",
       "subscription_data[trial_end]": trialEndEpochSeconds,
